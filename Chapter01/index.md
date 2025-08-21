@@ -1,4 +1,4 @@
-# Sections
+### Sections
 * [1.1 Weather and Climate](1_1_WeatherAndClimate.md)
 * [1.2 The Origin and Composition of the Atmosphere](1_2_OriginComposition.md)
 * [1.3 Atmospheric Cycles](1_3_AtmosphericCycles.md)
