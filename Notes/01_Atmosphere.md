@@ -17,11 +17,7 @@ MathJax = {
     - Bottle of Beads
     - Two scales I can stand on (or put an object across)
 - Class activity: Density
-    - Each group needs
-        - 2 film canisters 
-        - A large handful of pennies
-        - Beaker of water
-        - Scale
+    - Each group needs: 1 film canister, A large handful of pennies, Beaker of water, Scale
 
 __Reading__
 - Chapter 1, pages 4-10, 17-27
@@ -50,35 +46,6 @@ Segment 4 of the course will focus specifically on climate. For most of the cour
 What does the atmosphere look like today?
 - Today's atmosphere (Table 1.1)
 
-In order to really understand what it looks like, we need to understand two physics principles: Density and Pressure
+-----
 
-### Physics: Density
-__Density__ is a measure of how much mass is crammed into a space. For example, the Density of water is $1000 kg/m^3$, or $1 g/cm^3$. That means $1 cm^3$ of water has $1g$ of mass crammed into it.
-- What would happen if more mass is crammed into the same volume?
-    - If any mass has more mass than 1g in a $cm^3$, then it will sink
-- What would happen if there is less mass in that same volume?
-    - If any mass has more less than 1g in a $cm^3$, then it will float
-
-> __Demo__: Bottle with density beads
-
-> __Class Activity__: Density
->     - Each group has 4 film canisters
->     - Volume is the same for all (MEASURE THE VOLUME)
->     - Find the weight and calculate density
->     - Which will sink? Which will float?
-
-Our atmosphere is a fluid as well and behaves like water in this way. As a result, 
-- Any individual molecules that have less density than the air will float to the top of the atmosphere
-    - Hydrogen and Helium
-- Any individual molecules that have more density than the air will sink to the surface
-    - Water, Oxygen, Carbon Dioxide, etc.
-    - Heaviest molecules (like lead) will fall *all the way* to the surface and be removed from the atmosphere
-
-Where would the density of the atmosphere be greatest? Where the heaviest molecules gather or where the lightest molecules gather?
-- Heaviest molecules = greatest density
-- Density of the air is greatest at the surface and decreases as we increase in elevation
-
-### Physics: Pressure
-> __Demo__: Pennies distributed over many scales vs. all on one scale
-
-> __Class Activity__: 
+[Lecture Notes](./index.md)     Next lecture: [2: Layers of the Atmosphere](./02_LayersOfAtmosphere.md)
