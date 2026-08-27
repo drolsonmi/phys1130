@@ -86,3 +86,6 @@ Each lecture, I plan to begin with a weather discussion. For a discussion, we ne
 Textbook
 - Inclusive Access
 - Show on Canvas
+
+-----
+Next lecture: [1: The Atmosphere](./01_Atmosphere.md)

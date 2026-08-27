@@ -15,10 +15,11 @@ MathJax = {
 *Prep*
 - Demos
     - Bottle of Beads
-    - Two scales I can stand on
+    - Two scales I can stand on (or put an object across)
 - Class activity: Density
     - Each group needs
-        - 4 film canisters for each group (1 penny, 3 pennies, 8 pennies, 12 pennies)
+        - 2 film canisters 
+        - A large handful of pennies
         - Beaker of water
         - Scale
 
