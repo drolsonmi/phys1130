@@ -12,12 +12,43 @@ MathJax = {
 </head>
 
 ## Energy
+Energy is a measure of an object's ability to do physical work.
+
+> __Demo__: Conservation of Energy Marble Track
+
+Conservation of energy says that energy is not created or destroyed. It can only be converted from one form to another.
+
+Meteorology is based completely on this premise. Energy comes from the sun and is converted into forms that move our atmosphere.
+
+Types of energy:
+* Radiant Energy / Light Energy (Sun)
+* Kinetic Energy (Wind)
+* Potential Energy (Clouds)
+* Thermal Energy (Heated ground)
+* Chemical Energy (Bonds within air molecules)
 
 ## Temperature
+We need a way to measure energy. __Temperature__ is a measure of the kinetic energy (KE) of molecules. 
+
+Molecules vibrate and move. The faster they vibrate and move (more KE), the warmer it feels on our skin. The slower they vibrate and move, the colder it feels on our skin.
 
 ### Temperature Scales
+We have three main temperature scales
+* Explain Fahrenheit scale
+* Explain Celsius scale
+
+$$T^\circ C = \tfrac{5}{9}(T^\circ F - 32^\circ F) \qquad T^\circ F = \tfrac{9}{5}T^\circ C + 32^\circ F$$
+
+The problem with these scales is that none of these scales truly describes energy. Does $0^\circ F$ mean we are out of energy? No, because we can have less energy (get colder).
+
+We need a 3rd scale that measures energy. The Kelvin scale is just the Celsius scale but shifted so that 0K is the temperature at which all KE is lost (motion stops). This temperature is known as __absolute zero__. This happens at $T_0 = 0K = -273^\circ C = -419^\circ F$
+
+$$T^K = T^\circ C + 273$$
 
 ## Heat
+Meteorology deals with energy being converted (or transferred) from place to place (The sun to the ground, the ground to the air, etc.). The process in which energy is transferred due to a difference in temperature is known as __heat__.
+* Gaining heat = energy is transferred into the object
+* Losing heat = energy is transferred out of the object
 
 ### Specific Heat
 On the board, draw a cup with water. Label the temperature. Add ice.
@@ -57,12 +88,25 @@ Energy is transferred as one molecule hits another
 > * Cold air is more dense than warm air, so as the cloud comes out of the cooler, it sinks and pushes the warm air away, taking the energy with it
 
 ### Radiation
-Electromagnetic waves (show picture from OpenStax)
-* The size of the wave determines the type of radiation (show picture from OpenStax)
+Electromagnetic waves (show picture from OpenStax 24.2)
 
-| Radiation Type | Radio | Microwave | Infrared | Near Infrared | Visible | Ultraviolet | Gamma |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| __Wavelength__ | 
+![Concept of an Electromagnetic Wave](https://openstax.org/apps/image-cdn/v1/f=webp/apps/archive/20260105.231123/resources/d51b32ae43db26c62e088319af4c507e6302019d)
+
+* The size of the wave determines the type of radiation
+
+| Radiation Type | Wavelength                     |
+| :------------: | :----------------------------: |
+| Radio          | $\lambda > 1 m$                |
+| Microwave      | $100 \mu m < \lambda < 1 m$    |
+| Infrared       | $700 nm < \lambda < 0.1 \mu m$ |
+| Visible        | $350 nm < \lambda < 700 nm$    |
+| Ultraviolet    | $1 nm < \lambda < 700 nm$      |
+| X-rays         | $1 pm < \lambda < 1 nm$        |
+| Gamma rays     | $\lambda < 1 pm$               |
+
+![The Electromagnetic Spectrum](https://openstax.org/apps/image-cdn/v1/f=webp/apps/archive/20260105.231123/resources/87ac85312b2e847d3bd7f7b2fa4fb6f5f4196179)
+
+![The Visible Spectrum](https://openstax.org/apps/image-cdn/v1/f=webp/apps/archive/20260105.231123/resources/3f72ee1b28aa1be866672f74d2fe1c18ae534ff6)
 
 #### Wein's Law
 All objects emit radiation. The type of radiation depends on the temperature. We can measure the type of radiation using __Wein's Law__.
