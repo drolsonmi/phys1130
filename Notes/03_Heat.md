@@ -68,6 +68,15 @@ On the board, draw a cup with water. Label the temperature. Add ice.
 > * Dry ice sublimates
 > * Cloud is actually air cooling to the point that water is forced to condense
 
+> __Class Activity__: Evaporative Cooling
+> - Students measure the temperature of the air as a fan evaporates water from a wet paper towel
+> - Equipment for each group:
+>    * 2 thermometers
+>    * Paper towel
+>    * Water
+>    * A fan
+>    * A stopwatch
+
 ## Methods of Heat
 How is this energy transferred?
 

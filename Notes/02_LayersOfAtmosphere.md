@@ -71,8 +71,6 @@ The atmosphere has weight. In fact, every square inch of the surface of the Eart
 >     * Air fills in under the printer paper, balancing the pressure on each side
 >     * Air does not fill uner the newspaper as quickly, so there's an imbalance of pressure with the atmosphere pushing down a little harder, making it more difficult to lift
 
-> __Class Activity__: 
-
 ### Pressure Profile of the Atmosphere
 Pressure is based on force. Air pressure is the result of the weight of the atmosphere pushing down on the surface.
 
@@ -103,6 +101,13 @@ What would be the pressure if we could ascend into the atmosphere?
     * Top of the troposphere (lowest layer of the atmosphere)
 
 I often show 700-mb and 500-mb charts when doing forecasts at the beginning of class.
+
+> __Class Activity__: Pressure
+> - Students install PhyPhox on their phones and measure the pressure at different heights in the building
+> - Show that pressure drops with altitude
+> - Equipment for each group:
+>     - Students need to install PhyPhox on their phones
+
 
 ## Temperature Profile of the Atmosphere
 Air does not absorb sunlight very well at all. As a result, it heats up more on the ground than in the air itself. The lowest layer of the atmosphere following this pattern is known as the __troposphere__.
