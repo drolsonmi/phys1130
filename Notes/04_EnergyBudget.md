@@ -76,4 +76,4 @@ What happens when there's an imbalance?
 
 -----
 
-[Lecture Notes](./index.md)     Next lecture: []()
+[Lecture Notes](./index.md)     Next lecture: [5: Space Weather and Seasons](./05_SpaceWx_Seasons.md)

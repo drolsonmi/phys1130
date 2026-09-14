@@ -12,6 +12,34 @@ MathJax = {
 </head>
 
 ## Space Weather
+Space Weather is the interaction between the Sun and our Atmosphere.
+- Sun Spots and Sun Spot Cycle
+  - [Sunspot Cycle on Space Weather Dashboard](https://www.spaceweather.gov/communities/space-weather-enthusiasts-dashboard)
+  - Sunspots are cool spots on the surface of the sun due to magnetic storms on its surface
+
+![Current Sunspot image](https://soho.nascom.nasa.gov/data/synoptic/sunspots_earth/mdi_sunspots.jpg)
+
+- Solar Prominence
+  - If magnetic storms get strong, large plumes of solar particles arc above the surface
+- Coronal Mass Ejections
+  - The strongest storms cause enough disruptions in the magnetic field that high-energy solar particles escape from the surface of the sun
+  - These CMEs head out into space, occassionally impacting Earth
+- CMEs and Earth's Atmosphere
+  - The sun's high-energy particles move toward the Earth at high speeds
+  - If they impact
+    - Disruptions in the ionosphere
+    - Disruptions in communications
+    - Disruptions in the power grid
+- My Research
+  - Discovered lunar tidal enhancements in the ionosphere
+  - Part of models today
+- Earth's Magnetic Field
+  - Earth has a large magnetic field around it, generated from the iron core of the Earth
+  - These high-energy particles are electrically charged
+  - They end up spinning around the magnetic field toward the poles
+  - At the poles, they release that energy in the form of... LIGHT! (The Northern Lights and the Southern Lights)
+
+![The Northern Lights](../images/aurora.jpg)
 
 
 ## Seasons
@@ -51,4 +79,4 @@ What are the factors that determine whether we have a surplus (summer) or a defi
 
 -----
 
-[Lecture Notes](./index.md)     Next lecture: []()
+[Lecture Notes](./index.md)     Next lecture: [6: Temperature Cycles](./06_Temperature.md)
