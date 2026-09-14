@@ -17,7 +17,7 @@ Space Weather is the interaction between the Sun and our Atmosphere.
   - [Sunspot Cycle on Space Weather Dashboard](https://www.spaceweather.gov/communities/space-weather-enthusiasts-dashboard)
   - Sunspots are cool spots on the surface of the sun due to magnetic storms on its surface
 
-<img alt="Current Sunspot image" src="https://soho.nascom.nasa.gov/data/synoptic/sunspots_earth/mdi_sunspots.jpg" width=300>
+<a href="https://soho.nascom.nasa.gov/data/realtime-images.html"><img alt="Current Sunspot image" src="https://soho.nascom.nasa.gov/data/synoptic/sunspots_earth/mdi_sunspots.jpg" width=300></a>
 
 - Solar Prominence
   - If magnetic storms get strong, large plumes of solar particles arc above the surface
@@ -39,7 +39,7 @@ Space Weather is the interaction between the Sun and our Atmosphere.
   - They end up spinning around the magnetic field toward the poles
   - At the poles, they release that energy in the form of... LIGHT! (The Northern Lights and the Southern Lights)
 
-<img alt="The Northern Lights" src="https://drolsonmi.github.io/phys1130/images/aurora.jpg" width=300>
+<a href="https://drolsonmi.github.io/phys1130/images/aurora.jpg"><img alt="The Northern Lights" src="https://drolsonmi.github.io/phys1130/images/aurora.jpg" width=300></a>
 
 
 ## Seasons
