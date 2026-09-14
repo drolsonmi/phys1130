@@ -39,7 +39,7 @@ Space Weather is the interaction between the Sun and our Atmosphere.
   - They end up spinning around the magnetic field toward the poles
   - At the poles, they release that energy in the form of... LIGHT! (The Northern Lights and the Southern Lights)
 
-<img alt="The Northern Lights" src="https://drolsonmi.github.io/phys1130/images/aurora.jpg" width=300)
+<img alt="The Northern Lights" src="https://drolsonmi.github.io/phys1130/images/aurora.jpg" width=300>
 
 
 ## Seasons
