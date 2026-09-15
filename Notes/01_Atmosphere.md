@@ -48,4 +48,5 @@ What does the atmosphere look like today?
 
 -----
 
-[Lecture Notes](./index.md)     Next lecture: [2: Layers of the Atmosphere](./02_LayersOfAtmosphere.md)
+[Lecture Notes](./index.md)
+* Next lecture: [2: Layers of the Atmosphere](./02_LayersOfAtmosphere.md)

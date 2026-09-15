@@ -89,4 +89,5 @@ Textbook
 
 -----
 
-[Lecture Notes](./index.md)     Next lecture: [1: The Atmosphere](./01_Atmosphere.md)
+[Lecture Notes](./index.md)
+* Next lecture: [1: The Atmosphere](./01_Atmosphere.md)

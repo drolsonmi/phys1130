@@ -79,4 +79,5 @@ What are the factors that determine whether we have a surplus (summer) or a defi
 
 -----
 
-[Lecture Notes](./index.md)     Next lecture: [6: Temperature Cycles](./06_Temperature.md)
+[Lecture Notes](./index.md)
+* Next lecture: [6: Temperature Cycles](./06_Temperature.md)

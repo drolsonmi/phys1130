@@ -18,4 +18,5 @@ MathJax = {
 
 -----
 
-[Lecture Notes](./index.md)     Next lecture: []()
+[Lecture Notes](./index.md)
+* Next lecture: []()

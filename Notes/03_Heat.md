@@ -156,4 +156,5 @@ The next lesson will look at the balance between gaining and losing energy.
 
 -----
 
-[Lecture Notes](./index.md)     Next lecture: [4: The Energy Budget](./04_EnergyBudget.md)
+[Lecture Notes](./index.md)
+* Next lecture: [4: The Energy Budget](./04_EnergyBudget.md)

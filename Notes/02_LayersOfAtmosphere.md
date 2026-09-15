@@ -142,4 +142,5 @@ Above the mesopause, any molecules that are left are exposed to direct, unfilter
 
 -----
 
-[Lecture Notes](./index.md)     Next lecture: [3: Energy, Temperature, and Heat](./03_Heat.md)
+[Lecture Notes](./index.md)
+* Next lecture: [3: Energy, Temperature, and Heat](./03_Heat.md)
