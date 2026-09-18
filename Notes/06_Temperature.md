@@ -29,6 +29,7 @@ Graphs from textbook show some areas have large temperature ranges and others ha
 * Latitude (Graph in textbook)
 * Cloud cover (Graphic in textbook)
 * Humidity
+* Altitude - Greatest temperature range is just above the surface (Graphic in textbook)
 
 
 -----
