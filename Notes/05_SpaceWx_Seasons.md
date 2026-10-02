@@ -70,11 +70,15 @@ What are the factors that determine whether we have a surplus (summer) or a defi
 > * Earth turn on trace (T)
 > * Fast forward in time 1 year by clicking and holding the day up button
 > * Show the ecliptic nature of the orbit
->
+
+The orbit shape is opposite of what we'd expect. So, the orbit shape moderates the seasons, but isn't a cause of the seasons.
+
 > Length of Daylight
 > * Location --> Move to North Pole and hit "Space View"
 > * Zoom Out
 > * Change the date from September to January to March to June. Do an hourly progression to show how daylight changes by latitude. Note that the area in night along a latitude is greater in winter.
+
+Solar angle has a huge impact, but the biggest impact in seasons is the length of daylight.
 
 
 -----
