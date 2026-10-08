@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lifting a Parcel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: header + two linked panels sharing one altitude scale (sky column | temperature profile), readout and controls beneath */
+:root{
+  --bg:#eef3f7; --panel:#ffffff; --ink:#14212e; --muted:#5a6b7b; --line:#c9d5df;
+  --sky-top:#9cc3e6; --sky-bot:#e3eff8; --ground:#7a8f5a; --ground-dk:#5d7044;
+  --env:#14212e; --temp:#d2402b; --dew:#1f8a4c; --cool:#2f6fb5; --warm:#e0892a;
+  --cloud:#ffffff; --cloud-edge:#b7c6d3; --accent:#2f6fb5;
+  --display:"Archivo",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1620; --panel:#16212d; --ink:#e4ecf3; --muted:#93a4b5; --line:#2c3b4a;
+  --sky-top:#1b3550; --sky-bot:#2c4d6b; --ground:#3f5230; --ground-dk:#2f3e24;
+  --env:#e4ecf3; --temp:#ff6b52; --dew:#4cc77f; --cool:#6aa8ec; --warm:#f2a34b;
+  --cloud:#e9eef3; --cloud-edge:#8fa2b4; --accent:#6aa8ec; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1620; --panel:#16212d; --ink:#e4ecf3; --muted:#93a4b5; --line:#2c3b4a;
+  --sky-top:#1b3550; --sky-bot:#2c4d6b; --ground:#3f5230; --ground-dk:#2f3e24;
+  --env:#e4ecf3; --temp:#ff6b52; --dew:#4cc77f; --cool:#6aa8ec; --warm:#f2a34b;
+  --cloud:#e9eef3; --cloud-edge:#8fa2b4; --accent:#6aa8ec; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body)}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:20px 32px;display:grid;gap:16px}
+header h1{font:800 clamp(24px,4vw,34px)/1.1 var(--display);margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);max-width:70ch}
+.rates{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rate{font:500 12.5px var(--mono);padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.rate b{font-weight:600}
+.panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px}
+@media (max-width:760px){.panels{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.panel h2{font:700 12px var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+svg{display:block;width:100%;height:auto}
+svg text{font-family:var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:3px;border-radius:2px;display:inline-block}
+.lower{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.lower{grid-template-columns:1fr}}
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cell{display:grid;gap:2px}
+.cell .k{font:600 11px var(--display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.cell .v{font:600 20px var(--mono);font-variant-numeric:tabular-nums}
+.cell .f{font:400 13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.status{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:grid;gap:6px}
+.chip{justify-self:start;font:600 12px var(--display);letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:999px;color:#fff}
+.status p{margin:0;max-width:65ch}
+.controls{display:grid;gap:12px;align-content:start}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button,select{font:600 14px var(--body);padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+label{font-size:13px;color:var(--muted);display:grid;gap:4px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.note{font-size:13px;color:var(--muted);margin:0}
+</style>
+</head>
+<body style="margin:0">
+
+<div class="wrap">
+  <header>
+    <h1>Lifting a parcel through a conditionally unstable atmosphere</h1>
+    <p>A surface parcel at 30 °C with a 18 °C dew point is forced upward. The environment cools at 8 °C/km, which sits between the dry and moist adiabatic rates. The parcel resists lifting until it saturates and then becomes warmer than its surroundings.</p>
+    <div class="rates">
+      <span class="rate">Dry adiabatic <b>10 °C/km</b></span>
+      <span class="rate">Environment <b>8 °C/km</b></span>
+      <span class="rate">Moist adiabatic <b>≈6 °C/km</b></span>
+      <span class="rate">Dew point (unsaturated) <b>2 °C/km</b></span>
+    </div>
+  </header>
+
+  <div class="panels">
+    <section class="panel" aria-label="Parcel rising through the sky">
+      <h2>The parcel</h2>
+      <svg id="scene" viewBox="0 0 360 560" role="img" aria-label="Animated air parcel rising, forming a cloud"></svg>
+    </section>
+    <section class="panel" aria-label="Temperature versus altitude">
+      <h2>Temperature profile</h2>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--env)"></i>Environment</span>
+        <span><i class="sw" style="background:var(--temp)"></i>Parcel temperature</span>
+        <span><i class="sw" style="background:var(--dew)"></i>Parcel dew point</span>
+        <span><i class="sw" style="background:var(--cool);opacity:.45;height:10px"></i>Parcel colder</span>
+        <span><i class="sw" style="background:var(--warm);opacity:.45;height:10px"></i>Parcel warmer</span>
+      </div>
+      <svg id="chart" viewBox="0 0 420 560" role="img" aria-label="Temperature versus altitude for parcel and environment"></svg>
+    </section>
+  </div>
+
+  <div class="lower">
+    <section class="panel" aria-live="polite">
+      <div class="readout">
+        <div class="cell"><span class="k">Altitude</span><span class="v" id="rZ">0.00 km</span><span class="f" id="rZft">0 ft</span></div>
+        <div class="cell"><span class="k" style="color:var(--temp)">Parcel temp</span><span class="v" id="rT"></span><span class="f" id="rTf"></span></div>
+        <div class="cell"><span class="k" style="color:var(--dew)">Parcel dew point</span><span class="v" id="rD"></span><span class="f" id="rDf"></span></div>
+        <div class="cell"><span class="k">Environment</span><span class="v" id="rE"></span><span class="f" id="rEf"></span></div>
+      </div>
+      <div class="status">
+        <span class="chip" id="chip"></span>
+        <p id="msg"></p>
+      </div>
+    </section>
+    <section class="panel controls">
+      <div class="btns">
+        <button class="primary" id="play" type="button">Pause</button>
+        <button id="restart" type="button">Restart</button>
+        <select id="speed" aria-label="Animation speed">
+          <option value="0.5">Slow</option>
+          <option value="1" selected>Normal</option>
+          <option value="2">Fast</option>
+        </select>
+      </div>
+      <label for="scrub">Drag to set altitude
+        <input id="scrub" type="range" min="0" max="8" step="0.01" value="0">
+      </label>
+      <p class="note">The animation pauses briefly at each labeled level. A constant 6 °C/km moist rate is used for clarity; in the real atmosphere the moist rate increases with height as the air gets colder.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+(()=>{
+const T0=30, TD0=18, GENV=8, GD=10, GM=6, GDEW=2, ZTOP=8;
+const LCL=(T0-TD0)/(GD-GDEW);               // 1.5 km
+const TLCL=T0-GD*LCL;                        // 15 °C
+const LFC=LCL+(T0-GENV*LCL-TLCL)/(GENV-GM);  // 3.0 km
+const env=z=>T0-GENV*z;
+const parcelT=z=>z<=LCL?T0-GD*z:TLCL-GM*(z-LCL);
+const parcelD=z=>z<=LCL?TD0-GDEW*z:parcelT(z);
+const toF=c=>c*9/5+32;
+const fmt=v=>(Math.abs(v)<0.05?0:v).toFixed(1);
+const NS="http://www.w3.org/2000/svg";
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const Y=z=>520-z*61.25;
+
+/* ---------- Scene ---------- */
+const S=document.getElementById('scene');
+const defs=el('defs',{},S);
+const sg=el('linearGradient',{id:'sky',x1:0,y1:0,x2:0,y2:1},defs);
+el('stop',{offset:0,'stop-color':'var(--sky-top)'},sg);el('stop',{offset:1,'stop-color':'var(--sky-bot)'},sg);
+const cp=el('clipPath',{id:'aboveBase'},defs);el('rect',{x:0,y:0,width:360,height:Y(LCL)+1},cp);
+el('rect',{x:0,y:0,width:360,height:520,fill:'url(#sky)'},S);
+el('rect',{x:0,y:520,width:360,height:40,fill:'var(--ground)'},S);
+el('path',{d:'M0 520 Q60 508 120 520 T240 520 T360 518 V524 H0Z',fill:'var(--ground-dk)'},S);
+// axis
+el('line',{x1:44,y1:Y(0),x2:44,y2:Y(8),stroke:'var(--ink)','stroke-opacity':.5,'stroke-width':1},S);
+for(let k=0;k<=8;k++){
+  el('line',{x1:40,y1:Y(k),x2:48,y2:Y(k),stroke:'var(--ink)','stroke-opacity':.5},S);
+  const t=el('text',{x:36,y:Y(k)+4,'text-anchor':'end','font-size':11,fill:'var(--ink)'},S);t.textContent=k+' km';
+  if(k>0){const e=el('text',{x:52,y:Y(k)-3,'font-size':9.5,fill:'var(--ink)','fill-opacity':.7},S);e.textContent='env '+env(k)+'°';}
+}
+// level lines (hidden until reached)
+function levelLine(svg,z,label,x1,x2,id){
+  const g=el('g',{id,opacity:0,style:'transition:opacity .6s'},svg);
+  el('line',{x1,y1:Y(z),x2,y2:Y(z),stroke:'var(--ink)','stroke-dasharray':'5 4','stroke-width':1.2},g);
+  const below=svg.id==='scene', ty=below?Y(z)+4:Y(z)-20;
+  el('rect',{x:x1+2,y:ty,width:196,height:17,rx:3,fill:'var(--panel)','fill-opacity':.9},g);
+  const t=el('text',{x:x1+8,y:ty+12.5,'font-size':10.5,'font-weight':600,fill:'var(--ink)'},g);
+  t.textContent=label+' · '+z.toFixed(1)+' km';
+  return g;
+}
+const cloudG=el('g',{'clip-path':'url(#aboveBase)'},S);
+const lclS=levelLine(S,LCL,'Cloud Condensation Level',46,356,'lclS');
+const lfcS=levelLine(S,LFC,'Level of Free Convection',46,356,'lfcS');
+// forcing arrow
+const forceG=el('g',{},S);
+el('path',{d:'M138 18 v-36 m-7 9 l7 -9 l7 9',fill:'none',stroke:'var(--ink)','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round',id:'arrowPath'},forceG);
+const forceT=el('text',{x:138,y:32,'text-anchor':'middle','font-size':10,fill:'var(--ink)','font-weight':600},forceG);forceT.textContent='forced';
+// parcel
+const PX=180;
+const parcelG=el('g',{},S);
+const pc=el('circle',{cx:0,cy:0,r:20,'stroke-width':2,'stroke-dasharray':'4 3'},parcelG);
+const pl=el('text',{x:0,y:4,'text-anchor':'middle','font-size':9,'font-weight':600,fill:'var(--ink)'},parcelG);pl.textContent='parcel';
+// tag
+const tagG=el('g',{},S);
+el('rect',{x:0,y:-26,width:122,height:52,rx:5,fill:'var(--panel)',stroke:'var(--line)'},tagG);
+const tT=el('text',{x:8,y:-9,'font-size':11,'font-weight':600,fill:'var(--temp)'},tagG);
+const tD=el('text',{x:8,y:7,'font-size':11,'font-weight':600,fill:'var(--dew)'},tagG);
+const tE=el('text',{x:8,y:21,'font-size':9.5,fill:'var(--muted)'},tagG);
+
+// deterministic cloud puffs
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const puffs=[];
+for(let z=LCL;z<=ZTOP+0.3;z+=0.12){
+  const w=26+(z-LCL)*7;
+  for(let i=0;i<3;i++)puffs.push({z,x:PX+(rnd()-.5)*w*1.3,r:w*(0.55+rnd()*0.4)});
+}
+const puffEls=puffs.map(p=>el('circle',{cx:p.x,cy:Y(p.z),r:p.r,fill:'var(--cloud)',stroke:'var(--cloud-edge)','stroke-width':.8,opacity:0},cloudG));
+
+/* ---------- Chart ---------- */
+const C=document.getElementById('chart');
+const XMIN=-40,XMAX=35;const X=t=>50+(t-XMIN)/(XMAX-XMIN)*360;
+for(let t=-40;t<=30;t+=10){
+  el('line',{x1:X(t),y1:Y(0),x2:X(t),y2:Y(8),stroke:'var(--line)','stroke-width':1},C);
+  const tx=el('text',{x:X(t),y:536,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},C);tx.textContent=t+'°C';
+  const fx=el('text',{x:X(t),y:549,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},C);fx.textContent=Math.round(toF(t))+'°F';
+}
+for(let k=0;k<=8;k++){
+  el('line',{x1:50,y1:Y(k),x2:410,y2:Y(k),stroke:'var(--line)','stroke-width':k===0?1.4:.6},C);
+  const t=el('text',{x:44,y:Y(k)+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},C);t.textContent=k+' km';
+}
+const pts=(f,a,b,n=60)=>{let s='';for(let i=0;i<=n;i++){const z=a+(b-a)*i/n;s+=X(f(z)).toFixed(1)+','+Y(z).toFixed(1)+' ';}return s;};
+// reference guides
+el('polyline',{points:pts(z=>T0-GD*z,0,3.5),fill:'none',stroke:'var(--temp)','stroke-opacity':.3,'stroke-dasharray':'3 4','stroke-width':1.2},C);
+el('polyline',{points:pts(parcelT,LCL,ZTOP),fill:'none',stroke:'var(--temp)','stroke-opacity':.22,'stroke-dasharray':'3 4','stroke-width':1.2},C);
+const shadeCool=el('polygon',{fill:'var(--cool)','fill-opacity':.28},C);
+const shadeWarm=el('polygon',{fill:'var(--warm)','fill-opacity':.32},C);
+el('polyline',{points:pts(env,0,ZTOP),fill:'none',stroke:'var(--env)','stroke-width':2.2},C);
+const envLbl=el('text',{x:X(env(6.5))+8,y:Y(6.5),'text-anchor':'start','font-size':10.5,'font-weight':600,fill:'var(--env)'},C);envLbl.textContent='environment 8°C/km';
+const dLine=el('polyline',{fill:'none',stroke:'var(--dew)','stroke-width':2.4,'stroke-linecap':'round'},C);
+const tLine=el('polyline',{fill:'none',stroke:'var(--temp)','stroke-width':2.6,'stroke-linecap':'round'},C);
+const lclC=levelLine(C,LCL,'Cloud Condensation Level',50,410,'lclC');
+const lfcC=levelLine(C,LFC,'Level of Free Convection',50,410,'lfcC');
+const dEnv=el('circle',{r:4,fill:'var(--env)'},C);
+const dDew=el('circle',{r:5,fill:'var(--dew)',stroke:'var(--panel)','stroke-width':1.5},C);
+const dT=el('circle',{r:5.5,fill:'var(--temp)',stroke:'var(--panel)','stroke-width':1.5},C);
+// chart annotations for rates
+const ann=(z,t,txt,col,anchor='start')=>{const a=el('text',{x:X(t),y:Y(z),'font-size':10,fill:col,'text-anchor':anchor},C);a.textContent=txt;return a;};
+const a1=ann(0.5,T0-GD*0.5-2.5,'dry 10°C/km','var(--temp)','end');
+const a2=ann(5.2,parcelT(5.2)+1.2,'moist ≈6°C/km','var(--temp)');
+const a3=ann(1.0,TD0-GDEW*1.0-1.2,'dew pt 2°C/km','var(--dew)','end');
+
+/* ---------- Readout ---------- */
+const $=id=>document.getElementById(id);
+const chip=$('chip'),msg=$('msg');
+function phase(z){
+  if(z<LCL-1e-6)return{c:'var(--cool)',k:'Forced lift · unsaturated',m:`The parcel is pushed upward and cools at the dry adiabatic rate (10 °C/km), faster than the environment (8 °C/km). Its dew point falls slowly (about 2 °C/km), so the gap between temperature and dew point shrinks. The parcel is colder and denser than the air around it, so it would sink back if the lifting stopped.`};
+  if(z<LFC-1e-6)return{c:'var(--cool)',k:'Forced lift · saturated',m:`The parcel reached its dew point at the Cloud Condensation Level and a cloud forms. Condensation releases latent heat, so the parcel now cools at the moist adiabatic rate (about 6 °C/km), slower than the environment. It is still colder than its surroundings, so lifting must continue, but the gap is closing.`};
+  return{c:'var(--warm)',k:'Free convection · buoyant',m:`Above the Level of Free Convection the parcel is warmer than the surrounding air. It is now less dense and rises on its own, building the cloud upward. This is conditional instability: the air is stable for an unsaturated parcel but unstable once the parcel is saturated.`};
+}
+let lastKey='';
+function render(z){
+  const T=parcelT(z),D=parcelD(z),E=env(z),y=Y(z);
+  // scene parcel
+  const warm=T>E+1e-6, sat=z>=LCL-1e-6;
+  pc.setAttribute('fill',warm?'var(--warm)':'var(--cool)');
+  pc.setAttribute('fill-opacity',sat?.55:.35);
+  pc.setAttribute('stroke',warm?'var(--warm)':'var(--cool)');
+  parcelG.setAttribute('transform',`translate(${PX},${Math.min(y,500)})`);
+  tagG.setAttribute('transform',`translate(${PX+32},${Math.max(Math.min(y,494),40)})`);
+  tT.textContent=`T  ${fmt(T)}°C ${fmt(toF(T))}°F`;
+  tD.textContent=`Td ${fmt(D)}°C ${fmt(toF(D))}°F`;
+  tE.textContent=`env ${fmt(E)}°C · ${T>=E?'+':''}${fmt(T-E)}°`;
+  const forced=z<LFC-1e-6;
+  forceG.setAttribute('opacity',forced?1:0);
+  forceG.setAttribute('transform',`translate(0,${Math.min(y,500)})`);
+  puffs.forEach((p,i)=>puffEls[i].setAttribute('opacity',p.z<=z?1:0));
+  lclS.setAttribute('opacity',z>=LCL-1e-6?1:0);lfcS.setAttribute('opacity',z>=LFC-1e-6?1:0);
+  lclC.setAttribute('opacity',z>=LCL-1e-6?1:0);lfcC.setAttribute('opacity',z>=LFC-1e-6?1:0);
+  // chart
+  tLine.setAttribute('points',pts(parcelT,0,Math.max(z,0.001),120));
+  dLine.setAttribute('points',pts(parcelD,0,Math.max(z,0.001),120));
+  const zc=Math.min(z,LFC);
+  shadeCool.setAttribute('points',z>0?pts(parcelT,0,zc)+pts(env,zc,0):'');
+  shadeWarm.setAttribute('points',z>LFC?pts(parcelT,LFC,z)+pts(env,z,LFC):'');
+  dT.setAttribute('cx',X(T));dT.setAttribute('cy',y);
+  dDew.setAttribute('cx',X(D));dDew.setAttribute('cy',y);
+  dEnv.setAttribute('cx',X(E));dEnv.setAttribute('cy',y);
+  a1.setAttribute('opacity',z>0.5?1:0);a2.setAttribute('opacity',z>5.2?1:0);a3.setAttribute('opacity',z>0.9?1:0);
+  // readout
+  $('rZ').textContent=z.toFixed(2)+' km';$('rZft').textContent=Math.round(z*3280.84).toLocaleString()+' ft';
+  $('rT').textContent=fmt(T)+' °C';$('rTf').textContent=fmt(toF(T))+' °F';
+  $('rD').textContent=fmt(D)+' °C';$('rDf').textContent=fmt(toF(D))+' °F';
+  $('rE').textContent=fmt(E)+' °C';$('rEf').textContent=fmt(toF(E))+' °F';
+  const ph=phase(z);
+  if(ph.k!==lastKey){chip.textContent=ph.k;chip.style.background=ph.c;msg.textContent=ph.m;lastKey=ph.k;}
+  scrub.value=z;
+}
+
+/* ---------- Animation ---------- */
+const scrub=$('scrub'),playB=$('play'),speedS=$('speed');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let z=0,playing=!reduce,hold=0,last=null;
+const HOLD=1400;
+function setPlaying(p){playing=p;playB.textContent=p?'Pause':(z>=ZTOP?'Replay':'Play');last=null;if(p)requestAnimationFrame(tick);}
+function tick(ts){
+  if(!playing)return;
+  if(last===null)last=ts;const dt=Math.min(ts-last,60);last=ts;
+  if(hold>0){hold-=dt;}else{
+    const base=z<LFC?0.28:0.28+Math.min((z-LFC)*0.12,0.4); // speeds up once buoyant
+    const nz=Math.min(ZTOP,z+base*(+speedS.value)*dt/1000);
+    if(z<LCL&&nz>=LCL){z=LCL;hold=HOLD;}
+    else if(z<LFC&&nz>=LFC){z=LFC;hold=HOLD;}
+    else z=nz;
+    render(z);
+    if(z>=ZTOP){setPlaying(false);return;}
+  }
+  requestAnimationFrame(tick);
+}
+playB.addEventListener('click',()=>{if(z>=ZTOP){z=0;render(z);}setPlaying(!playing);});
+$('restart').addEventListener('click',()=>{z=0;hold=0;render(z);setPlaying(true);});
+scrub.addEventListener('input',()=>{z=+scrub.value;hold=0;render(z);if(playing)setPlaying(false);});
+render(reduce?LFC+1:0);if(reduce){z=LFC+1;}
+setPlaying(playing);
+})();
+</script>
+</body>
+</html>
