@@ -18,6 +18,21 @@ a
 * [Skew-T Diagram]()
 * [Animation of Conditional Instability](https://drolsonmi.github.io/phys1130/9_AtmosphericStability/parcel-lift-animation.html)
 
+# Weather Project
+* Discuss weather project and have students start submitting journal entries
+
+# Segment 2
+Segment 1 of the course discussed the origins and conditions of the atmosphere. We learned about heat, temperature, seasons, humidity, and clouds. These are the fundamentals of what makes the atmosphere work.
+
+Now that we have the basics, let's move forward to discuss the way that the atmosphere moves. We'll discuss,
+* Cloud Development
+* Precipitation
+* Pressure and wind
+* Wind systems
+* Fronts
+
+We begin with cloud development.
+
 ## Environmental Lapse Rate
 In the troposphere, the temperature drops with increasing altitude
 * Avg Lapse Rate = $6.5^\circ C / km$ (or $3.5^\circ F / 1000ft$)
@@ -94,6 +109,8 @@ Either way (dry or adiabatic), the thermal will rise
 Atmosphere is unstable if Atmospheric Lapse Rate $> 11^\circ C / km$
 
 ### Conditionally Unstable Atmosphere
+![Conditional Stability 1](https://www.noaa.gov/sites/default/files/2022-05/conditionalstability1.png)![Conditional Stability 2](https://www.noaa.gov/sites/default/files/2022-05/conditionalstability2.png)![Conditional Stability 3](https://www.noaa.gov/sites/default/files/2022-05/conditionalstability3.png)![Conditional Stability 4](https://www.noaa.gov/sites/default/files/2022-05/conditionalstability4.png)
+
 Atmosphere is conditionally unstable if $6^\circ C / km \le$ Atmospheric Lapse Rate $\le 11^\circ C / km$.
 
 Will the thermal rise or fall?
