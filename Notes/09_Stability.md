@@ -120,6 +120,10 @@ Will the thermal rise or fall?
 
 [Animation of Conditionally Unstable Atmosphere](https://drolsonmi.github.io/phys1130/9_AtmosphericStability/parcel-lift-animation.html)
 
+How far up do you have to go to reach the CCL?
+
+$$H_{meters} = 125(T-T_d) ~~~ \to ~~~ H_{km} = 0.125(T-T_d) \qquad\qquad H_{feet} = 228(T-T_d)$$
+
 ## Thermal forcing
 4 major ways to force thermal to rise
 1. Heating
