@@ -27,19 +27,22 @@ Smaller droplets have higher surface tension, making it harder for them to merge
 
 ### Collision-Coalescence process
 
-> [Animation of Collision-Coalescence Process](https://claude.ai/artifact/Lkmz9VM21S6prXobP4bFfo?sk=pLUYZiAYQT-4gu8muulrsg)
+> [HTML Animation of Collision-Coalescence Process](https://drolsonmi.github.com/phys1130/10_Precipitation/collision-coalescence-animation.html)
+> - [Animation of Collision-Coalescence Process (Claude)](https://claude.ai/artifact/Lkmz9VM21S6prXobP4bFfo?sk=pLUYZiAYQT-4gu8muulrsg)
 
 <!-- ![Animation of the Collision-Coalescence Process](../10_Precipitation/collision-coalescence-animation.gif) -->
 
 ### Bergeron (ice-crystal) process
 
-> [Animation of Ice-Crystal process](https://claude.ai/artifact/QTDB1sckbQJyRcKSfeDrpp?sk=X-2bt-_eVFKBGC_dlzYQhA)
+> [HTML Animation of Ice-Crystal Process](https://drolsonmi.github.com/phys1130/10_Precipitation/ice-crystal-process-animation.html)
+> - [Animation of Ice-Crystal process](https://claude.ai/artifact/QTDB1sckbQJyRcKSfeDrpp?sk=X-2bt-_eVFKBGC_dlzYQhA)
 
 <!-- ![Animation of the Ice-Crystal process](../10_Precipitation/ice-crystal-process-animation.gif) -->
 
 ### Accretion and Aggregation
 
-> [Animation of Accretion-Aggregation process](https://claude.ai/artifact/QTDB1sckbQJyRcKSfeDrpp?sk=X-2bt-_eVFKBGC_dlzYQhA)
+> [HTML Animation of Accretion an Aggregation Process](https://drolsonmi.github.com/phys1130/10_Precipitation/accretion-aggregation-animation.html)
+> - [Animation of Accretion-Aggregation process (Claude)](https://claude.ai/artifact/Qtu7CTsZ4CCmLbYvncagn2?sk=cscHedZhXBUj9b2BcyoMsQ)
 
 <!-- ![Animation of the Ice-Crystal process](../10_Precipitation/ice-crystal-process-animation.gif) -->
 
@@ -67,3 +70,9 @@ Talk about seeding
 - Freezing Rain
 - Graupel
 - Hail
+
+> [HTML Animation of Sleet and Freezing Rain](https://drolsonmi.github.com/phys1130/10_Precipitation/sleet-freezingrain-animation.html)
+
+> [HTML Animation of Graupel Formation](https://drolsonmi.github.com/phys1130/10_Precipitation/graupel-animation.html)
+
+> [HTML Animation of Hail Formation](https://drolsonmi.github.com/phys1130/10_Precipitation/hail-animation.html)

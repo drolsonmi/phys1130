@@ -1,0 +1,600 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Winter Precipitation Types</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+<style>
+/* Layout: one 16:9 stage that scales to fit, with a slim control bar beneath. Single dark look on purpose (matches the projected video). */
+:root {
+  --bg: #0b1322;
+  --stage: #0e182a;
+  --fg: #edf2fa;
+  --muted: #9eb0c9;
+  --line: #24344f;
+  --btn: #16243b;
+  --btn-hover: #1f3352;
+  --accent: #61a0ff;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box; overflow: hidden;
+}
+#wrap { width: 100%; flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
+#stage { display: block; background: var(--stage); border-radius: 6px; max-width: 100%; max-height: 100%; aspect-ratio: 16 / 9; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+button {
+  font: 600 15px/1 var(--font); color: var(--fg); background: var(--btn);
+  border: 1px solid var(--line); border-radius: 8px; padding: 11px 18px; cursor: pointer;
+}
+button:hover { background: var(--btn-hover); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .4; cursor: default; }
+#next { background: var(--accent); color: #07101f; border-color: var(--accent); padding-inline: 26px; }
+#next:hover { filter: brightness(1.08); }
+.dots { display: flex; gap: 6px; }
+.dot { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 13px; color: var(--muted); }
+.dot[aria-current="true"] { color: #07101f; background: var(--fg); border-color: var(--fg); }
+.hint { color: var(--muted); font-size: 13px; }
+:fullscreen body, body:fullscreen { padding: 0; }
+</style>
+
+<div id="wrap"><canvas id="stage" width="1920" height="1080" aria-label="Animation of snow, sleet, freezing rain and rain forming"></canvas></div>
+<div class="bar">
+  <button id="prev" type="button">&larr; Back</button>
+  <div class="dots" id="dots"></div>
+  <button id="next" type="button">Next &rarr;</button>
+  <button id="replay" type="button" title="Restart this scene (R)">Restart scene</button>
+  <button id="pause" type="button" title="Pause or resume (P)">Pause</button>
+  <button id="fs" type="button" title="Fullscreen (F)">Fullscreen</button>
+</div>
+<div class="hint">Keys: &rarr; or Space = Next &nbsp;·&nbsp; &larr; = Back &nbsp;·&nbsp; R = Restart scene &nbsp;·&nbsp; P = Pause &nbsp;·&nbsp; F = Fullscreen</div>
+
+<script>
+(() => {
+const W = 1920, H = 1080;
+const cv = document.getElementById('stage');
+const ctx = cv.getContext('2d');
+const FONT = '"Inter", system-ui, sans-serif';
+
+const BG = [0.055, 0.094, 0.165], PANEL = [0.075, 0.13, 0.22];
+const TXT = [0.93, 0.95, 0.98], MUTED = [0.62, 0.69, 0.79];
+const WARM = [0.96, 0.42, 0.30], COLD = [0.38, 0.62, 1.00];
+const DROP = [0.30, 0.62, 1.00], ICE = [0.86, 0.94, 1.00], GROUND = [0.24, 0.22, 0.20];
+const ZTOP = 3.0;
+
+const SC = [
+  { name: "Snow", sub: "The entire column is below freezing", color: [0.92, 0.96, 1.0],
+    prof: [[-12, 3.0], [-9, 2.2], [-6.5, 1.2], [-3, 0.0]], kind: "snow",
+    caps: [[0.8, "Entire layer from cloud to ground is colder than 0°C (32°F)."],
+           [4.5, "Snowflakes never melt, so they reach the ground as snow."]],
+    result: "SNOW", summary: "Entire column below 0°C. Flakes never melt." },
+  { name: "Sleet", sub: "Warm layer aloft, deep cold layer at the surface", color: [0.75, 0.88, 1.0],
+    prof: [[-11, 3.0], [-3, 2.75], [0, 2.5], [3.2, 2.05], [0, 1.6], [-6, 0.7], [-4, 0.0]], kind: "sleet",
+    caps: [[0.8, "A warm layer aloft (above 0°C) melts the falling snowflakes into raindrops."],
+           [4.0, "A DEEP below-freezing layer near the ground gives the drops time to refreeze."],
+           [7.3, "They land as ice pellets (sleet) that bounce when they hit the ground."]],
+    result: "SLEET", summary: "Warm layer aloft melts snow; a deep cold layer refreezes drops into ice pellets." },
+  { name: "Freezing Rain", sub: "Warm layer lower down, shallow cold layer at the surface", color: [0.45, 0.90, 0.95],
+    prof: [[-11, 3.0], [-6, 2.4], [0, 1.8], [4.2, 1.1], [0, 0.4], [-2.5, 0.0]], kind: "frz",
+    caps: [[0.8, "Snow melts completely in a deep warm layer closer to the ground."],
+           [4.0, "The cold layer at the surface is too SHALLOW to refreeze them: drops become supercooled."],
+           [7.3, "Supercooled drops freeze on contact, coating the ground.\nTrees, power lines, and roads become encased in ice."]],
+    result: "FREEZING RAIN", summary: "Shallow surface cold layer: drops stay liquid (supercooled) and freeze on impact." },
+  { name: "Rain", sub: "Warm layer extends all the way to the surface", color: [0.40, 0.68, 1.0],
+    prof: [[-11, 3.0], [-5, 2.4], [0, 1.8], [4, 1.0], [8, 0.0]], kind: "rain",
+    caps: [[0.8, "Above-freezing air extends all the way down to the surface."],
+           [4.5, "Snowflakes melt and stay liquid, reaching the ground as rain."]],
+    result: "RAIN", summary: "Warm layer reaches the ground. Snow melts and stays as rain." },
+];
+
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ease = t => { t = clamp(t); return t * t * (3 - 2 * t); };
+
+function T_at(sc, z) {
+  const p = sc.prof;
+  for (let i = 0; i < p.length - 1; i++) {
+    const [t1, z1] = p[i], [t2, z2] = p[i + 1];
+    if (z2 <= z && z <= z1) return t1 + (t2 - t1) * (z1 - z) / (z1 - z2);
+  }
+  return p[p.length - 1][0];
+}
+function crossings(sc) {
+  const p = sc.prof, out = [];
+  for (let i = 0; i < p.length - 1; i++) {
+    const [t1, z1] = p[i], [t2, z2] = p[i + 1];
+    if (((t1 < 0 && 0 <= t2) || (t1 >= 0 && 0 > t2)) && t1 !== t2) out.push(z1 + (z2 - z1) * (0 - t1) / (t2 - t1));
+  }
+  return out;
+}
+for (const sc of SC) {
+  const cr = crossings(sc);
+  sc.cr = cr;
+  if (sc.kind === "snow") { sc.zt = null; sc.zb = null; }
+  else if (sc.kind === "rain") { sc.zt = cr[0]; sc.zb = 0; }
+  else { sc.zt = cr[0]; sc.zb = cr[1]; }
+}
+function state(sc, z) {
+  if (sc.zt === null) return [0, 0, false];
+  const zt = sc.zt, zb = sc.zb;
+  const m = clamp((zt - z) / (0.55 * (zt - zb)));
+  let f = 0, sup = false;
+  if (sc.kind === "sleet" && z < zb) f = clamp((zb - z) / 0.6);
+  if (sc.kind === "frz" && z < zb) sup = true;
+  return [m, f, sup];
+}
+const VS = 0.52, VR = 0.95, DT = 1 / 240;
+for (const sc of SC) {
+  const zs = [ZTOP + 0.05];
+  let z = zs[0];
+  while (z > 0) { const [m] = state(sc, z); z -= (VS + (VR - VS) * m) * DT; zs.push(z); }
+  sc.traj = Float32Array.from(zs);
+  sc.thit = (zs.length - 1) * DT;
+}
+function z_of(sc, tau) {
+  const i = tau / DT, i0 = Math.floor(i), tr = sc.traj;
+  if (i0 >= tr.length - 1) return 0;
+  return tr[i0] + (tr[i0 + 1] - tr[i0]) * (i - i0);
+}
+
+// endless, deterministic particle stream
+const SPAWN_DT = 0.055, SPAWN_T0 = -6;
+function hash(i, k) { let x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); }
+function particle(i) {
+  return { spawn: SPAWN_T0 + i * SPAWN_DT + hash(i, 1) * 0.04, x: 0.03 + 0.94 * hash(i, 2),
+    rot: hash(i, 3) * Math.PI, size: 0.8 + 0.4 * hash(i, 4), ph: hash(i, 5) * 2 * Math.PI, bx: hash(i, 6) * 2 - 1 };
+}
+
+// ---------- drawing helpers ----------
+const col = (c, a = 1) => `rgba(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)},${a})`;
+function setFont(size, bold) { ctx.font = `${bold ? 700 : 400} ${size}px ${FONT}`; }
+function text(s, x, y, size, color = TXT, bold = false, align = "left", alpha = 1) {
+  setFont(size, bold);
+  ctx.textAlign = align; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = col(color, alpha);
+  ctx.fillText(s, x, y);
+  return ctx.measureText(s).width;
+}
+function textW(s, size, bold) { setFont(size, bold); return ctx.measureText(s).width; }
+function wrap(s, maxw, size, bold = false) {
+  setFont(size, bold);
+  const lines = []; let cur = "";
+  for (const w of s.split(/\s+/)) {
+    const t = (cur + " " + w).trim();
+    if (ctx.measureText(t).width > maxw && cur) { lines.push(cur); cur = w; } else cur = t;
+  }
+  lines.push(cur);
+  return lines;
+}
+function rrect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function circle(x, y, r) { ctx.beginPath(); ctx.arc(x, y, Math.max(0, r), 0, Math.PI * 2); }
+function flatEllipse(x, y, rx, ry) { ctx.beginPath(); ctx.ellipse(x, y, Math.max(0, rx), Math.max(0, ry), 0, 0, Math.PI * 2); }
+
+function snowflake(x, y, r, rot, a) {
+  if (a <= 0.01) return;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+  ctx.lineCap = "round"; ctx.lineWidth = Math.max(1, r * 0.16); ctx.strokeStyle = col([1, 1, 1], a);
+  ctx.beginPath();
+  for (let k = 0; k < 6; k++) {
+    const an = k * Math.PI / 3, c = Math.cos(an), s = Math.sin(an);
+    const P = (px, py) => [px * c - py * s, px * s + py * c];
+    const bx = r * 0.55, b = r * 0.32;
+    let p;
+    ctx.moveTo(0, 0); p = P(r, 0); ctx.lineTo(p[0], p[1]);
+    p = P(bx, 0); ctx.moveTo(p[0], p[1]); p = P(bx + b * 0.6, b); ctx.lineTo(p[0], p[1]);
+    p = P(bx, 0); ctx.moveTo(p[0], p[1]); p = P(bx + b * 0.6, -b); ctx.lineTo(p[0], p[1]);
+  }
+  ctx.stroke(); ctx.restore();
+}
+function drop(x, y, r, a, fill = DROP, outline = null, streak = true) {
+  if (r <= 0.2 || a <= 0.01) return;
+  if (streak) {
+    const g = ctx.createLinearGradient(x, y - r * 5, x, y);
+    g.addColorStop(0, col(fill, 0)); g.addColorStop(1, col(fill, 0.35 * a));
+    ctx.strokeStyle = g; ctx.lineWidth = r * 0.9; ctx.lineCap = "butt";
+    ctx.beginPath(); ctx.moveTo(x, y - r * 5); ctx.lineTo(x, y); ctx.stroke();
+  }
+  flatEllipse(x, y, r * 1.08, r * 0.94);  // real drops are slightly flattened spheres
+  ctx.fillStyle = col(fill, a); ctx.fill();
+  if (outline) { ctx.strokeStyle = col(outline, a); ctx.lineWidth = Math.max(1.2, r * 0.3); ctx.stroke(); }
+  circle(x - r * 0.35, y - r * 0.35, r * 0.28); ctx.fillStyle = col([1, 1, 1], 0.55 * a); ctx.fill();
+}
+function pellet(x, y, r, f, a = 1) {
+  const c = [0, 1, 2].map(i => DROP[i] + (ICE[i] - DROP[i]) * f);
+  drop(x, y, r, a, c, f > 0.3 ? [1, 1, 1] : null, f < 0.99);
+}
+
+function zoneTint(sc, x0, y0, w, h) {
+  const n = 300, runs = [];
+  for (let i = 0; i < n; i++) {
+    const warm = T_at(sc, ZTOP * (1 - (i + 0.5) / n)) > 0;
+    if (runs.length && runs[runs.length - 1][0] === warm) runs[runs.length - 1][2] = i + 1;
+    else runs.push([warm, i, i + 1]);
+  }
+  for (const [warm, a0, a1] of runs) {
+    ctx.fillStyle = warm ? col(WARM, 0.20) : col(COLD, 0.09);
+    const ya = y0 + h * a0 / n, yb = y0 + h * a1 / n;
+    ctx.fillRect(x0, ya, w, yb - ya);
+  }
+}
+
+function drawPowerline(x0, w, gy, s, glaze) {
+  const px1 = x0 + w * 0.70, px2 = x0 + w * 0.94, ph = 78 * s;
+  ctx.strokeStyle = col([0.45, 0.36, 0.28]); ctx.lineWidth = 5 * s; ctx.lineCap = "butt";
+  for (const px of [px1, px2]) {
+    ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(px, gy - ph);
+    ctx.moveTo(px - 14 * s, gy - ph + 8 * s); ctx.lineTo(px + 14 * s, gy - ph + 8 * s); ctx.stroke();
+  }
+  const wy = t => gy - ph + 8 * s + 18 * s * Math.sin(Math.PI * t);
+  const wire = () => { ctx.beginPath(); for (let i = 0; i <= 40; i++) { const t = i / 40, x = lerp(px1, px2, t); i ? ctx.lineTo(x, wy(t)) : ctx.moveTo(x, wy(t)); } ctx.stroke(); };
+  const lw = 2.2 * s + glaze * 7 * s;
+  if (glaze > 0) {
+    ctx.strokeStyle = col([0.75, 0.95, 1.0], 0.9); ctx.lineWidth = lw; wire();
+    ctx.fillStyle = col([0.80, 0.96, 1.0], 0.9);
+    for (let k = 1; k < 12; k++) {
+      const t = k / 12, x = lerp(px1, px2, t);
+      const L = glaze * (10 + 9 * ((k * 37) % 5) / 4) * s, y = wy(t) + lw / 2 - 1;
+      ctx.beginPath(); ctx.moveTo(x - 2.6 * s, y); ctx.lineTo(x + 2.6 * s, y); ctx.lineTo(x, y + L); ctx.closePath(); ctx.fill();
+    }
+  }
+  ctx.strokeStyle = col([0.15, 0.15, 0.17]); ctx.lineWidth = 2.2 * s; wire();
+}
+
+function drawColumn(sc, t, x0, y0, w, h, s = 1, labels = true, gh = 46) {
+  const gy = y0 + h, zy = z => y0 + (ZTOP - z) / ZTOP * h;
+  const g = ctx.createLinearGradient(0, y0, 0, gy);
+  g.addColorStop(0, col([0.09, 0.14, 0.24])); g.addColorStop(1, col([0.15, 0.22, 0.34]));
+  ctx.fillStyle = g; ctx.fillRect(x0, y0, w, h);
+  zoneTint(sc, x0, y0, w, h);
+
+  ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, w, h + gh); ctx.clip();
+  ctx.fillStyle = col([0.55, 0.60, 0.68], 0.95);
+  for (let i = 0; i <= 9; i++) { circle(x0 + w * i / 9, y0 + 4 * s, (34 + 14 * Math.sin(i * 1.7)) * s); ctx.fill(); }
+  ctx.fillRect(x0, y0, w, 8 * s);
+  ctx.restore();
+
+  for (const zc of sc.cr) {
+    const y = zy(zc);
+    ctx.setLineDash([10 * s, 7 * s]); ctx.strokeStyle = col([1, 1, 1], 0.55); ctx.lineWidth = 1.6 * s;
+    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 + w, y); ctx.stroke(); ctx.setLineDash([]);
+    if (labels) text("0°C", x0 + w - 10, y - 8, 20, TXT, true, "right", 0.85);
+  }
+
+  const prog = clamp((t - sc.thit + 1.0) / 8.0);
+  ctx.fillStyle = col(GROUND); ctx.fillRect(x0, gy, w, gh);
+  ctx.fillStyle = col([0.33, 0.30, 0.26]); ctx.fillRect(x0, gy, w, 4 * s);
+
+  const kind = sc.kind;
+  if (kind === "snow") {
+    const th = 16 * s * prog;
+    if (th > 0.3) {
+      ctx.fillStyle = col([0.95, 0.97, 1.0]); ctx.beginPath(); ctx.moveTo(x0, gy + 2);
+      for (let i = 0; i <= 60; i++) ctx.lineTo(x0 + w * i / 60, gy - th * (1 + 0.25 * Math.sin(i * 1.3)));
+      ctx.lineTo(x0 + w, gy + 2); ctx.closePath(); ctx.fill();
+    }
+  }
+  if (kind === "frz") {
+    const th = 9 * s * prog;
+    if (th > 0.3) {
+      ctx.fillStyle = col([0.62, 0.90, 0.98], 0.75); ctx.fillRect(x0, gy - th, w, th + 2);
+      ctx.strokeStyle = col([1, 1, 1], 0.8); ctx.lineWidth = 1.5 * s;
+      ctx.beginPath(); ctx.moveTo(x0, gy - th + 1); ctx.lineTo(x0 + w, gy - th + 1); ctx.stroke();
+    }
+  }
+  if (kind === "rain") {
+    ctx.fillStyle = col(DROP, 0.45);
+    for (let k = 0; k < 7; k++) {
+      const px = x0 + w * (0.08 + 0.13 * k + 0.03 * Math.sin(k * 3));
+      const pw = (30 + 20 * ((k * 7) % 3)) * s * prog;
+      if (pw > 1) { flatEllipse(px, gy + 8 * s, pw, pw * 0.18); ctx.fill(); }
+    }
+  }
+  drawPowerline(x0, w, gy, s, kind === "frz" ? prog : 0);
+
+  // particles
+  const thit = sc.thit;
+  const life = thit + (kind === "sleet" ? 9 : 0.7);
+  const iMin = Math.max(0, Math.floor((t - life - SPAWN_T0) / SPAWN_DT) - 1);
+  const iMax = Math.floor((t - SPAWN_T0) / SPAWN_DT) + 1;
+  for (let i = iMin; i <= iMax; i++) {
+    const P = particle(i), tau = t - P.spawn;
+    if (tau < 0) continue;
+    let x = x0 + P.x * w; const sz = P.size * s;
+    if (tau < thit) {
+      const z = z_of(sc, tau);
+      if (z > ZTOP) continue;
+      const [m, f, sup] = state(sc, z), y = zy(z);
+      x += (1 - m) * 7 * s * Math.sin(tau * 2.2 + P.ph);
+      if (m < 1) snowflake(x, y, 9 * sz * (1 - 0.55 * m), P.rot + tau * 0.8, 1 - m);
+      if (m > 0) {
+        const r = 4.6 * sz * (0.45 + 0.55 * m);
+        if (kind === "sleet" && f > 0) pellet(x, y, r * (1 - 0.1 * f), f, m);
+        else if (sup) drop(x, y, r, m, DROP, [0.65, 0.97, 1.0]);
+        else drop(x, y, r, m);
+      }
+    } else {
+      const tl = tau - thit;
+      if (kind === "snow") {
+        if (tl < 0.6) snowflake(x, gy - 3 * s, 6 * sz, P.rot, 1 - tl / 0.6);
+      } else if (kind === "sleet") {
+        const r = 4.2 * sz, bt = 0.55;
+        if (tl < bt) {
+          const u = tl / bt;
+          pellet(x + P.bx * 14 * s * u, gy - r - 30 * s * 4 * u * (1 - u), r, 1);
+        } else if (tl < 9) {
+          circle(x + P.bx * 14 * s, gy - r * 0.8, r * 0.85);
+          ctx.fillStyle = col(ICE, 0.95); ctx.fill();
+          ctx.strokeStyle = col([1, 1, 1]); ctx.lineWidth = 1; ctx.stroke();
+        }
+      } else if (kind === "frz") {
+        if (tl < 0.6) {
+          const u = tl / 0.6, c = [0, 1, 2].map(k => lerp(DROP[k], ICE[k], u));
+          const rr = (4 + 9 * ease(u * 2)) * s;
+          flatEllipse(x, gy - 2 * s, rr, rr * 0.3); ctx.fillStyle = col(c, 1 - 0.6 * u); ctx.fill();
+          if (u > 0.4) {
+            const a = 1 - (u - 0.4) / 0.6, L = 6 * s;
+            ctx.strokeStyle = col([1, 1, 1], a); ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x - L, gy - 6 * s); ctx.lineTo(x + L, gy - 6 * s);
+            ctx.moveTo(x, gy - 6 * s - L); ctx.lineTo(x, gy - 6 * s + L); ctx.stroke();
+          }
+        }
+      } else if (kind === "rain") {
+        if (tl < 0.4) {
+          const u = tl / 0.4, rr = (3 + 14 * u) * s;
+          flatEllipse(x, gy, rr, rr * 0.3); ctx.strokeStyle = col(DROP, 0.8 * (1 - u)); ctx.lineWidth = 1.6; ctx.stroke();
+          ctx.fillStyle = col(DROP, 1 - u);
+          for (const d of [-1, 1]) { circle(x + d * 12 * s * u, gy - 16 * s * 4 * u * (1 - u), 1.8 * s); ctx.fill(); }
+        }
+      }
+    }
+  }
+}
+
+function profileSegments(sc, tx, zy, zstop, widths) {
+  const n = 200;
+  ctx.lineCap = "round";
+  for (const [lw, colorFn] of widths) {
+    ctx.lineWidth = lw;
+    for (let i = 0; i < n; i++) {
+      const z1 = ZTOP * (1 - i / n);
+      let z2 = ZTOP * (1 - (i + 1) / n);
+      if (z1 <= zstop) break;
+      z2 = Math.max(z2, zstop);
+      const T1 = T_at(sc, z1), T2 = T_at(sc, z2);
+      ctx.strokeStyle = colorFn((T1 + T2) / 2);
+      ctx.beginPath(); ctx.moveTo(tx(T1), zy(z1)); ctx.lineTo(tx(T2), zy(z2)); ctx.stroke();
+    }
+  }
+}
+
+function drawProfile(sc, x0, y0, w, h, drawFrac) {
+  const TMIN = -14, TMAX = 10;
+  const tx = T => x0 + (T - TMIN) / (TMAX - TMIN) * w, zy = z => y0 + (ZTOP - z) / ZTOP * h;
+  ctx.fillStyle = col(PANEL); ctx.fillRect(x0, y0, w, h);
+  zoneTint(sc, x0, y0, w, h);
+  ctx.lineWidth = 1; ctx.strokeStyle = col([1, 1, 1], 0.07);
+  ctx.beginPath();
+  for (let T = -12; T <= 10; T += 4) { ctx.moveTo(tx(T), y0); ctx.lineTo(tx(T), y0 + h); }
+  for (const z of [1, 2]) { ctx.moveTo(x0, zy(z)); ctx.lineTo(x0 + w, zy(z)); }
+  ctx.stroke();
+  ctx.setLineDash([10, 7]); ctx.strokeStyle = col([1, 1, 1], 0.7); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(tx(0), y0); ctx.lineTo(tx(0), y0 + h); ctx.stroke();
+  ctx.strokeStyle = col([1, 1, 1], 0.35); ctx.lineWidth = 1.6;
+  for (const zc of sc.cr) { ctx.beginPath(); ctx.moveTo(x0, zy(zc)); ctx.lineTo(x0 + w, zy(zc)); ctx.stroke(); }
+  ctx.setLineDash([]);
+
+  const zstop = ZTOP - drawFrac * ZTOP;
+  profileSegments(sc, tx, zy, zstop, [[5, T => col(T > 0 ? WARM : COLD)]]);
+  if (drawFrac < 1) { circle(tx(T_at(sc, zstop)), zy(zstop), 7); ctx.fillStyle = col([1, 1, 1]); ctx.fill(); }
+
+  ctx.strokeStyle = col([1, 1, 1], 0.25); ctx.lineWidth = 1.5; ctx.strokeRect(x0, y0, w, h);
+  for (let T = -12; T <= 10; T += 4) text(`${T}`, tx(T), y0 + h + 30, 20, MUTED, false, "center");
+  text("Temperature (°C)", x0 + w / 2, y0 + h + 64, 22, TXT, true, "center");
+  for (let z = 0; z <= 3; z++) text(`${z}`, x0 - 14, zy(z) + 7, 20, MUTED, false, "right");
+  ctx.save(); ctx.translate(x0 - 46, y0 + h / 2); ctx.rotate(-Math.PI / 2);
+  text("Altitude (km)", 0, 0, 22, TXT, true, "center"); ctx.restore();
+  text("0°C = 32°F", tx(0) + 8, y0 + 26, 18, TXT, false, "left", 0.8);
+}
+
+function layerLabels(sc, x0, y0, w, h, a) {
+  if (a <= 0) return;
+  const zy = z => y0 + (ZTOP - z) / ZTOP * h;
+  const items = {
+    snow: [[1.5, "Below freezing all the way down", COLD]],
+    sleet: [[2.78, "Cold: snow", COLD], [2.05, "Warm layer: melting", WARM], [1.0, "Deep cold layer: refreezing", COLD]],
+    frz: [[2.4, "Cold: snow", COLD], [1.1, "Warm layer: melting", WARM], [0.2, "Shallow cold layer: supercooled", COLD]],
+    rain: [[2.4, "Cold: snow", COLD], [0.9, "Warm layer: melting / rain", WARM]],
+  }[sc.kind];
+  for (const [z, s, c] of items) {
+    const y = zy(z), tw = textW(s, 21, true);
+    rrect(x0 + 14, y - 19, tw + 28, 36, 18);
+    ctx.fillStyle = col([0.05, 0.08, 0.14], 0.78 * a); ctx.fill();
+    ctx.strokeStyle = col(c, 0.9 * a); ctx.lineWidth = 2; ctx.stroke();
+    text(s, x0 + 28, y + 7, 21, TXT, true, "left", a);
+  }
+}
+
+// ---------- scenes ----------
+function sceneIntro(t) {
+  ctx.fillStyle = col(BG); ctx.fillRect(0, 0, W, H);
+  const a = ease(t / 0.8);
+  text("INTRODUCTION TO METEOROLOGY", W / 2, 250, 26, MUTED, true, "center", a);
+  text("Snow, Sleet, Freezing Rain & Rain", W / 2, 340, 72, TXT, true, "center", a);
+  text("How the vertical temperature profile decides what reaches the ground", W / 2, 410, 32, MUTED, false, "center", a);
+  const items = [["Snowflake", "flake"], ["Raindrop", "drop"], ["Ice pellet (sleet)", "pellet"], ["Supercooled drop", "sup"]];
+  const cx0 = W / 2 - 3 * 220;
+  items.forEach(([lab, kind], i) => {
+    const ai = ease((t - 1.2 - i * 0.3) / 0.6);
+    if (ai <= 0) return;
+    const cx = cx0 + i * 440, cy = 600;
+    rrect(cx - 180, cy - 90, 360, 220, 22); ctx.fillStyle = col(PANEL, ai); ctx.fill();
+    if (kind === "flake") snowflake(cx, cy, 34, t * 0.4, ai);
+    else if (kind === "drop") drop(cx, cy + 10, 18, ai);
+    else if (kind === "pellet") pellet(cx, cy, 17, 1, ai);
+    else drop(cx, cy + 10, 18, ai, DROP, [0.65, 0.97, 1.0]);
+    text(lab, cx, cy + 90, 26, TXT, true, "center", ai);
+  });
+  const a3 = ease((t - 2.8) / 0.6);
+  if (a3 > 0) {
+    for (const [cx, c, lab] of [[W / 2 - 330, WARM, "Red shading = above 0°C (32°F)"], [W / 2 + 330, COLD, "Blue shading = below 0°C (32°F)"]]) {
+      const tw = textW(lab, 28, false);
+      rrect(cx - tw / 2 - 44, 834, 28, 28, 6); ctx.fillStyle = col(c, 0.55 * a3); ctx.fill();
+      text(lab, cx - tw / 2, 858, 28, TXT, false, "left", a3);
+    }
+  }
+  const a4 = ease((t - 4) / 0.6);
+  if (a4 > 0) text("Press Next to begin", W / 2, 990, 24, MUTED, false, "center", a4 * (0.65 + 0.35 * Math.sin(t * 2.5)));
+}
+
+function sceneScenario(idx, lt) {
+  const sc = SC[idx];
+  ctx.fillStyle = col(BG); ctx.fillRect(0, 0, W, H);
+  rrect(80, 40, 150, 46, 23); ctx.fillStyle = col(sc.color, 0.18); ctx.fill();
+  text(`SCENARIO ${idx + 1}`, 155, 71, 20, sc.color, true, "center");
+  const nw = text(sc.name, 250, 82, 54, TXT, true);
+  text("—  " + sc.sub, 250 + nw + 24, 80, 30, MUTED);
+
+  const SX = 80, SY = 130, SW = 1060, SH = 760;
+  drawColumn(sc, lt, SX, SY, SW, SH);
+  layerLabels(sc, SX, SY, SW, SH, ease((lt - 1.5) / 0.6));
+  text("Ground", SX + 16, SY + SH + 34, 20, MUTED, true);
+
+  const PX = 1300, PW = 560;
+  text("Temperature profile", PX + PW / 2, SY - 14, 24, TXT, true, "center");
+  drawProfile(sc, PX, SY, PW, SH, ease(lt / 2.2));
+
+  let cur = null;
+  for (const c of sc.caps) if (lt >= c[0]) cur = c;
+  if (cur) {
+    const ca = ease((lt - cur[0]) / 0.4);
+    const lines = cur[1].split("\n").flatMap(p => wrap(p, 1700, 32));
+    const y = lines.length === 1 ? 1000 : 1002;
+    lines.forEach((ln, j) => text(ln, W / 2, y + j * 40, 32, TXT, false, "center", ca));
+  }
+  const ra = ease((lt - 6.0) / 0.5);
+  if (ra > 0) {
+    const lab = "Reaches the ground as: " + sc.result, tw = textW(lab, 30, true), bx = SX + SW - tw - 60;
+    rrect(bx, SY + 24, tw + 40, 56, 28);
+    ctx.fillStyle = col([0.05, 0.08, 0.14], 0.85 * ra); ctx.fill();
+    ctx.strokeStyle = col(sc.color, ra); ctx.lineWidth = 2.5; ctx.stroke();
+    text(lab, bx + 20, SY + 62, 30, sc.color, true, "left", ra);
+  }
+}
+
+function sceneSummary(lt) {
+  ctx.fillStyle = col(BG); ctx.fillRect(0, 0, W, H);
+  text("Summary: same snow aloft, different results at the ground", W / 2, 80, 46, TXT, true, "center", ease(lt / 0.6));
+  const pw = 405, gap = 40, xs = (W - (4 * pw + 3 * gap)) / 2;
+  SC.forEach((sc, i) => {
+    const a = ease((lt - 0.5 - i * 0.5) / 0.6);
+    if (a <= 0) return;
+    const x0 = xs + i * (pw + gap), y0 = 130;
+    ctx.save(); ctx.globalAlpha = a;
+    rrect(x0, y0, pw, 860, 20); ctx.fillStyle = col(PANEL); ctx.fill();
+    text(sc.result, x0 + pw / 2, y0 + 56, 38, sc.color, true, "center");
+    const cx = x0 + 22, cy = y0 + 90, cw = pw - 44, ch = 470;
+    ctx.save(); rrect(cx, cy, cw, ch + 30, 10); ctx.clip();
+    drawColumn(sc, lt + 6, cx, cy, cw, ch, 0.62, false, 30);
+    ctx.restore();
+    const TMIN = -14, TMAX = 10;
+    const tx = T => cx + (T - TMIN) / (TMAX - TMIN) * cw, zy = z => cy + (ZTOP - z) / ZTOP * ch;
+    ctx.setLineDash([8, 6]); ctx.strokeStyle = col([1, 1, 1], 0.6); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(tx(0), cy); ctx.lineTo(tx(0), cy + ch); ctx.stroke(); ctx.setLineDash([]);
+    profileSegments(sc, tx, zy, 0, [[9, () => col([0.03, 0.05, 0.1], 0.8)], [5, T => col(T > 0 ? WARM : COLD)]]);
+    text("0°C", tx(0) + 6, cy + 62, 17, TXT, true, "left", 0.9);
+    wrap(sc.summary, pw - 50, 25).forEach((ln, j) => text(ln, x0 + pw / 2, y0 + 650 + j * 34, 25, TXT, false, "center"));
+    const fact = { snow: "Warm layer: none", sleet: "Surface cold layer: DEEP", frz: "Surface cold layer: SHALLOW", rain: "Surface cold layer: none" }[sc.kind];
+    text(fact, x0 + pw / 2, y0 + 820, 23, sc.color, true, "center");
+    ctx.restore();
+  });
+  text("Key question: Is there a warm layer, and how deep is the cold air beneath it?", W / 2, 1045, 32, TXT, true, "center", ease((lt - 3.5) / 0.7));
+}
+
+// ---------- player ----------
+const SCENES = ["Title", "1 Snow", "2 Sleet", "3 Freezing rain", "4 Rain", "Summary"];
+let scene = 0, sceneTime = 0, paused = false, last = null, fadeFrom = null, fadeT = 1;
+const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const dots = document.getElementById("dots");
+SCENES.forEach((name, i) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "dot"; b.id = "dot" + i;
+  b.textContent = i === 0 ? "T" : i === 5 ? "S" : String(i);
+  b.title = name; b.setAttribute("aria-label", "Go to " + name);
+  b.addEventListener("click", () => go(i));
+  dots.appendChild(b);
+});
+const prevB = document.getElementById("prev"), nextB = document.getElementById("next");
+const pauseB = document.getElementById("pause");
+
+function updateUI() {
+  prevB.disabled = scene === 0; nextB.disabled = scene === SCENES.length - 1;
+  [...dots.children].forEach((d, i) => d.setAttribute("aria-current", i === scene ? "true" : "false"));
+  pauseB.textContent = paused ? "Resume" : "Pause";
+}
+function go(i) {
+  i = Math.max(0, Math.min(SCENES.length - 1, i));
+  if (i === scene) return;
+  scene = i; sceneTime = 0; fadeT = 0; updateUI();
+}
+nextB.onclick = () => go(scene + 1);
+prevB.onclick = () => go(scene - 1);
+document.getElementById("replay").onclick = () => { sceneTime = 0; fadeT = 0; };
+pauseB.onclick = () => { paused = !paused; updateUI(); };
+document.getElementById("fs").onclick = toggleFs;
+function toggleFs() {
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(() => {});
+  } catch (e) {}
+}
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "BUTTON" && (e.key === " " || e.key === "Enter")) return;
+  if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); go(scene + 1); }
+  else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(scene - 1); }
+  else if (e.key === "r" || e.key === "R") { sceneTime = 0; fadeT = 0; }
+  else if (e.key === "p" || e.key === "P") { paused = !paused; updateUI(); }
+  else if (e.key === "f" || e.key === "F") toggleFs();
+});
+// clicking the picture also advances (handy with a presenter clicker / mouse)
+cv.addEventListener("click", () => go(scene + 1));
+
+function render() {
+  const t = sceneTime;
+  if (scene === 0) sceneIntro(t);
+  else if (scene <= 4) sceneScenario(scene - 1, t);
+  else sceneSummary(t);
+  if (fadeT < 1) { ctx.fillStyle = `rgba(0,0,0,${1 - ease(fadeT)})`; ctx.fillRect(0, 0, W, H); }
+}
+function frame(now) {
+  if (last === null) last = now;
+  let dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (!paused) { sceneTime += dt * (reduceMotion ? 0.5 : 1); }
+  fadeT = Math.min(1, fadeT + dt / 0.4);
+  render();
+  requestAnimationFrame(frame);
+}
+updateUI();
+let started = false;
+const start = () => { if (!started) { started = true; requestAnimationFrame(frame); } };
+if (document.fonts && document.fonts.load) {
+  Promise.all([document.fonts.load('700 40px "Inter"'), document.fonts.load('400 40px "Inter"')])
+    .then(start, start);
+  setTimeout(start, 1500);
+} else start();
+})();
+</script>
+
+</body></html>

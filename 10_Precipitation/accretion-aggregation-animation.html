@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Accretion and Aggregation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #e9edf4; --bar: #ffffff; --ink: #25282b; --muted: #5d6470; --edge: #cfd6e2;
+  --brand: #1e376c; --accent: #f47920; --btn: #f1f4f9; --btn-ink: #1e376c;
+  color-scheme: light;
+  box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a3acbb; --edge: #2c3650;
+    --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a3acbb; --edge: #2c3650;
+  --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100%; background: var(--page); color: var(--ink); font-family: "Nunito Sans", system-ui, sans-serif; }
+#app { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; min-height: 100vh; background: var(--page); }
+#frame { width: min(100%, calc((100vh - 140px) * 16 / 9)); aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+#app:fullscreen #frame { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #ffffff;
+  --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; color: var(--second); font-family: "Nunito Sans", system-ui, sans-serif; }
+.layer { position: absolute; inset: 0; display: none; }
+.ground { position: absolute; inset: 0; background: var(--ground); }
+.words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.words > * { margin: 0; }
+.line { font-family: "Zilla Slab", Georgia, serif; font-size: 84px; line-height: 1.04; font-weight: 700; color: var(--main); }
+.line .w { display: inline-block; white-space: pre; }
+.sub { font-size: 34px; line-height: 1.4; color: color-mix(in srgb, var(--second) 82%, var(--ground)); }
+.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.rule { width: 96px; height: 4px; background: var(--accent); border-radius: 2px; }
+.art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.puff { fill: color-mix(in srgb, var(--main) 6%, var(--ground)); }
+.puff2 { fill: color-mix(in srgb, var(--main) 10%, var(--ground)); }
+.ice { fill: color-mix(in srgb, var(--main) 16%, var(--ground)); stroke: var(--main); stroke-linejoin: round; }
+.arm { fill: none; stroke: var(--main); stroke-linecap: round; stroke-linejoin: round; }
+.drop { fill: color-mix(in srgb, var(--main) 28%, var(--ground)); stroke: color-mix(in srgb, var(--main) 70%, var(--ground)); stroke-width: 2; }
+.ring { fill: none; stroke: var(--accent); stroke-width: 5; }
+.shard { fill: color-mix(in srgb, var(--main) 22%, var(--ground)); stroke: var(--main); stroke-width: 2.5; stroke-linejoin: round; }
+.label { font-family: "Nunito Sans", system-ui, sans-serif; font-size: 28px; font-weight: 700; fill: var(--main); }
+.lead { fill: none; stroke: var(--main); stroke-width: 2.5; stroke-dasharray: 6 6; }
+.card { position: absolute; border-radius: 16px; background: color-mix(in srgb, var(--main) 6%, var(--ground)); border: 2px solid color-mix(in srgb, var(--main) 18%, var(--ground)); }
+.eq { font-size: 30px; font-weight: 700; color: var(--second); line-height: 1.3; }
+.frozen { fill: color-mix(in srgb, var(--main) 30%, var(--ground)); stroke: var(--main); stroke-width: 3; }
+.crack { fill: none; stroke: var(--main); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.note { font-size: 24px; color: color-mix(in srgb, var(--second) 60%, var(--ground)); }
+
+#bar { width: min(100%, calc((100vh - 140px) * 16 / 9)); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 8px 10px; }
+#app:fullscreen #bar { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+button { font: inherit; font-weight: 700; font-size: 15px; color: var(--btn-ink); background: var(--btn); border: 1px solid var(--edge);
+  border-radius: 8px; min-height: 40px; padding: 0 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+button:hover { border-color: var(--brand); }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#next { background: var(--brand); color: var(--bar); border-color: var(--brand); padding: 0 20px; }
+#next.ready { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+#where { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 6px; padding: 0 6px; }
+#title { font-size: 15px; font-weight: 700; color: var(--ink); }
+#dots { display: flex; gap: 6px; }
+#dots button { min-height: 0; width: 26px; height: 8px; padding: 0; border-radius: 4px; border: 0; background: var(--edge); }
+#dots button.on { background: var(--brand); }
+#dots button.done { background: color-mix(in srgb, var(--brand) 45%, var(--edge)); }
+.hint { font-size: 13px; color: var(--muted); }
+@media (max-width: 640px) { .hint { display: none; } button .t { display: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="frame"><div id="stage"></div></div>
+  <div id="bar">
+    <button id="back" aria-label="Previous scene"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span class="t">Back</span></button>
+    <button id="replay" aria-label="Replay this scene"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" id="pauseIco"><path d="M8 5v14M16 5v14"/></svg><span class="t" id="pauseTxt">Pause</span></button>
+    <div id="where"><div id="title" aria-live="polite"></div><div id="dots" role="group" aria-label="Scenes"></div></div>
+    <span class="hint">Arrow keys or Space</span>
+    <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="next" aria-label="Next scene"><span class="t">Next</span><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+</div>
+<script>
+(function () {
+// ---------- helpers ----------
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const ei = x => x * x * x;
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eob = (x, s) => { s = s || 1.4; const c = s + 1; return 1 + c * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2); };
+const NS = 'http://www.w3.org/2000/svg';
+function h(html) { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; }
+function fadeFromRight(el, t, t0) {
+  if (!el._w) {
+    const words = el.textContent.split(' ');
+    el.textContent = '';
+    el._w = words.map((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w + (i < words.length - 1 ? ' ' : ''); el.appendChild(s); return s; });
+  }
+  el._w.forEach((s, i) => { const p = eo(seg(t, t0 + i * .11, t0 + i * .11 + .5)); s.style.opacity = p; s.style.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)'; });
+}
+function subIn(st, t, a) { const p = eo(seg(t, a, a + .6)); st.opacity = p; st.transform = 'translateX(' + lerp(26, 0, p) + 'px)'; }
+function puffs(g, list) {
+  const els = list.map(p => { const e = document.createElementNS(NS, 'ellipse'); e.setAttribute('class', p[4] ? 'puff2' : 'puff'); e.setAttribute('rx', p[2]); e.setAttribute('ry', p[3]); g.appendChild(e); return e; });
+  return function (offY, offX) {
+    els.forEach((e, i) => {
+      const p = list[i];
+      let y = (p[1] - offY) % 1600; if (y < 0) y += 1600;
+      let x = (p[0] - offX) % 3400; if (x < 0) x += 3400;
+      e.setAttribute('cx', (x - 750).toFixed(1)); e.setAttribute('cy', (y - 250).toFixed(1));
+    });
+  };
+}
+const PUFFS = [[2250, 1150, 560, 200], [1150, 1550, 600, 200], [2450, 400, 600, 190], [2850, 1000, 480, 220], [1750, 1300, 460, 130, 1], [2570, 670, 300, 110, 1], [1000, 400, 520, 200]];
+
+// ---------- the ice ----------
+const ICE = (function () {
+  const C = [1260, 540], R = 150, D2R = Math.PI / 180;
+  const rot = (x, y, deg) => { const a = deg * D2R, c = Math.cos(a), n = Math.sin(a); return [x * c - y * n, x * n + y * c]; };
+  const pstr = pts => pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  const hexPts = r => { const p = []; for (let k = 0; k < 6; k++) p.push(rot(0, -r, k * 60)); return p; };
+  let s = 7; const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+  const B = [[0, .5, 10], [3, .45, 10], [1, .7, 9], [4, .3, 9]];
+  for (let i = 0; i < 34; i++) B.push([i % 6, .12 + .76 * rnd(), 6 + rnd() * 5]);
+  function beadLocal(i) {
+    const b = B[i], a = rot(0, -R, b[0] * 60), c = rot(0, -R, b[0] * 60 + 60), n = rot(0, -1, b[0] * 60 + 30);
+    return [a[0] + (c[0] - a[0]) * b[1] + n[0] * b[2] * .45, a[1] + (c[1] - a[1]) * b[1] + n[1] * b[2] * .45];
+  }
+  function beadPos(i, deg, sc) { const l = beadLocal(i), p = rot(l[0] * (sc || 1), l[1] * (sc || 1), deg); return [C[0] + p[0], C[1] + p[1]]; }
+  function build(parent) {
+    let html = '<polygon class="ice" style="stroke-width:4px" points="' + pstr(hexPts(R)) + '"/>' +
+      '<polygon style="fill:none;stroke:color-mix(in srgb, var(--main) 35%, var(--ground));stroke-width:2px" points="' + pstr(hexPts(R * .62)) + '"/>';
+    B.forEach((b, i) => { const l = beadLocal(i); html += '<circle class="frozen" data-i="' + i + '" cx="' + l[0].toFixed(1) + '" cy="' + l[1].toFixed(1) + '" r="' + b[2].toFixed(1) + '"/>'; });
+    const g = document.createElementNS(NS, 'g'); g.innerHTML = html; parent.appendChild(g);
+    const beads = []; g.querySelectorAll('.frozen').forEach(e => { beads[+e.getAttribute('data-i')] = e; e.style.transformBox = 'fill-box'; e.style.transformOrigin = 'center'; });
+    return { g, beads };
+  }
+  const P = [];
+  P.push({ pts: hexPts(42), plate: [0, 0, 0], flake: [0, 0, 0] });
+  for (let k = 0; k < 6; k++) {
+    const w = 10 + (k % 3), q = (k % 2 ? 4 : -3);
+    const pts = [[0, -78], [w - 1, -44 + q], [w, 26], [0, 78], [-w, 30 - q], [-(w - 2), -40]];
+    const pp = rot(0, -114, k * 60), fp = rot(0, -120, k * 60);
+    P.push({ pts, plate: [pp[0], pp[1], k * 60], flake: [fp[0], fp[1], k * 60] });
+  }
+  for (let j = 0; j < 12; j++) {
+    const m = j >> 1, L = 26 + (j % 4) * 3, w = 5 + (j % 3), q = ((j * 7) % 5) - 2;
+    const pts = [[q * .6, -L], [w, -L * .3 + q], [w * .8, L * .6], [0, L], [-w * .9, L * .5 - q], [-w, -L * .4]];
+    let pp, pa;
+    if (j % 2 === 0) { pp = rot(0, -85, m * 60 + 30); pa = m * 60 + 30; } else { pp = rot(0, -148, m * 60 + 30); pa = m * 60 + 120; }
+    const k = j % 2 === 0 ? m : (m + 1) % 6, sd = j % 2 === 0 ? 1 : -1, dir = k * 60 + sd * 60;
+    const base = rot(0, -140, k * 60), off = rot(0, -L, dir);
+    P.push({ pts, plate: [pp[0], pp[1], pa], flake: [base[0] + off[0], base[1] + off[1], dir] });
+  }
+  P.forEach((p, i) => {
+    const spin = (i % 2 ? 1 : -1) * (25 + (i * 17) % 40);
+    if (i === 0) p.frag = [C[0] - 35, C[1] + 30, 25];
+    else p.frag = [C[0] + p.plate[0] * 2.1 + Math.sin(i * 2.1) * 18, C[1] + p.plate[1] * 2.1 + Math.cos(i * 1.3) * 18, p.plate[2] + spin];
+    p.e = [p.frag[0] + Math.sin(i * 1.7) * 45, p.frag[1] + Math.cos(i * 2.3) * 35 + 20, p.frag[2] + (i % 2 ? 1 : -1) * (40 + i * 7)];
+  });
+  function pieces(parent) {
+    return P.map(p => { const e = document.createElementNS(NS, 'polygon'); e.setAttribute('class', 'ice'); e.setAttribute('points', pstr(p.pts)); e.style.strokeWidth = '3px'; parent.appendChild(e); return e; });
+  }
+  function place(e, x, y, a, sc) { e.setAttribute('transform', 'translate(' + x.toFixed(2) + ' ' + y.toFixed(2) + ') rotate(' + a.toFixed(3) + ')' + (sc ? ' scale(' + sc + ')' : '')); }
+  function flakeSVG() { return P.map(p => '<polygon class="ice" style="stroke-width:3px" points="' + pstr(p.pts) + '" transform="translate(' + p.flake[0].toFixed(2) + ' ' + p.flake[1].toFixed(2) + ') rotate(' + p.flake[2] + ')"/>').join(''); }
+  function drops(parent, n, seed) {
+    let q = seed || 3; const r2 = () => { q = (q * 48271) % 2147483647; return (q - 1) / 2147483646; };
+    const list = [];
+    for (let i = 0; i < n; i++) {
+      const el = document.createElementNS(NS, 'circle'); el.setAttribute('class', 'drop');
+      const d = { el, x: 880 + r2() * 1020, y0: r2() * 1260, v: 0.8 + r2() * 0.5, r: 5 + r2() * 7, ph: r2() * 6 };
+      el.setAttribute('r', d.r.toFixed(1)); parent.appendChild(el); list.push(d);
+    }
+    return function (Pp) {
+      list.forEach(d => {
+        let y = (d.y0 - Pp * 220 * d.v) % 1260; if (y < 0) y += 1260;
+        d.el.setAttribute('cx', (d.x + Math.sin(Pp * .7 + d.ph) * 12).toFixed(1));
+        d.el.setAttribute('cy', (y - 90).toFixed(1));
+      });
+    };
+  }
+  return { C, R, B, rot, pstr, hexPts, build, beadPos, P, pieces, place, flakeSVG, drops };
+})();
+
+// ---------- scenes ----------
+const SCENES = [];
+function scene(id, name, dur, def) { SCENES.push(Object.assign({ id, name, dur }, def)); }
+const C = ICE.C;
+const textBlock = (top, width, tag, line, sub, lineStyle) =>
+  '<div class="words" style="left:140px;top:' + top + 'px;width:' + width + 'px">' +
+  '<p class="tag">' + tag + '</p><h2 class="line"' + (lineStyle ? ' style="' + lineStyle + '"' : '') + '>' + line + '</h2>' +
+  (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div>';
+function textRefs(self, root) { self.tagS = root.querySelector('.tag').style; self.line = root.querySelector('.line'); const s = root.querySelector('.sub'); self.subS = s && s.style; }
+function textRender(self, t, subAt) { self.tagS.opacity = eo(seg(t, 0.2, 0.7)); fadeFromRight(self.line, t, 0.4); if (self.subS) subIn(self.subS, t, subAt); }
+
+scene('cloud', 'Inside a cloud', 5, {
+  init(root) {
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g><g class="ic"></g></svg>' +
+      '<div class="words" style="left:140px;top:300px;width:780px">' +
+      '<p class="tag">Introduction to meteorology</p><h1 class="line" style="font-size:104px">Accretion and aggregation</h1>' +
+      '<div class="rule"></div><p class="sub">How ice crystals grow into snowflakes</p></div></div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.ice = ICE.build(root.querySelector('.ic')); this.ice.beads.forEach(b => b.style.opacity = 0);
+    textRefs(this, root); this.rule = root.querySelector('.rule').style;
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5));
+    fadeFromRight(this.line, t, 0.1);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.9, 1.4)) + ')';
+    subIn(this.subS, t, 1.2);
+    this.pf(t * 6, t * 20);
+    const appear = eo(seg(t, 0.6, 1.4)), push = eio(seg(t, 2.9, 4.4));
+    const sc = lerp(0.2, 1, push) * lerp(0.6, 1, appear) * (1 + 0.012 * Math.sin(2 * Math.PI * t / 2.5));
+    const rot = 5 * Math.sin(2 * Math.PI * t / 5);
+    this.ice.g.setAttribute('transform', 'translate(' + C[0] + ' ' + C[1] + ') scale(' + sc.toFixed(4) + ') rotate(' + rot.toFixed(3) + ')');
+    this.ice.g.style.opacity = appear;
+  },
+});
+
+scene('fall', 'The fall', 6, {
+  init(root) {
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g><g class="dr"></g>' +
+      '<g class="ar"><path class="arm" style="stroke-width:6px" d="M1040 400 V660 M1016 632 L1040 662 L1064 632"/><text class="label" x="1040" y="370" text-anchor="middle">Falls</text></g>' +
+      '<g class="ic"></g>' +
+      '<g class="dl"><circle class="drop" r="13" cx="0" cy="0"/><path class="lead" d="M18 -6 L80 -40"/><text class="label" x="88" y="-46">Supercooled droplet</text></g>' +
+      '<g class="il"><path class="lead" d="M1332 422 L1430 300"/><text class="label" x="1440" y="292">Ice crystal</text><text class="label" x="1440" y="328" style="font-weight:400">a hexagonal plate</text></g></svg>' +
+      textBlock(300, 720, 'Inside the cloud, below 0 °C', 'Supercooled droplets', 'Tiny droplets of liquid water stay unfrozen well below 0 °C. The heavier ice crystal falls past them.') + '</div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.upd = ICE.drops(root.querySelector('.dr'), 34, 11);
+    this.ice = ICE.build(root.querySelector('.ic')); this.ice.beads.forEach(b => b.style.opacity = 0);
+    this.ar = root.querySelector('.ar'); this.dl = root.querySelector('.dl'); this.il = root.querySelector('.il');
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    this.upd(t); this.pf(t * 120, 0);
+    const rot = 5 * Math.sin(2 * Math.PI * t / 6);
+    this.ice.g.setAttribute('transform', 'translate(' + C[0] + ' ' + C[1] + ') rotate(' + rot.toFixed(3) + ')');
+    const a = eo(seg(t, 2.0, 2.5));
+    this.ar.style.opacity = a;
+    this.ar.setAttribute('transform', 'translate(0 ' + (Math.sin(t * 3) * 12 * a).toFixed(1) + ')');
+    this.il.style.opacity = eo(seg(t, 2.4, 2.9));
+    const lt = (t - 0) % 9;
+    this.dl.style.opacity = eo(seg(t, 2.8, 3.3)) * (1 - eo(seg(lt, 8.0, 8.6)));
+    this.dl.setAttribute('transform', 'translate(' + (1560 + Math.sin(t) * 8).toFixed(1) + ' ' + (1080 - lt * 110).toFixed(1) + ')');
+  },
+});
+
+scene('hit', 'First collision', 7, {
+  HIT: [1.6, 3.2, 4.2, 5.1], DX: [60, -80, 40, -50],
+  init(root) {
+    let d = '';
+    this.HIT.forEach((_, i) => { d += '<circle class="drop hd" r="' + (ICE.B[i][2] + 1).toFixed(1) + '"/><circle class="ring hr" r="10"/>'; });
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g><g class="dr"></g><g class="ic"></g><g>' + d + '</g>' +
+      '<g class="lb"><path class="lead" d="M0 0 L90 -90"/><text class="label" x="100" y="-98">Frozen droplet</text></g></svg>' +
+      textBlock(300, 720, 'Accretion', 'Collide and freeze', 'A supercooled droplet strikes the ice crystal and freezes on contact, adding its water to the crystal.') + '</div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.upd = ICE.drops(root.querySelector('.dr'), 34, 11);
+    this.ice = ICE.build(root.querySelector('.ic'));
+    this.hd = [...root.querySelectorAll('.hd')]; this.hr = [...root.querySelectorAll('.hr')]; this.lb = root.querySelector('.lb');
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    this.upd(t + 6); this.pf(t * 120 + 720, 0);
+    const rot = 5 * Math.sin(2 * Math.PI * t / 7);
+    this.ice.g.setAttribute('transform', 'translate(' + C[0] + ' ' + C[1] + ') rotate(' + rot.toFixed(3) + ')');
+    this.ice.beads.forEach((b, i) => {
+      if (i >= 4) { b.style.opacity = 0; return; }
+      const tc = this.HIT[i], p = ICE.beadPos(i, rot), a = seg(t, tc - 1.1, tc), d = this.hd[i];
+      d.setAttribute('cx', lerp(p[0] + this.DX[i], p[0], a).toFixed(1));
+      d.setAttribute('cy', lerp(p[1] + 380, p[1], ei(a) * 0.4 + a * 0.6).toFixed(1));
+      d.style.opacity = t > tc - 1.1 && t < tc ? 1 : 0;
+      const f = seg(t, tc, tc + 0.35);
+      b.style.opacity = t >= tc ? 1 : 0;
+      const sx = t >= tc ? lerp(1.35, 1, eob(f, 1.8)) : 1, sy = t >= tc ? lerp(0.6, 1, eob(f, 1.8)) : 1;
+      b.style.transform = 'scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
+      const r = this.hr[i], rr = seg(t, tc, tc + 0.6);
+      r.setAttribute('cx', p[0].toFixed(1)); r.setAttribute('cy', p[1].toFixed(1));
+      r.setAttribute('r', lerp(12, 54, eo(rr)).toFixed(1));
+      r.style.opacity = t >= tc && rr < 1 ? 1 - rr : 0;
+    });
+    const p0 = ICE.beadPos(0, rot);
+    this.lb.setAttribute('transform', 'translate(' + (p0[0] + 14).toFixed(1) + ' ' + (p0[1] - 12).toFixed(1) + ')');
+    this.lb.style.opacity = eo(seg(t, 2.1, 2.6));
+  },
+});
+
+scene('grow', 'Growing larger', 7, {
+  init(root) {
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g><g class="dr"></g><g class="ic"></g></svg>' +
+      '<div class="words" style="left:140px;top:280px;width:720px"><p class="tag">Accretion</p><h2 class="line">Growing larger</h2>' +
+      '<p class="sub">More droplets collide and freeze on. Droplet by droplet, the ice crystal grows larger and heavier.</p>' +
+      '<div class="mt" style="display:flex;flex-direction:column;gap:12px;margin-top:12px"><p class="tag" style="color:var(--main)">Crystal size</p>' +
+      '<div style="width:520px;height:18px;border-radius:9px;background:color-mix(in srgb, var(--main) 10%, var(--ground))">' +
+      '<div class="bar" style="height:100%;border-radius:9px;background:var(--accent);transform-origin:0 50%"></div></div></div></div></div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.upd = ICE.drops(root.querySelector('.dr'), 40, 11);
+    this.ice = ICE.build(root.querySelector('.ic'));
+    textRefs(this, root); this.mt = root.querySelector('.mt').style; this.bar = root.querySelector('.bar').style;
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    this.mt.opacity = eo(seg(t, 1.8, 2.3));
+    const extra = t < 7 ? 0.6 * t * t / 14 : 2.1 + 0.6 * (t - 7);
+    this.upd(t + extra + 13); this.pf((t + extra) * 120 + 1560, 0);
+    const grow = eio(seg(t, 0.8, 6.4));
+    this.bar.transform = 'scaleX(' + lerp(0.35, 0.85, grow).toFixed(3) + ')';
+    const sc = lerp(1, 1.25, grow), rot = 5 * Math.sin(2 * Math.PI * t / 7);
+    this.ice.g.setAttribute('transform', 'translate(' + C[0] + ' ' + C[1] + ') rotate(' + rot.toFixed(3) + ') scale(' + sc.toFixed(4) + ')');
+    this.ice.beads.forEach((b, i) => {
+      const tc = i < 4 ? -1 : 0.8 + (i - 4) * (4.8 / 34);
+      const pop = i < 4 ? 1 : eob(seg(t, tc, tc + 0.3), 1.8);
+      const absorb = eio(seg(t, Math.max(tc, 0) + 0.7, Math.max(tc, 0) + 1.4));
+      b.style.opacity = t >= tc ? 1 - absorb : 0;
+      b.style.transform = 'scale(' + (t >= tc ? pop * lerp(1, 0.4, absorb) : 0).toFixed(3) + ')';
+    });
+  },
+});
+
+scene('shatter', 'Shattering', 6, {
+  init(root) {
+    this.SH = [];
+    for (let i = 0; i < 10; i++) { const a = (i * 36 + 13) * Math.PI / 180; this.SH.push({ ca: Math.cos(a), sa: Math.sin(a), d: 700 + (i * 47) % 300, s: 0.6 + (i % 3) * 0.25, sp: (i % 2 ? 1 : -1) * (120 + i * 13) }); }
+    let cr = '', sh = '';
+    for (let m = 0; m < 6; m++) {
+      const a = m * 60 + 30, p1 = ICE.rot(0, -40, a), p2 = ICE.rot(14, -100, a), p3 = ICE.rot(-8, -162, a);
+      cr += '<path class="crack ck" pathLength="1" d="M' + p1[0].toFixed(1) + ' ' + p1[1].toFixed(1) + 'L' + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1) + 'L' + p3[0].toFixed(1) + ' ' + p3[1].toFixed(1) + '"/>';
+      const q1 = ICE.rot(0, -42, m * 60), q2 = ICE.rot(18, -130, m * 60 + 30);
+      cr += '<path class="crack ck" pathLength="1" d="M' + q1[0].toFixed(1) + ' ' + q1[1].toFixed(1) + 'L' + q2[0].toFixed(1) + ' ' + q2[1].toFixed(1) + '"/>';
+    }
+    this.SH.forEach(() => { sh += '<polygon class="shard sh" points="0,-12 9,6 -8,8"/>'; });
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g><g class="dr"></g>' +
+      '<g class="pl"><g class="pi"></g>' + cr + '</g><g class="pc"></g>' +
+      '<circle class="ring rg" cx="' + C[0] + '" cy="' + C[1] + '" r="20"/><g>' + sh + '</g></svg>' +
+      textBlock(300, 720, 'Shattering', 'It breaks apart', 'Grown large and fragile, the crystal fractures into slivers and uniquely shaped pieces of ice.') + '</div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.drG = root.querySelector('.dr'); this.upd = ICE.drops(this.drG, 40, 11);
+    this.pl = root.querySelector('.pl');
+    const ice = ICE.build(root.querySelector('.pi')); ice.beads.forEach(b => b.style.opacity = 0); ice.g.setAttribute('transform', 'scale(1.25)');
+    this.cracks = [...root.querySelectorAll('.ck')];
+    this.pc = ICE.pieces(root.querySelector('.pc'));
+    this.ring = root.querySelector('.rg'); this.sh = [...root.querySelectorAll('.sh')];
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.6);
+    const slow = eio(seg(t, 0, 2));
+    this.upd(t * lerp(1.6, 0.6, slow) + 24);
+    this.drG.style.opacity = lerp(1, 0.25, eo(seg(t, 1.2, 3)));
+    this.pf(t * 60 + 3000, 0);
+    const shake = t < 1.3 ? Math.sin(t * 38) * 2 * seg(t, 0.3, 1.2) : 0;
+    this.pl.setAttribute('transform', 'translate(' + C[0] + ' ' + C[1] + ') rotate(' + shake.toFixed(3) + ')');
+    this.pl.style.opacity = t < 1.3 ? 1 : 0;
+    this.cracks.forEach((c, i) => { const f = eo(seg(t, 0.3 + i * 0.07, 0.6 + i * 0.07)); c.style.strokeDasharray = '1'; c.style.strokeDashoffset = (1 - f).toFixed(3); });
+    const p = eo(seg(t, 1.3, 6)), amp = seg(t, 5.5, 7.5);
+    ICE.P.forEach((pc, i) => {
+      const e = this.pc[i];
+      e.style.opacity = t >= 1.3 ? 1 : 0;
+      const x = lerp(C[0] + pc.plate[0], pc.frag[0], p) + Math.sin(t * 0.9 + i * 1.9) * 10 * amp;
+      const y = lerp(C[1] + pc.plate[1], pc.frag[1], p) + Math.cos(t * 0.7 + i * 2.3) * 8 * amp;
+      ICE.place(e, x, y, lerp(pc.plate[2], pc.frag[2], p) + Math.sin(t * 0.6 + i) * 8 * amp);
+    });
+    const rr = seg(t, 1.3, 2.0);
+    this.ring.setAttribute('r', lerp(40, 260, eo(rr)).toFixed(1));
+    this.ring.style.opacity = t >= 1.3 && rr < 1 ? 1 - rr : 0;
+    const sp = eo(seg(t, 1.3, 3.4));
+    this.sh.forEach((e, i) => {
+      const s = this.SH[i];
+      e.setAttribute('transform', 'translate(' + (C[0] + s.ca * s.d * sp).toFixed(1) + ' ' + (C[1] + s.sa * s.d * sp).toFixed(1) + ') rotate(' + (s.sp * sp).toFixed(1) + ') scale(' + s.s + ')');
+      e.style.opacity = t >= 1.3 && sp < 1 ? 1 : 0;
+    });
+  },
+});
+
+scene('drift', 'Drifting apart', 6, {
+  init(root) {
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g><g class="pc"></g></svg>' +
+      textBlock(300, 700, 'Fragments', 'Drifting apart', 'Each sliver and piece now drifts and tumbles on its own through the cold cloud.') + '</div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.pc = ICE.pieces(root.querySelector('.pc'));
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    this.pf(t * 20 + 3360, t * 12);
+    const go = eio(seg(t, 0, 6)), env = Math.sin(Math.PI * go), amp = seg(t, 5.8, 7.5);
+    ICE.P.forEach((pc, i) => {
+      const x = lerp(pc.frag[0], pc.e[0], go) + Math.sin(t * 1.1 + i * 1.9) * 14 * Math.max(env, amp);
+      const y = lerp(pc.frag[1], pc.e[1], go) + Math.cos(t * 0.9 + i * 2.7) * 10 * Math.max(env, amp);
+      ICE.place(this.pc[i], x, y, lerp(pc.frag[2], pc.e[2], go) + Math.sin(t * 0.5 + i * 1.3) * 14 * amp);
+    });
+  },
+});
+
+scene('stick', 'Collide and stick', 8, {
+  init(root) {
+    this.ARR = ICE.P.map((_, i) => i === 0 ? 1.8 : i <= 6 ? 2.4 + (i - 1) * 0.45 : 5.0 + (i - 7) * 0.2);
+    this.DUR = ICE.P.map((_, i) => i === 0 ? 1.4 : i <= 6 ? 1.3 : 1.1);
+    let rg = ''; for (let k = 0; k < 6; k++) rg += '<circle class="ring rg" r="10"/>';
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g><g class="all"><g class="pc"></g><g>' + rg + '</g></g></svg>' +
+      textBlock(250, 700, 'Aggregation', 'Collide and stick', 'The pieces collide and bond. A thin, liquid-like layer on the ice and interlocking edges hold them together, aided by weak electrical attraction.') + '</div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.all = root.querySelector('.all');
+    this.pc = ICE.pieces(root.querySelector('.pc'));
+    this.rings = [...root.querySelectorAll('.rg')];
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    this.pf(t * 20 + 3480, t * 12 + 72);
+    const spin = 3 * Math.max(0, t - 7.5) * seg(t, 7.5, 9);
+    this.all.setAttribute('transform', 'rotate(' + spin.toFixed(3) + ' ' + C[0] + ' ' + C[1] + ')');
+    ICE.P.forEach((pc, i) => {
+      const ta = this.ARR[i], raw = seg(t, ta - this.DUR[i], ta);
+      const p = i === 0 ? eio(raw) : eob(raw, 1.2);
+      const hv = (1 - raw) * seg(t, 0, 0.8) * 9;
+      const tx = C[0] + pc.flake[0], ty = C[1] + pc.flake[1];
+      const ta2 = pc.flake[2] + 360 * Math.round((pc.e[2] - pc.flake[2]) / 360);
+      const x = lerp(pc.e[0], tx, p) + Math.sin(t * 1.2 + i * 1.7) * hv;
+      const y = lerp(pc.e[1], ty, p) + Math.cos(t * 1.0 + i * 2.1) * hv;
+      const bump = t > ta ? 1 + 0.08 * Math.sin(seg(t, ta, ta + 0.35) * Math.PI) : 1;
+      ICE.place(this.pc[i], x, y, lerp(pc.e[2], ta2, eio(raw)), bump.toFixed(3));
+    });
+    this.rings.forEach((rg, k) => {
+      const ta = this.ARR[k + 1], c = ICE.rot(0, -42, k * 60), rr = seg(t, ta, ta + 0.6);
+      rg.setAttribute('cx', (C[0] + c[0]).toFixed(1)); rg.setAttribute('cy', (C[1] + c[1]).toFixed(1));
+      rg.setAttribute('r', lerp(8, 40, eo(rr)).toFixed(1));
+      rg.style.opacity = t >= ta && rr < 1 ? 1 - rr : 0;
+    });
+  },
+});
+
+scene('flake', 'A snowflake', 8, {
+  init(root) {
+    this.BG = [];
+    for (let i = 0; i < 9; i++) this.BG.push({ x: 920 + ((i * 397) % 960), y0: (i * 263) % 1180, v: 70 + (i % 4) * 14, r: (i * 37) % 60, s: 0.14 + (i % 3) * 0.04 });
+    const fl = ICE.flakeSVG();
+    let bg = ''; this.BG.forEach(b => { bg += '<g class="bgf" style="opacity:0"><g transform="scale(' + b.s + ')">' + fl + '</g></g>'; });
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g><g>' + bg + '</g><g class="cl">' + fl + '</g>' +
+      '<g class="lb"><path class="lead ld" d="M0 0 L0 0"/><text class="label" x="1530" y="232">Snowflake</text><text class="label" x="1530" y="270" style="font-weight:400">six points, bonded pieces</text></g></svg>' +
+      textBlock(280, 700, 'Aggregation', 'A snowflake', 'Bonded together, the pieces form a six-pointed snowflake that keeps falling toward the ground.') +
+      '<div class="words" style="left:140px;top:990px;width:700px"><p class="note">Simplified illustration</p></div></div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.cl = root.querySelector('.cl'); this.lb = root.querySelector('.lb'); this.ld = root.querySelector('.ld');
+    this.bg = [...root.querySelectorAll('.bgf')]; this.note = root.querySelector('.note').style;
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    this.note.opacity = eo(seg(t, 1.6, 2.2));
+    this.pf(t * 20 + 3640 + seg(t, 4.8, 8) * 160 + Math.max(0, t - 8) * 40, t * 12 + 168);
+    const zin = eio(seg(t, 0.3, 2.4)), zout = eio(seg(t, 4.6, 6.6));
+    const sc = lerp(lerp(1, 1.18, zin), 0.62, zout);
+    const idle = seg(t, 8, 9.5);
+    const fall = eio(seg(t, 4.6, 8)) * 140 + Math.sin((t - 8) * 0.8) * 12 * idle;
+    const rc = 12 * eio(seg(t, 0, 8)) + 4 * Math.max(0, t - 8) * idle;
+    this.cl.setAttribute('transform', 'translate(' + C[0] + ' ' + (C[1] + fall).toFixed(2) + ') rotate(' + rc.toFixed(3) + ') scale(' + sc.toFixed(4) + ')');
+    this.lb.style.opacity = eo(seg(t, 2.4, 2.9)) * (1 - eo(seg(t, 4.4, 4.9)));
+    this.ld.setAttribute('d', 'M' + (C[0] + 190 * sc).toFixed(1) + ' ' + (C[1] - 110 * sc).toFixed(1) + ' L1520 260');
+    this.bg.forEach((g, i) => {
+      const b = this.BG[i];
+      let y = (b.y0 + b.v * t) % 1180; y -= 60;
+      g.setAttribute('transform', 'translate(' + (b.x + Math.sin(t * 0.8 + i) * 14).toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + (b.r + t * 9).toFixed(1) + ')');
+      g.style.opacity = eo(seg(t, 4.8 + (i % 3) * 0.25, 5.6 + (i % 3) * 0.25)) * 0.85;
+    });
+  },
+});
+
+scene('recap', 'Recap', 7, {
+  init(root) {
+    let fz = '';
+    [[0, .4], [1, .7], [2, .3], [3, .6], [4, .5], [5, .2]].forEach(b => {
+      const a = ICE.rot(0, -76, b[0] * 60), c = ICE.rot(0, -76, b[0] * 60 + 60), n = ICE.rot(0, -6, b[0] * 60 + 30);
+      fz += '<circle class="frozen" style="stroke-width:2.5px" cx="' + (a[0] + (c[0] - a[0]) * b[1] + n[0]).toFixed(1) + '" cy="' + (a[1] + (c[1] - a[1]) * b[1] + n[1]).toFixed(1) + '" r="8"/>';
+    });
+    const icoA = '<polygon class="ice" style="stroke-width:3px" points="' + ICE.pstr(ICE.hexPts(76)) + '"/>' + fz + '<circle class="drop" cx="40" cy="108" r="9"/><circle class="drop" cx="-62" cy="96" r="7"/>';
+    let icoB = '';
+    ICE.P.forEach((p, i) => { const x = p.plate[0] * 0.95 + Math.sin(i * 2.1) * 14, y = p.plate[1] * 0.95 + Math.cos(i * 1.3) * 14; icoB += '<polygon class="ice" style="stroke-width:3px" points="' + ICE.pstr(p.pts) + '" transform="scale(0.5) translate(' + (x * 1.1).toFixed(1) + ' ' + (y * 1.1).toFixed(1) + ') rotate(' + (p.plate[2] + (i % 2 ? 30 : -25)) + ')"/>'; });
+    const icoC = '<g transform="scale(0.48)">' + ICE.flakeSVG() + '</g>';
+    const card = (x, ico, head, eq) => '<div class="card rc" style="left:' + x + 'px;top:420px;width:520px;height:520px;display:flex;flex-direction:column;align-items:center;gap:20px;padding:40px 36px;text-align:center">' +
+      '<svg class="ri" width="230" height="230" viewBox="-115 -115 230 230" style="flex:none;overflow:visible">' + ico + '</svg>' +
+      '<div class="words" style="position:static;align-items:center"><p class="line" style="font-size:58px">' + head + '</p><p class="eq">' + eq + '</p></div></div>';
+    root.append(h('<div class="ground"><svg class="art" viewBox="0 0 1920 1080"><g class="pf"></g></svg>' +
+      '<div class="words" style="left:140px;top:120px;width:1400px"><p class="tag">Recap</p><h2 class="line hd" style="font-size:96px">From crystal to snowflake</h2><div class="rule"></div></div>' +
+      card(140, icoA, 'Accretion', 'Supercooled droplets freeze onto an ice crystal') +
+      card(700, icoB, 'Shattering', 'A large crystal breaks into slivers and pieces') +
+      card(1260, icoC, 'Aggregation', 'Pieces collide and bond into a snowflake') + '</div>'));
+    this.pf = puffs(root.querySelector('.pf'), PUFFS);
+    this.tagS = root.querySelector('.tag').style; this.hd = root.querySelector('.hd'); this.rule = root.querySelector('.rule').style;
+    this.cards = [...root.querySelectorAll('.rc')].map(e => e.style); this.icons = [...root.querySelectorAll('.ri')].map(e => e.style);
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0.1, 0.6));
+    fadeFromRight(this.hd, t, 0.2);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.9, 1.4)) + ')';
+    this.pf(0, t * 10);
+    this.cards.forEach((c, i) => {
+      const p = seg(t, 1.0 + i * 0.45, 1.7 + i * 0.45);
+      c.opacity = eo(p); c.transform = 'translateY(' + lerp(40, 0, eo(p)) + 'px)';
+      const s = t > 1.0 + i * 0.45 ? eob(seg(t, 1.2 + i * 0.45, 1.9 + i * 0.45), 1.6) : 0;
+      this.icons[i].transform = 'rotate(' + (Math.sin(t * 0.9 + i) * 4).toFixed(2) + 'deg) scale(' + s.toFixed(3) + ')';
+    });
+  },
+});
+
+// ---------- player ----------
+const stage = document.getElementById('stage'), frame = document.getElementById('frame');
+SCENES.forEach(s => { s.root = document.createElement('div'); s.root.className = 'layer'; stage.appendChild(s.root); s.init(s.root); });
+function fit() { stage.style.transform = 'scale(' + (frame.clientWidth / 1920) + ')'; }
+new ResizeObserver(fit).observe(frame); fit();
+
+const dots = document.getElementById('dots'), title = document.getElementById('title');
+const nextB = document.getElementById('next'), backB = document.getElementById('back');
+SCENES.forEach((s, i) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ': ' + s.name); b.onclick = () => go(i); dots.appendChild(b); });
+
+let cur = 0, start = performance.now(), prev = null, prevT = 0, fadeStart = 0, paused = false, pausedAt = 0;
+const FADE = 0.4;
+function sceneTime(now) { return ((paused ? pausedAt : now) - start) / 1000; }
+function go(i) {
+  if (i < 0 || i >= SCENES.length) return;
+  const now = performance.now();
+  if (i !== cur) { prev = cur; prevT = sceneTime(now); fadeStart = now; }
+  cur = i; start = now; if (paused) pausedAt = now;
+  title.textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + SCENES[i].name;
+  [...dots.children].forEach((d, k) => { d.className = k === i ? 'on' : k < i ? 'done' : ''; if (k === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  backB.disabled = i === 0;
+  nextB.disabled = i === SCENES.length - 1;
+}
+function frameLoop(now) {
+  const t = sceneTime(now);
+  const fp = prev === null ? 1 : clamp01((now - fadeStart) / 1000 / FADE);
+  SCENES.forEach((s, k) => {
+    const show = k === cur || (k === prev && fp < 1);
+    s.root.style.display = show ? 'block' : 'none';
+  });
+  if (prev !== null && fp < 1) { const ps = SCENES[prev]; ps.root.style.opacity = 1 - fp; ps.render(prevT + (now - fadeStart) / 1000); }
+  else prev = null;
+  const s = SCENES[cur];
+  s.root.style.opacity = fp; s.root.style.zIndex = 2; if (prev !== null) SCENES[prev].root.style.zIndex = 1;
+  s.render(Math.max(0, t));
+  nextB.classList.toggle('ready', t >= s.dur && cur < SCENES.length - 1);
+  requestAnimationFrame(frameLoop);
+}
+nextB.onclick = () => go(cur + 1);
+backB.onclick = () => go(cur - 1);
+document.getElementById('replay').onclick = () => { prev = null; start = performance.now(); if (paused) pausedAt = start; };
+const pauseB = document.getElementById('pause'), pauseTxt = document.getElementById('pauseTxt'), pauseIco = document.getElementById('pauseIco');
+function togglePause() {
+  const now = performance.now();
+  if (paused) { start += now - pausedAt; paused = false; } else { pausedAt = now; paused = true; }
+  pauseTxt.textContent = paused ? 'Play' : 'Pause';
+  pauseB.setAttribute('aria-label', paused ? 'Play' : 'Pause');
+  pauseIco.innerHTML = paused ? '<path d="M7 5l12 7-12 7z"/>' : '<path d="M8 5v14M16 5v14"/>';
+}
+pauseB.onclick = togglePause;
+const app = document.getElementById('app');
+document.getElementById('full').onclick = () => {
+  try { if (document.fullscreenElement) document.exitFullscreen(); else app.requestFullscreen(); } catch (e) {}
+};
+document.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('#dots')) return;
+  if (e.key === 'ArrowRight' || e.key === 'PageDown' || (e.key === ' ' && e.target === document.body)) { e.preventDefault(); go(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (e.key === 'r' || e.key === 'R') document.getElementById('replay').click();
+  else if (e.key === 'p' || e.key === 'P') togglePause();
+  else if (e.key === 'f' || e.key === 'F') document.getElementById('full').click();
+});
+go(0);
+requestAnimationFrame(frameLoop);
+})();
+</script>
+</body>
+</html>
