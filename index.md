@@ -103,6 +103,7 @@ I look forward to exploring the science of the atmosphere with you!
 
 
 ## Chapter Links
+### Segment 1: Fundamentals of the Atmosphere
 * [Chapter 1: The Atmosphere](./1_TheAtmosphere/index.md)
     * [1.1 Weather and Climate](./1_TheAtmosphere/1_1_WeatherAndClimate.md)
     * [1.2 The Origin and Composition of the Atmosphere](./1_TheAtmosphere/1_2_OriginComposition.md)
@@ -144,3 +145,9 @@ I look forward to exploring the science of the atmosphere with you!
     * 8.2 Fog
     * 8.3 Basic Cloud Types
     * 8.4 Other Cloud Types
+
+### Segment 2: Motions of the Atmosphere
+* Chapter 9: Atmospheric Stability
+* Chapter 10: Precipitation
+    * [Growth of Water Droplets](./10_Precipitation/10_2_DropletGrowth.md)
+    * [Growth of Ice Crystals](./10_Precipitation/10_3_IceGrowth.md)

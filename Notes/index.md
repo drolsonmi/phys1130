@@ -14,7 +14,7 @@ Class lecture notes for my lecture section of the class:
 
 ## Segment 2: Motions of the Atmosphere
 - [Lecture 9: Atmospheric Stability](./09_Stability.md)
-    - [Animation of a Conditionally Unstable Atmosphere](https://drolsonmi.github.io/phys1130/9_AtmosphericStability/09_parcel-lift-animation.html)
+    - [Animation of a Conditionally Unstable Atmosphere](https://drolsonmi.github.io/phys1130/9_AtmosphericStability/parcel-lift-animation.html)
 
 ## Segment 3: Severe Weather
 
