@@ -252,6 +252,41 @@ function drawPowerline(x0, w, gy, s, glaze) {
   ctx.strokeStyle = col([0.15, 0.15, 0.17]); ctx.lineWidth = 2.2 * s; wire();
 }
 
+function drawSnowman(x, gy, s, a) {
+  // total height ~37.5*s, under half of the 78*s power poles
+  if (a <= 0.01) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  const white = col([0.97, 0.98, 1.0]), edge = col([0.70, 0.78, 0.90]);
+  for (const [cy, r] of [[-8, 8], [-20, 6], [-29, 4.5]]) {
+    circle(x, gy + cy * s, r * s); ctx.fillStyle = white; ctx.fill();
+    ctx.strokeStyle = edge; ctx.lineWidth = 1 * s; ctx.stroke();
+  }
+  // stick arms
+  ctx.strokeStyle = col([0.42, 0.30, 0.20]); ctx.lineWidth = 1.4 * s; ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x - 5 * s, gy - 21 * s); ctx.lineTo(x - 14 * s, gy - 27 * s); ctx.lineTo(x - 16 * s, gy - 30 * s);
+  ctx.moveTo(x - 14 * s, gy - 27 * s); ctx.lineTo(x - 17 * s, gy - 26 * s);
+  ctx.moveTo(x + 5 * s, gy - 21 * s); ctx.lineTo(x + 14 * s, gy - 27 * s); ctx.lineTo(x + 16 * s, gy - 30 * s);
+  ctx.moveTo(x + 14 * s, gy - 27 * s); ctx.lineTo(x + 17 * s, gy - 26 * s);
+  ctx.stroke();
+  // face and buttons
+  ctx.fillStyle = col([0.10, 0.10, 0.12]);
+  for (const [dx, dy, r] of [[-1.6, -30, 0.8], [1.6, -30, 0.8], [0, -22, 0.9], [0, -18.5, 0.9], [0, -11, 1], [0, -6.5, 1]]) {
+    circle(x + dx * s, gy + dy * s, r * s); ctx.fill();
+  }
+  ctx.fillStyle = col([0.95, 0.55, 0.15]);
+  ctx.beginPath(); ctx.moveTo(x, gy - 28.6 * s); ctx.lineTo(x + 5 * s, gy - 28 * s); ctx.lineTo(x, gy - 27.4 * s); ctx.closePath(); ctx.fill();
+  // scarf
+  ctx.fillStyle = col([0.85, 0.25, 0.25]);
+  ctx.fillRect(x - 4.5 * s, gy - 25.5 * s, 9 * s, 1.8 * s);
+  ctx.fillRect(x + 1.5 * s, gy - 25 * s, 1.8 * s, 5 * s);
+  // top hat
+  ctx.fillStyle = col([0.10, 0.10, 0.12]);
+  ctx.fillRect(x - 5 * s, gy - 33 * s, 10 * s, 1.3 * s);
+  ctx.fillRect(x - 3.2 * s, gy - 37.5 * s, 6.4 * s, 4.6 * s);
+  ctx.restore();
+}
+
 function drawColumn(sc, t, x0, y0, w, h, s = 1, labels = true, gh = 46) {
   const gy = y0 + h, zy = z => y0 + (ZTOP - z) / ZTOP * h;
   const g = ctx.createLinearGradient(0, y0, 0, gy);
@@ -302,6 +337,7 @@ function drawColumn(sc, t, x0, y0, w, h, s = 1, labels = true, gh = 46) {
     }
   }
   drawPowerline(x0, w, gy, s, kind === "frz" ? prog : 0);
+  if (kind === "snow") drawSnowman(x0 + w * 0.28, gy, s, ease((prog - 0.15) / 0.5));
 
   // particles
   const thit = sc.thit;
@@ -493,6 +529,119 @@ function sceneScenario(idx, lt) {
   }
 }
 
+function drawReindeer(x, y, t, ph, shade) {
+  const body = col([0.78 * shade, 0.56 * shade, 0.34 * shade]);
+  const g = Math.sin(t * 14 + ph);  // gallop
+  ctx.strokeStyle = body; ctx.lineWidth = 3; ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x - 12, y + 6); ctx.lineTo(x - 18 - 6 * g, y + 20);
+  ctx.moveTo(x - 8, y + 6); ctx.lineTo(x - 4 + 6 * g, y + 20);
+  ctx.moveTo(x + 10, y + 6); ctx.lineTo(x + 18 + 6 * g, y + 18);
+  ctx.moveTo(x + 14, y + 6); ctx.lineTo(x + 6 - 6 * g, y + 20);
+  ctx.stroke();
+  flatEllipse(x, y, 20, 9); ctx.fillStyle = body; ctx.fill();
+  // neck and head
+  ctx.beginPath(); ctx.moveTo(x + 14, y - 4); ctx.lineTo(x + 24, y - 16); ctx.lineWidth = 7; ctx.stroke();
+  flatEllipse(x + 28, y - 18, 8, 5.5); ctx.fill();
+  circle(x + 35, y - 17, 2.2); ctx.fillStyle = col([0.15, 0.1, 0.08]); ctx.fill();
+  // tail
+  circle(x - 20, y - 4, 3); ctx.fillStyle = col([0.95, 0.92, 0.85]); ctx.fill();
+  // antlers
+  ctx.strokeStyle = col([0.80 * shade, 0.68 * shade, 0.48 * shade]); ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + 25, y - 22); ctx.lineTo(x + 20, y - 36); ctx.moveTo(x + 22, y - 30); ctx.lineTo(x + 15, y - 34);
+  ctx.moveTo(x + 21, y - 33); ctx.lineTo(x + 25, y - 40);
+  ctx.moveTo(x + 28, y - 23); ctx.lineTo(x + 30, y - 37); ctx.moveTo(x + 29, y - 31); ctx.lineTo(x + 35, y - 35);
+  ctx.stroke();
+}
+
+function drawSleigh(t, left, right, baseY, k) {
+  // one pass, left to right; drawn in local units scaled by k
+  const DUR = 4.5, LEN = 420, SPAN = (right - left) / k;
+  if (t < 0 || t > DUR) return;
+  const X = lerp(-LEN - 40, SPAN + 40, t / DUR);
+  const Y = 6 * Math.sin(t * 2.2);
+  ctx.save();
+  ctx.translate(left, baseY); ctx.scale(k, k);
+  // sparkle trail
+  for (let k = 1; k <= 14; k++) {
+    const tk = t - k * 0.06, tx = lerp(-LEN - 40, SPAN + 40, tk / DUR) - 6;
+    const ty = 6 * Math.sin(tk * 2.2) + 22 + 6 * Math.sin(k * 1.9 + t * 9);
+    circle(tx, ty, 2.6 * (1 - k / 15)); ctx.fillStyle = col([1, 0.92, 0.6], 0.8 * (1 - k / 15)); ctx.fill();
+  }
+  const deer = [X + 175, X + 255, X + 335, X + 415];
+  // reins
+  ctx.strokeStyle = col([0.85, 0.75, 0.40], 0.9); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(X + 62, Y - 2);
+  deer.forEach((dx, i) => ctx.lineTo(dx + 12, Y - 4 + 2 * Math.sin(t * 7 + i)));
+  ctx.stroke();
+  deer.forEach((dx, i) => drawReindeer(dx, Y + 2 * Math.sin(t * 7 + i), t, i * 1.3, i % 2 ? 0.85 : 1));
+  // Santa
+  circle(X + 42, Y - 6, 13); ctx.fillStyle = col([0.80, 0.12, 0.14]); ctx.fill();
+  circle(X + 45, Y - 24, 7.5); ctx.fillStyle = col([0.96, 0.80, 0.68]); ctx.fill();
+  flatEllipse(X + 46, Y - 16, 8, 6); ctx.fillStyle = col([0.97, 0.97, 0.97]); ctx.fill();
+  ctx.fillStyle = col([0.80, 0.12, 0.14]);
+  ctx.beginPath(); ctx.moveTo(X + 36, Y - 28); ctx.lineTo(X + 54, Y - 28); ctx.lineTo(X + 34, Y - 42); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = col([0.97, 0.97, 0.97]);
+  ctx.fillRect(X + 36, Y - 30, 18, 3.5); circle(X + 34, Y - 42, 3); ctx.fill();
+  // gift sack
+  circle(X + 16, Y - 10, 12); ctx.fillStyle = col([0.30, 0.55, 0.32]); ctx.fill();
+  // sleigh body
+  ctx.fillStyle = col([0.72, 0.10, 0.12]);
+  ctx.beginPath();
+  ctx.moveTo(X, Y - 8); ctx.lineTo(X + 6, Y + 14); ctx.lineTo(X + 72, Y + 14);
+  ctx.quadraticCurveTo(X + 88, Y + 12, X + 86, Y - 6); ctx.lineTo(X + 74, Y - 2); ctx.lineTo(X + 64, Y + 2);
+  ctx.lineTo(X + 14, Y + 2); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = col([0.95, 0.78, 0.30]); ctx.lineWidth = 2; ctx.stroke();
+  // runner
+  ctx.lineWidth = 3; ctx.beginPath();
+  ctx.moveTo(X - 4, Y + 24); ctx.lineTo(X + 84, Y + 24); ctx.quadraticCurveTo(X + 100, Y + 24, X + 98, Y + 12);
+  ctx.moveTo(X + 20, Y + 14); ctx.lineTo(X + 20, Y + 24); ctx.moveTo(X + 62, Y + 14); ctx.lineTo(X + 62, Y + 24);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSkater(x, y, dir, phase, speed, coat, hat) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(dir, 1);
+  const sw = 4.5 * Math.sin(phase) * speed, lift = 2 * speed;
+  const feet = [[sw, -Math.max(0, Math.sin(phase)) * lift], [-sw, -Math.max(0, -Math.sin(phase)) * lift]];
+  ctx.lineCap = "round";
+  for (const [fx, fy] of feet) {
+    ctx.strokeStyle = col([0.18, 0.20, 0.26]); ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(fx, fy - 2); ctx.stroke();
+    ctx.strokeStyle = col([0.85, 0.88, 0.92]); ctx.lineWidth = 1.2;     // blade
+    ctx.beginPath(); ctx.moveTo(fx - 3.5, fy); ctx.lineTo(fx + 3, fy); ctx.quadraticCurveTo(fx + 4.5, fy, fx + 4.2, fy - 1.5); ctx.stroke();
+  }
+  // back arm
+  ctx.strokeStyle = col(coat); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(2, -19); ctx.lineTo(-4, -14 + 2 * Math.sin(phase)); ctx.stroke();
+  // torso (leaning into the glide)
+  ctx.lineWidth = 5.5;
+  ctx.beginPath(); ctx.moveTo(0, -11); ctx.lineTo(2.2, -20); ctx.stroke();
+  circle(3, -24, 3.2); ctx.fillStyle = col([0.95, 0.80, 0.68]); ctx.fill();
+  ctx.fillStyle = col(hat);
+  ctx.beginPath(); ctx.arc(3, -24.6, 3.4, Math.PI, 0); ctx.closePath(); ctx.fill();
+  circle(3, -28.6, 1.4); ctx.fill();
+  ctx.restore();
+}
+
+function drawSkaters(t, left, w, groundY) {
+  // a couple glides in from the left, then keeps skating back and forth on the glaze
+  if (t < 0) return;
+  let X, v;
+  const enterT = 1.6, x0 = -0.12 * w, xc = 0.30 * w, A = 0.17 * w, om = 0.9;
+  if (t < enterT) { const u = t / enterT; X = lerp(x0, xc, u * (2 - u)); v = (xc - x0) * (2 - 2 * u) / enterT; }
+  else { const tt = t - enterT; X = xc + A * Math.sin(tt * om); v = A * om * Math.cos(tt * om); }
+  const dir = v >= 0 ? 1 : -1, speed = clamp(Math.abs(v) / (A * om));
+  const phase = t * 5.5;
+  const xa = left + X, xb = left + X - 13 * dir, y = groundY;
+  // held hands
+  ctx.strokeStyle = col([0.95, 0.80, 0.68]); ctx.lineWidth = 1.6; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(xa + 2 * dir, y - 18); ctx.quadraticCurveTo((xa + xb) / 2, y - 13, xb + 2 * dir, y - 18); ctx.stroke();
+  drawSkater(xb, y, dir, phase + Math.PI, Math.max(0.35, speed), [0.55, 0.35, 0.80], [0.95, 0.85, 0.30]);
+  drawSkater(xa, y, dir, phase, Math.max(0.35, speed), [0.85, 0.22, 0.25], [0.97, 0.97, 0.97]);
+}
+
 function sceneSummary(lt) {
   ctx.fillStyle = col(BG); ctx.fillRect(0, 0, W, H);
   text("Summary: same snow aloft, different results at the ground", W / 2, 80, 46, TXT, true, "center", ease(lt / 0.6));
@@ -507,6 +656,10 @@ function sceneSummary(lt) {
     const cx = x0 + 22, cy = y0 + 90, cw = pw - 44, ch = 470;
     ctx.save(); rrect(cx, cy, cw, ch + 30, 10); ctx.clip();
     drawColumn(sc, lt + 6, cx, cy, cw, ch, 0.62, false, 30);
+    // Snow panel only: sleigh flies through the snow once, ~1 s after the Rain panel has appeared
+    if (sc.kind === "snow") drawSleigh(lt - 3.6, cx, cx + cw, cy + ch * 0.36, 0.45);
+    // Freezing Rain panel only: a couple skates out onto the glaze at the same moment
+    if (sc.kind === "frz") drawSkaters(lt - 3.6, cx, cw, cy + ch - 9 * 0.62 * clamp((lt + 6 - sc.thit + 1) / 8));
     ctx.restore();
     const TMIN = -14, TMAX = 10;
     const tx = T => cx + (T - TMIN) / (TMAX - TMIN) * cw, zy = z => cy + (ZTOP - z) / ZTOP * ch;

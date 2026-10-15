@@ -1,0 +1,683 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Graupel Formation Lesson</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@400;700&display=swap">
+<style>
+/* Layout: a dark presentation room; the 16:9 white slide scales to fit, controls in a bar beneath. Deliberately single-theme. */
+:root { --room:#0d1830; --bar:#132349; --ink:#ffffff; --muted:#c3cfe4; --accent:#f47920; --line:#2a4a8c; color-scheme:dark; }
+html, body { height:100%; }
+body { background:var(--room); color:var(--ink); font-family:"Nunito Sans", Helvetica, Arial, sans-serif; overflow:hidden; }
+.app { height:100%; display:flex; flex-direction:column; background:var(--room); }
+.viewport { flex:1; position:relative; min-height:0; overflow:hidden; }
+#stage { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0; overflow:hidden; background:#fff;
+  --display:"Zilla Slab", Georgia, serif; --sans:"Nunito Sans", Helvetica, Arial, sans-serif; box-shadow:0 12px 40px rgba(0,0,0,.35); }
+.scene { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; }
+.bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--bar); border-top:1px solid var(--line);
+  padding-block:10px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+.bar button { font:inherit; font-size:15px; font-weight:700; color:var(--ink); background:transparent; border:1.5px solid var(--line);
+  border-radius:6px; padding:8px 14px; cursor:pointer; display:inline-flex; align-items:center; gap:8px; }
+.bar button:hover { border-color:var(--muted); }
+.bar button:focus-visible { outline:3px solid #faa634; outline-offset:2px; }
+.bar button:disabled { opacity:.35; cursor:default; }
+.bar button.next { background:var(--accent); border-color:var(--accent); color:#fff; padding-inline:22px; }
+.bar button.next.ready { box-shadow:0 0 0 3px #fdcb86; }
+.where { flex:1; min-width:0; display:flex; align-items:center; gap:14px; }
+.dots { display:flex; gap:6px; }
+.dots button { width:14px; height:14px; padding:0; border-radius:50%; border:1.5px solid var(--muted); }
+.dots button[aria-current="true"] { background:var(--accent); border-color:var(--accent); }
+.dots button.seen { background:var(--muted); }
+.label { font-size:15px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-variant-numeric:tabular-nums; }
+.label b { color:var(--ink); }
+.keys { font-size:13px; color:var(--muted); }
+@media (max-width:720px) { .keys { display:none; } .label { display:none; } }
+#stage { --ground:#FFFFFF; --main:#1E376C; --second:#25282B; --accent:#F47920; color:var(--second); font-family:var(--sans, system-ui, sans-serif) }
+.ground { position:absolute; inset:0; background:var(--ground) }
+.sky { position:absolute; inset:0; background:linear-gradient(180deg, color-mix(in srgb, var(--main) 14%, var(--ground)), color-mix(in srgb, var(--main) 7%, var(--ground))) }
+.words { position:absolute; margin:0; display:flex; flex-direction:column; gap:20px } .words > * { margin:0 }
+.line { font-family:var(--display, var(--sans, system-ui, sans-serif)); font-size:76px; line-height:1.05; font-weight:700; color:var(--main); text-wrap:balance }
+.sub { font-size:34px; line-height:1.4; color:color-mix(in srgb, var(--second) 85%, var(--ground)) }
+.tag { font-size:22px; letter-spacing:.14em; text-transform:uppercase; font-weight:700; color:var(--accent) }
+.art { position:absolute; inset:0; width:100%; height:100%; overflow:visible }
+.arm-o { fill:none; stroke:var(--main); stroke-width:15; stroke-linecap:round; stroke-linejoin:round }
+.arm-i { fill:none; stroke:var(--ground); stroke-width:8; stroke-linecap:round; stroke-linejoin:round }
+.ice { fill:var(--ground); stroke:var(--main); stroke-width:3.5; stroke-linejoin:round }
+.crys { fill:color-mix(in srgb, var(--main) 4%, var(--ground)); stroke:color-mix(in srgb, var(--main) 45%, var(--ground)); stroke-width:2.5 }
+.drop { fill:color-mix(in srgb, var(--main) 32%, var(--ground)); stroke:color-mix(in srgb, var(--main) 80%, var(--ground)); stroke-width:2 }
+.rime { fill:var(--ground); stroke:color-mix(in srgb, var(--main) 60%, var(--ground)); stroke-width:2 }
+.pellet { fill:var(--ground); stroke:var(--main); stroke-width:3 }
+.air { fill:color-mix(in srgb, var(--main) 7%, var(--ground)); stroke:color-mix(in srgb, var(--main) 50%, var(--ground)); stroke-width:1 }
+.callout { fill:none; stroke:var(--accent); stroke-width:4 }
+.callout-txt { font-size:30px; font-weight:700; fill:var(--main) }
+.callout-bg { fill:var(--ground); stroke:var(--accent); stroke-width:3 }
+.hail { fill:color-mix(in srgb, var(--main) 16%, var(--ground)); stroke:var(--main); stroke-width:4 }
+.hail-ring { fill:none; stroke:color-mix(in srgb, var(--main) 40%, var(--ground)); stroke-width:3 }
+.earth { fill:color-mix(in srgb, var(--main) 72%, var(--second)) }
+.finger { fill:color-mix(in srgb, var(--main) 10%, var(--ground)); stroke:var(--main); stroke-width:4 }
+.mark { fill:none; stroke:var(--accent); stroke-width:8; stroke-linecap:round }
+.g-bar { fill:color-mix(in srgb, var(--main) 16%, var(--ground)); stroke:var(--main); stroke-width:2 }
+.g-lab { font-size:20px; font-weight:700; letter-spacing:.12em; fill:color-mix(in srgb, var(--second) 72%, var(--ground)) }
+.g-dot { fill:var(--accent); stroke:var(--ground); stroke-width:3 }
+.cap { font-size:34px; font-weight:700; color:var(--main) }
+.note { font-size:28px; line-height:1.35; color:color-mix(in srgb, var(--second) 85%, var(--ground)) }
+.legend { display:flex; flex-direction:column; gap:16px } .legend > div { display:flex; align-items:center; gap:16px; font-size:28px }
+</style>
+<div class="app" id="app">
+  <div class="viewport" id="viewport"><div id="stage"></div></div>
+  <div class="bar">
+    <button type="button" id="back" aria-label="Previous scene">&#8592; Back</button>
+    <button type="button" id="pause" aria-label="Pause">Pause</button>
+    <button type="button" id="replay" aria-label="Replay this scene">Replay</button>
+    <div class="where"><div class="dots" id="dots"></div><span class="label" id="label"></span></div>
+    <span class="keys">Keys: &#8594; or Space next, &#8592; back, R replay, F full screen</span>
+    <button type="button" id="full">Full screen</button>
+    <button type="button" class="next" id="next">Next &#8594;</button>
+  </div>
+</div>
+<script>
+(function(){
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+var R=170,BR=[[62,46],[102,38],[138,24]],PR=27,G=880;
+function f(n){return n.toFixed(1);}
+function hex(s){var p=[];for(var k=0;k<6;k++){var a=Math.PI/3*k;p.push(f(s*Math.cos(a))+','+f(s*Math.sin(a)));}return p.join(' ');}
+var main='',br='';
+for(var k=0;k<6;k++){var a=Math.PI/3*k-Math.PI/2,c=Math.cos(a),s=Math.sin(a);main+='M0 0L'+f(R*c)+' '+f(R*s);
+for(var j=0;j<3;j++){var d=BR[j][0],l=BR[j][1],x=d*c,y=d*s;for(var g=-1;g<=1;g+=2){var b=a+g*Math.PI/3;br+='M'+f(x)+' '+f(y)+'L'+f(x+l*Math.cos(b))+' '+f(y+l*Math.sin(b));}}}
+function flake(p){return '<g class="'+p+'-flake"><g class="'+p+'-br"><path class="arm-o" d="'+br+'"/></g><g class="'+p+'-arms"><path class="arm-o" d="'+main+'"/></g><g class="'+p+'-br"><path class="arm-i" d="'+br+'"/></g><g class="'+p+'-arms"><path class="arm-i" d="'+main+'"/></g><polygon class="ice '+p+'-core" points="'+hex(30)+'"/></g>';}
+var r=rng(42),A=[],B=[];
+for(var i=0;i<150;i++){var kk=Math.floor(r()*6),aa=Math.PI/3*kk-Math.PI/2,x,y,dd;
+if(r()<0.55){dd=40+r()*135;x=dd*Math.cos(aa);y=dd*Math.sin(aa);}else{var bb=BR[Math.floor(r()*3)],sg=r()<.5?-1:1,ba=aa+sg*Math.PI/3,u=0.3+r()*0.7;x=bb[0]*Math.cos(aa)+u*bb[1]*Math.cos(ba);y=bb[0]*Math.sin(aa)+u*bb[1]*Math.sin(ba);dd=Math.hypot(x,y);}
+var off=(r()-.5)*14,pa=aa+Math.PI/2;x+=off*Math.cos(pa);y+=off*Math.sin(pa);A.push({x:x,y:y,r:6+r()*4,o:-dd-r()*70});}
+A.sort(function(p,q){return p.o-q.o;});
+for(var i2=0;i2<240;i2++){var u2=Math.sqrt(r()),a2=r()*Math.PI*2,d2=24+u2*160;B.push({x:d2*Math.cos(a2),y:d2*Math.sin(a2),r:8+r()*5,o:r()-u2*0.6});}
+B.sort(function(p,q){return p.o-q.o;});
+function ball(R0,seed){var q=rng(seed||5),m='<g>';for(var n=0;n<22;n++){var an=n/22*Math.PI*2+q()*0.2,rr=R0*(0.14+q()*0.06);m+='<circle class="rime" cx="'+f(R0*0.9*Math.cos(an))+'" cy="'+f(R0*0.9*Math.sin(an))+'" r="'+f(rr)+'"/>';}
+m+='<circle class="rime" style="stroke:none" r="'+f(R0*0.93)+'"/>';for(var n2=0;n2<9;n2++){var a3=q()*Math.PI*2,d3=q()*R0*0.6;m+='<circle class="rime" style="stroke-width:1.5" cx="'+f(d3*Math.cos(a3))+'" cy="'+f(d3*Math.sin(a3))+'" r="'+f(R0*0.13)+'"/>';}return m+'</g>';}
+function gauge(p){return '<g class="'+p+'-gauge"><rect class="g-bar" x="1712" y="200" width="20" height="560" rx="10"/><line x1="1722" y1="772" x2="1722" y2="864" style="stroke:var(--main);stroke-width:2;stroke-dasharray:6 8"/><rect class="earth" x="1692" y="872" width="60" height="10" rx="5"/><text class="g-lab" x="1752" y="276">TOP</text><text class="g-lab" x="1752" y="486">MIDDLE</text><text class="g-lab" x="1752" y="722">BASE</text><text class="g-lab" x="1752" y="884">GROUND</text><circle class="g-dot '+p+'-gdot" cx="1722" cy="240" r="14"/></g>';}
+function gy(pos){return 200+680*pos;}
+var sr=rng(9),SH=[{x0:960,y0:540,dv:0,h0:150,dir:0,late:false}];
+for(var m2=0;m2<20;m2++)SH.push({x0:830+sr()*820,y0:-40+sr()*720,dv:-30+sr()*70,h0:70+sr()*110,dir:sr()<.5?-1:1,late:false});
+SH=SH.filter(function(p,ix){return ix===0||Math.hypot(p.x0-960,p.y0-540)>90;});
+for(var m3=0;m3<16;m3++)SH.push({x0:830+sr()*820,s:3+sr()*2.6,h0:70+sr()*110,dir:sr()<.5?-1:1,late:true});
+function bounce(p,tau,ti){var h=p.h0,t2=tau,x=p.x0+p.dir*35*Math.min(1,tau/1.2);for(var k2=0;k2<4;k2++){var d=2*Math.sqrt(2*h/4000);if(t2<d){var fx=t2/d;return{x:x,y:G-PR-4*h*fx*(1-fx),s:0.15*Math.max(0,1-t2/0.08)*(h/p.h0)};}t2-=d;h*=0.3;}return{x:x,y:G-PR,s:0};}
+function pelletAt(p,t){var ti;if(!p.late){if(t<3)return{x:p.x0,y:p.y0+p.dv*t,s:0};var y3=p.y0+p.dv*3,D=G-PR-y3;ti=3+(D<350?Math.sqrt(D/350):1+(D-350)/700);if(t<ti){var u3=t-3;return{x:p.x0,y:y3+(u3<1?350*u3*u3:350+700*(u3-1)),s:0};}}else{if(t<p.s)return null;ti=p.s+(G-PR+40)/700;if(t<ti)return{x:p.x0,y:-40+700*(t-p.s),s:0};}return bounce(p,t-ti,ti);}
+window.GR={rng:rng,hex:hex,flake:flake,beads:{A:A,B:B},R:R,BALL:195,PR:PR,G:G,spin:function(T){return T*7;},sway:function(T){return 18*Math.sin(T*1.25);},gauge:gauge,gy:gy,shower:SH,pelletAt:pelletAt,bounce:bounce,ball:ball};
+function air(b){var s=b.r;return '<circle class="air" cx="'+f(s*0.3)+'" cy="'+f(-s*0.25)+'" r="'+f(s*0.24)+'" style="stroke-width:'+f(s*0.1)+'"/><circle class="air" cx="'+f(-s*0.32)+'" cy="'+f(s*0.28)+'" r="'+f(s*0.16)+'" style="stroke-width:'+f(s*0.08)+'"/>';}
+function bead(b,cls){return '<g class="'+cls+'" transform="translate('+f(b.x)+' '+f(b.y)+')"><circle class="rime" r="'+f(b.r)+'" style="stroke-width:1.2"/>'+air(b)+'</g>';}
+var br2=rng(64),BS=[];for(var m4=0;m4<46;m4++)BS.push({x0:820+br2()*980,s:br2()*5.4,h0:90+br2()*120,dir:br2()<.5?-1:1,late:true});
+window.GR.air=air;window.GR.bead=bead;window.GR.bset=BS;
+var RP=40,RG=900,RV=650,RGR=3000,rr3=rng(71),RAIN=[{x0:1180,y0:220,s:0,h0:240,dir:-1}];
+for(var m5=0;m5<40;m5++)RAIN.push({x0:780+rr3()*860,y0:60,s:0.3+rr3()*8.6,h0:130+rr3()*130,dir:rr3()<.5?-1:1});
+function rainHit(p){return p.s+(RG-RP-p.y0)/RV;}
+function rainAt(p,t){if(t<p.s)return null;var ti=rainHit(p);if(t<ti)return{x:p.x0,y:p.y0+RV*(t-p.s),s:0};var tau=t-ti,h=p.h0,t2=tau,x=p.x0+p.dir*50*Math.min(1,tau/1.5);for(var k=0;k<4;k++){var d=2*Math.sqrt(2*h/RGR);if(t2<d){var q=t2/d;return{x:x,y:RG-RP-4*h*q*(1-q),s:0.15*Math.max(0,1-t2/0.08)*(h/p.h0)};}t2-=d;h*=0.35;}return{x:x,y:RG-RP,s:0};}
+function rainBounces(p){var out=[],t0=rainHit(p),h=p.h0;for(var k=0;k<3;k++){out.push({t:t0,v:h/p.h0});t0+=2*Math.sqrt(2*h/RGR);h*=0.35;}return out;}
+window.GR.rain=RAIN;window.GR.RP=RP;window.GR.RG=RG;window.GR.rainAt=rainAt;window.GR.rainBounces=rainBounces;
+})();
+</script>
+<script>
+(function () {
+  var SCENES = [];
+  var clamp01 = function (x) { return x < 0 ? 0 : x > 1 ? 1 : x; };
+  var seg = function (t, a, b) { return clamp01((t - a) / (b - a)); };
+  var lerp = function (a, b, p) { return a + (b - a) * p; };
+  var eo = function (x) { x = clamp01(x); return 1 - Math.pow(1 - x, 3); };
+  var ei = function (x) { x = clamp01(x); return x * x * x; };
+  var eio = function (x) { x = clamp01(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+  var eob = function (x, s) { x = clamp01(x); s = s == null ? 1.4 : s; var c = s + 1; return 1 + c * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2); };
+  function words(el) {
+    if (!el._w) {
+      var parts = el.textContent.split(' ');
+      el.textContent = '';
+      el._w = parts.map(function (p, i) {
+        var sp = document.createElement('span'); sp.textContent = p; sp.style.display = 'inline-block';
+        el.appendChild(sp); if (i < parts.length - 1) el.appendChild(document.createTextNode(' '));
+        return sp;
+      });
+    }
+    return el._w;
+  }
+  var TextFx = {
+    fadeFromRight: function (el, t, t0, o) {
+      o = o || {}; var st = o.stagger || .11, du = o.dur || .5, dx = o.dx == null ? 26 : o.dx, w = words(el);
+      w.forEach(function (sp, i) { var p = eo(seg(t, t0 + i * st, t0 + i * st + du)); sp.style.opacity = p; sp.style.transform = 'translateX(' + ((1 - p) * dx).toFixed(1) + 'px)'; });
+      return t0 + (w.length - 1) * st + du;
+    },
+    fadeOutLeft: function (el, t, t0) {
+      var w = words(el);
+      w.forEach(function (sp, i) { var p = ei(seg(t, t0 + i * .06, t0 + i * .06 + .3)); sp.style.opacity = 1 - p; sp.style.transform = 'translateX(' + (-p * 26).toFixed(1) + 'px)'; });
+    }
+  };
+  var h = function (s) { var tp = document.createElement('template'); tp.innerHTML = s.trim(); return tp.content.firstElementChild; };
+SCENES.push({id:"cloud-top",name:"Cloud top",dur:6,run:function(kit){
+const { seg, eo, eio, lerp, TextFx } = kit;
+kit.scene('cloud-top', {
+  init(kit) {
+    this.T0 = kit.start;
+    const r = GR.rng(11);
+    this.cr = [];
+    let cs = '';
+    for (let i = 0; i < 30; i++) {
+      const c = { x: 760 + r() * 900, y: r() * 1300 - 100, s: 7 + r() * 13, a: r() * 60, w: (r() - 0.5) * 40 };
+      this.cr.push(c);
+      cs += '<polygon class="crys ct-c" points="' + GR.hex(c.s) + '"/>';
+    }
+    kit.stage.append(kit.h('<div class="sky">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' + cs + '<g class="ct-f">' + GR.flake('ct') + '</g>' + GR.gauge('ct') + '</svg>' +
+      '<div class="words" style="left:140px;top:300px;width:600px"><p class="tag ct-tag">Introduction to Meteorology</p>' +
+      '<h1 class="line ct-line">How graupel forms</h1>' +
+      '<p class="sub ct-sub">It starts as a snowflake. Ice crystals grow six branching arms high in the cold cloud.</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.cEls = [...kit.stage.querySelectorAll('.ct-c')];
+    this.f = q('.ct-f');
+    this.arms = [...kit.stage.querySelectorAll('.ct-arms')];
+    this.br = [...kit.stage.querySelectorAll('.ct-br')];
+    this.dot = q('.ct-gdot');
+    this.line = q('.ct-line');
+    this.tag = q('.ct-tag').style;
+    this.sub = q('.ct-sub').style;
+  },
+  render(t) {
+    const T = this.T0 + t;
+    const off = t < 6 ? 12 * t + 38 * Math.pow(Math.max(0, t - 3), 2) : 414 + 240 * (t - 6);
+    this.cr.forEach((c, i) => {
+      const y = ((c.y - off) % 1300 + 1300) % 1300 - 110;
+      this.cEls[i].setAttribute('transform', 'translate(' + (c.x + Math.sin(T * 0.6 + i) * 6).toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + (c.a + c.w * T).toFixed(1) + ')');
+    });
+    const zoom = lerp(0.35, 1, eio(seg(t, 0, 3.2)));
+    const breathe = zoom * (1 + 0.012 * Math.sin(T * 2.1));
+    this.f.setAttribute('transform', 'translate(' + (1240 + GR.sway(T)).toFixed(1) + ' 540) rotate(' + GR.spin(T).toFixed(2) + ') scale(' + breathe.toFixed(4) + ')');
+    this.dot.setAttribute('cy', GR.gy(lerp(0.06, 0.16, eio(seg(t, 2.6, 6)))).toFixed(1));
+    TextFx.fadeFromRight(this.line, t, -0.7);
+    
+    const out = 1;
+    this.tag.opacity = out;
+    this.sub.opacity = eo(seg(t, 0.4, 1.0)) * out;
+    this.sub.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 0.4, 1.0))).toFixed(1) + 'px)';
+  },
+});
+}});
+SCENES.push({id:"descent",name:"Into the droplets",dur:8,run:function(kit){
+const { seg, eo, eio, lerp, TextFx } = kit;
+kit.scene('descent', {
+  init(kit) {
+    this.T0 = kit.start;
+    const r = GR.rng(23);
+    this.dr = [];
+    let ds = '';
+    for (let i = 0; i < 170; i++) {
+      const d = { x: 40 + r() * 1640, y: 880 + r() * 2700, r: 5 + r() * 6, ph: r() * 6 };
+      this.dr.push(d);
+      ds += '<circle class="drop de-d" r="' + d.r.toFixed(1) + '"/>';
+    }
+    this.cr = [];
+    let cs = '';
+    for (let i = 0; i < 10; i++) {
+      const c = { x: 760 + r() * 900, y: r() * 700, s: 7 + r() * 12, a: r() * 60 };
+      this.cr.push(c);
+      cs += '<polygon class="crys de-c" points="' + GR.hex(c.s) + '"/>';
+    }
+    kit.stage.append(kit.h('<div class="sky">' +
+      '<svg class="art" viewBox="0 0 1920 1080"><g class="de-w">' + cs + ds + '</g><g class="de-f">' + GR.flake('de') + '</g>' + GR.gauge('de') + '</svg>' +
+      '<div class="words" style="left:140px;top:300px;width:600px"><p class="tag de-tag">Middle of the cloud</p>' +
+      '<h2 class="line de-line">Into the supercooled droplets</h2>' +
+      '<p class="sub de-sub">These tiny droplets are still liquid water, even though the air is colder than 0 °C.</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.dEls = [...kit.stage.querySelectorAll('.de-d')];
+    this.cEls = [...kit.stage.querySelectorAll('.de-c')];
+    this.w = q('.de-w');
+    this.f = q('.de-f');
+    this.dot = q('.de-gdot');
+    this.line = q('.de-line');
+    this.tag = q('.de-tag').style;
+    this.sub = q('.de-sub').style;
+  },
+  render(t) {
+    const T = this.T0 + t;
+    const off = t < 8 ? 245 * t + 4 * t * t : 2216 + 309 * (t - 8);
+    this.dr.forEach((d, i) => {
+      let y = d.y - off; if (y < -60) y += 2700 * Math.ceil((-60 - y) / 2700);
+      const el = this.dEls[i];
+      if (y < -60 || y > 1140) { el.style.opacity = 0; return; }
+      el.style.opacity = 1;
+      el.setAttribute('cx', (d.x + Math.sin(T * 0.9 + d.ph) * 8).toFixed(1));
+      el.setAttribute('cy', y.toFixed(1));
+    });
+    const coff = 12 * 6 + 38 * 9 + 240 * t;
+    this.cr.forEach((c, i) => {
+      const y = c.y + 400 - coff;
+      this.cEls[i].setAttribute('transform', 'translate(' + c.x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + (c.a + 10 * T).toFixed(1) + ')');
+    });
+    const p = eio(seg(t, 6.2, 8));
+    const z = lerp(1, 2.6, p);
+    this.w.setAttribute('transform', 'translate(' + lerp(1240, 1180, p).toFixed(1) + ' 540) scale(' + z.toFixed(4) + ') translate(-1240 -540)');
+    const breathe = 1 + 0.012 * Math.sin(T * 2.1) * (1 - p);
+    const fx = lerp(1240 + GR.sway(T), 1180, p);
+    this.f.setAttribute('transform', 'translate(' + fx.toFixed(1) + ' 540) rotate(' + GR.spin(T).toFixed(2) + ') scale(' + (z * breathe).toFixed(4) + ')');
+    this.dot.setAttribute('cy', GR.gy(lerp(0.16, 0.42, eio(seg(t, 0, 8)))).toFixed(1));
+    TextFx.fadeFromRight(this.line, t, 0.5);
+    
+    const out = 1;
+    this.tag.opacity = eo(seg(t, 0.2, 0.7)) * out;
+    this.sub.opacity = eo(seg(t, 1.2, 1.8)) * out;
+    this.sub.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 1.2, 1.8))).toFixed(1) + 'px)';
+  },
+});
+}});
+SCENES.push({id:"riming",name:"Riming",dur:10,run:function(kit){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+const RM_Z = 2.6, RM_X = 1180, RM_Y = 540, RM_HI = 10;
+kit.scene('riming', {
+  init(kit) {
+    this.T0 = kit.start;
+    const r = GR.rng(31);
+    this.bg = [];
+    let bs = '';
+    for (let i = 0; i < 36; i++) {
+      const d = { x: 60 + r() * 1620, y: r() * 1500, r: 12 + r() * 14, ph: r() * 6 };
+      this.bg.push(d);
+      bs += '<circle class="drop rm-bg" r="' + d.r.toFixed(1) + '"/>';
+    }
+    const A = GR.beads.A;
+    this.A = A.map((b, i) => ({ b, tb: 0.5 + i / A.length * 8.8, jx: (r() - 0.5) * 120, jy: 240 + r() * 120 }));
+    let beads = '', drops = '';
+    A.forEach(b => {
+      beads += GR.bead(b, 'rm-b');
+      drops += '<circle class="drop rm-d" r="' + (b.r * RM_Z * 0.85).toFixed(1) + '"/>';
+    });
+    const icon = GR.bead({ x: 0, y: 0, r: 16 }, '');
+    kit.stage.append(kit.h('<div class="sky">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' + bs + '<g class="rm-f">' + GR.flake('rm') + beads + '</g>' + drops +
+      '<circle class="callout rm-ring" r="10"/>' + GR.gauge('rm') + '</svg>' +
+      '<div class="words rm-words" style="left:120px;top:150px;width:590px"><p class="tag">Riming</p>' +
+      '<h2 class="line rm-line">Droplets freeze on contact</h2>' +
+      '<p class="sub rm-sub">Each supercooled droplet that hits the ice freezes instantly into rime. Tiny pockets of air freeze in too, which makes rime white and opaque.</p>' +
+      '<div class="legend" style="margin-top:12px">' +
+      '<div class="rm-leg"><svg width="44" height="44" viewBox="-22 -22 44 44"><circle class="drop" r="16"/></svg><span>Supercooled droplet (liquid)</span></div>' +
+      '<div class="rm-leg"><svg width="44" height="44" viewBox="-22 -22 44 44">' + icon + '</svg><span>Rime (frozen droplet)</span></div>' +
+      '<div class="rm-leg"><svg width="44" height="44" viewBox="-22 -22 44 44"><circle class="callout" r="19" style="stroke-width:3"/><circle class="air" r="8" style="stroke-width:2"/></svg><span>Trapped air makes it white</span></div></div></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.bgEls = [...kit.stage.querySelectorAll('.rm-bg')];
+    this.bEls = [...kit.stage.querySelectorAll('.rm-b')];
+    this.dEls = [...kit.stage.querySelectorAll('.rm-d')];
+    this.f = q('.rm-f');
+    this.ring = q('.rm-ring');
+    this.dot = q('.rm-gdot');
+    this.line = q('.rm-line');
+    this.words = q('.rm-words').style;
+    this.sub = q('.rm-sub').style;
+    this.leg = [...kit.stage.querySelectorAll('.rm-leg')].map(e => e.style);
+  },
+  render(t) {
+    const T = this.T0 + t;
+    this.bg.forEach((d, i) => {
+      const y = ((d.y - 300 * t) % 1500 + 1500) % 1500 - 200;
+      this.bgEls[i].setAttribute('cx', (d.x + Math.sin(T + d.ph) * 10).toFixed(1));
+      this.bgEls[i].setAttribute('cy', y.toFixed(1));
+    });
+    const rot = GR.spin(T);
+    this.f.setAttribute('transform', 'translate(' + RM_X + ' ' + RM_Y + ') rotate(' + rot.toFixed(2) + ') scale(' + RM_Z + ')');
+    const ca = Math.cos(rot * Math.PI / 180), sa = Math.sin(rot * Math.PI / 180);
+    this.A.forEach((o, i) => {
+      const bx = RM_X + RM_Z * (o.b.x * ca - o.b.y * sa), by = RM_Y + RM_Z * (o.b.x * sa + o.b.y * ca);
+      const bead = this.bEls[i], drop = this.dEls[i];
+      if (t >= o.tb) {
+        bead.style.opacity = 1;
+        bead.setAttribute('transform', 'translate(' + o.b.x.toFixed(1) + ' ' + o.b.y.toFixed(1) + ') scale(' + lerp(1.35, 1, eo(seg(t, o.tb, o.tb + 0.22))).toFixed(3) + ')');
+      } else bead.style.opacity = 0;
+      const p = seg(t, o.tb - 0.55, o.tb);
+      if (p > 0 && p < 1) {
+        const e = ei(p);
+        drop.style.opacity = Math.min(1, p * 4);
+        drop.setAttribute('cx', (bx + o.jx * (1 - e)).toFixed(1));
+        drop.setAttribute('cy', (by + o.jy * (1 - e)).toFixed(1));
+      } else drop.style.opacity = 0;
+      if (i === RM_HI) {
+        this.ring.setAttribute('cx', bx.toFixed(1));
+        this.ring.setAttribute('cy', by.toFixed(1));
+        const a = eo(seg(t, 4.6, 5.1)) * (1 - eio(seg(t, 8.6, 9.1)));
+        this.ring.setAttribute('r', (o.b.r * RM_Z + lerp(40, 14, a)).toFixed(1));
+        this.ring.style.opacity = a;
+      }
+    });
+    this.dot.setAttribute('cy', GR.gy(lerp(0.42, 0.52, seg(t, 0, 10))).toFixed(1));
+    TextFx.fadeFromRight(this.line, t, 0.4);
+    this.sub.opacity = eo(seg(t, 1.3, 1.9));
+    [2.4, 3.2, 4.6].forEach((a, i) => {
+      const e = eo(seg(t, a, a + 0.5));
+      this.leg[i].opacity = e;
+      this.leg[i].transform = 'translateY(' + lerp(16, 0, e).toFixed(1) + 'px)';
+    });
+    this.words.opacity = 1;
+  },
+});
+}});
+SCENES.push({id:"rime-ball",name:"A ball of rime",dur:6.5,run:function(kit){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+kit.scene('rime-ball', {
+  init(kit) {
+    this.T0 = kit.start;
+    const r = GR.rng(31);
+    this.bg = [];
+    let bs = '';
+    for (let i = 0; i < 36; i++) {
+      const d = { x: 60 + r() * 1620, y: r() * 1500, r: 12 + r() * 14, ph: r() * 6 };
+      this.bg.push(d);
+      bs += '<circle class="drop rb-bg" r="' + d.r.toFixed(1) + '"/>';
+    }
+    const r2 = GR.rng(57);
+    let aB = '', bB = '', drops = '';
+    GR.beads.A.forEach(b => { aB += GR.bead(b, ''); });
+    const B = GR.beads.B;
+    this.B = B.map((b, i) => ({ b, tb: 0.2 + i / B.length * 4.8, jx: (r2() - 0.5) * 120, jy: 240 + r2() * 120 }));
+    B.forEach(b => {
+      bB += GR.bead(b, 'rb-b');
+      drops += '<circle class="drop rb-d" r="' + (b.r * 2.6 * 0.85).toFixed(1) + '"/>';
+    });
+    kit.stage.append(kit.h('<div class="sky">' +
+      '<svg class="art" viewBox="0 0 1920 1080"><g class="rb-w">' + bs + '</g><g class="rb-f">' + GR.flake('rb') + aB +
+      '<circle class="rime rb-fill" r="186" style="stroke:none"/>' + bB + '</g>' + drops + GR.gauge('rb') + '</svg>' +
+      '<div class="words" style="left:120px;top:250px;width:580px"><p class="tag rb-tag">Graupel</p>' +
+      '<h2 class="line rb-line">A ball of rime</h2>' +
+      '<p class="sub rb-sub">Rime buries the arms, with the snowflake still inside. This soft, white pellet, 2 to 5 mm across, is graupel.</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.bgEls = [...kit.stage.querySelectorAll('.rb-bg')];
+    this.bEls = [...kit.stage.querySelectorAll('.rb-b')];
+    this.dEls = [...kit.stage.querySelectorAll('.rb-d')];
+    this.w = q('.rb-w');
+    this.f = q('.rb-f');
+    this.fill = q('.rb-fill').style;
+    this.dot = q('.rb-gdot');
+    this.line = q('.rb-line');
+    this.tag = q('.rb-tag').style;
+    this.sub = q('.rb-sub').style;
+  },
+  render(t) {
+    const T = this.T0 + t;
+    const p = 0;
+    const z = Math.exp(lerp(Math.log(2.6), Math.log(GR.PR / GR.BALL), p));
+    const fx = lerp(1180, 960, p);
+    this.w.setAttribute('transform', 'translate(' + fx.toFixed(1) + ' 540) scale(' + (z / 2.6).toFixed(4) + ') translate(-1180 -540)');
+    this.bg.forEach((d, i) => {
+      const y = ((d.y - 300 * (t + 10)) % 1500 + 1500) % 1500 - 200;
+      this.bgEls[i].setAttribute('cx', (d.x + Math.sin(T + d.ph) * 10).toFixed(1));
+      this.bgEls[i].setAttribute('cy', y.toFixed(1));
+    });
+    const rot = GR.spin(T);
+    this.f.setAttribute('transform', 'translate(' + fx.toFixed(1) + ' 540) rotate(' + rot.toFixed(2) + ') scale(' + z.toFixed(4) + ')');
+    this.fill.opacity = 0.82 * eio(seg(t, 2.6, 4.6)) + 0.18 * eio(seg(t, 5.0, 5.8)) + 0 * T;
+    const ca = Math.cos(rot * Math.PI / 180), sa = Math.sin(rot * Math.PI / 180);
+    this.B.forEach((o, i) => {
+      const bead = this.bEls[i], drop = this.dEls[i];
+      if (t >= o.tb) {
+        bead.style.opacity = 1;
+        bead.setAttribute('transform', 'translate(' + o.b.x.toFixed(1) + ' ' + o.b.y.toFixed(1) + ') scale(' + lerp(1.35, 1, eo(seg(t, o.tb, o.tb + 0.22))).toFixed(3) + ')');
+      } else bead.style.opacity = 0;
+      const pp = seg(t, o.tb - 0.55, o.tb);
+      if (pp > 0 && pp < 1) {
+        const bx = 1180 + 2.6 * (o.b.x * ca - o.b.y * sa), by = 540 + 2.6 * (o.b.x * sa + o.b.y * ca);
+        const e = ei(pp);
+        drop.style.opacity = Math.min(1, pp * 4);
+        drop.setAttribute('cx', (bx + o.jx * (1 - e)).toFixed(1));
+        drop.setAttribute('cy', (by + o.jy * (1 - e)).toFixed(1));
+      } else drop.style.opacity = 0;
+    });
+    this.dot.setAttribute('cy', GR.gy(lerp(0.52, 0.6, seg(t, 0, 8))).toFixed(1));
+    this.tag.opacity = eo(seg(t, 0.3, 0.8));
+    TextFx.fadeFromRight(this.line, t, 0.6);
+    this.sub.opacity = eo(seg(t, 2.8, 3.4));
+    this.sub.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 2.8, 3.4))).toFixed(1) + 'px)';
+  },
+});
+}});
+SCENES.push({id:"shower",name:"Pellet shower",dur:11,run:function(kit){
+const { seg, eo, eio, lerp, TextFx } = kit;
+kit.scene('shower', {
+  init(kit) {
+    const RP = GR.RP;
+    let cloud = 'M-20 -20 L1940 -20 L1940 110';
+    for (let x = 1940; x > -20; x -= 160) cloud += ' Q' + (x - 80) + ' 160 ' + (x - 160) + ' 110';
+    cloud += ' Z';
+    let ps = '';
+    for (let i = GR.rain.length - 1; i >= 0; i--) ps += '<g class="pellet sh-p" data-i="' + i + '">' + GR.ball(RP, 400 + i) + '</g>';
+    const r = GR.rng(12);
+    let ins = '';
+    for (let i = 0; i < 16; i++) {
+      const a = r() * Math.PI * 2, d = Math.sqrt(r()) * 105;
+      ins += GR.bead({ x: 300 + d * Math.cos(a), y: 760 + d * Math.sin(a), r: 30 + r() * 12 }, '');
+    }
+    kit.stage.append(kit.h('<div class="ground" style="background:color-mix(in srgb, var(--main) 3%, var(--ground))">' +
+      '<svg class="art" viewBox="0 0 1920 1080"><defs><clipPath id="sh-clip"><circle cx="300" cy="760" r="118"/></clipPath></defs>' +
+      '<rect class="earth" x="-10" y="' + GR.RG + '" width="1940" height="200"/>' + ps +
+      '<path d="' + cloud + '" style="fill:color-mix(in srgb, var(--main) 14%, var(--ground))"/>' +
+      '<g class="sh-inset"><circle cx="300" cy="760" r="122" style="fill:var(--ground)"/><g clip-path="url(#sh-clip)">' + ins + '</g><circle class="callout" cx="300" cy="760" r="122"/>' +
+      '<text class="callout-txt" x="450" y="750">Air pockets</text><text class="callout-txt" x="450" y="788" style="font-weight:400;font-size:26px">keep it light and brittle</text></g>' +
+      GR.gauge('sh') + '</svg>' +
+      '<div class="words" style="left:120px;top:200px;width:600px"><p class="tag sh-tag">Below the cloud</p>' +
+      '<h2 class="line sh-line">Light pellets bounce</h2>' +
+      '<p class="sub sh-sub">Trapped air makes graupel much lighter than solid ice. The pellets fall in showers and bounce when they hit the ground.</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.pEls = [...kit.stage.querySelectorAll('.sh-p')].map(el => ({ el, p: GR.rain[+el.getAttribute('data-i')] }));
+    this.inset = q('.sh-inset').style;
+    this.dot = q('.sh-gdot');
+    this.line = q('.sh-line');
+    this.tag = q('.sh-tag').style;
+    this.sub = q('.sh-sub').style;
+  },
+  render(t) {
+    this.pEls.forEach(o => {
+      let tt = t, fade = 1;
+      if (o.p !== GR.rain[0] && t > o.p.s) { const ph = (t - o.p.s) % 9; tt = o.p.s + ph; fade = (t - o.p.s < 9 ? 1 : Math.min(1, ph / 0.3)) * (1 - Math.max(0, (ph - 8.2) / 0.8)); }
+      const s = GR.rainAt(o.p, tt);
+      if (!s) { o.el.style.opacity = 0; return; }
+      o.el.style.opacity = fade;
+      o.el.setAttribute('transform', 'translate(' + s.x.toFixed(1) + ' ' + (s.y + GR.RP * s.s).toFixed(1) + ') scale(' + (1 + s.s).toFixed(3) + ' ' + (1 - s.s).toFixed(3) + ') rotate(' + (s.x * 0.8).toFixed(1) + ')');
+    });
+    this.dot.setAttribute('cy', GR.gy(lerp(0.84, 1, eio(seg(t, 0, 1.0)))).toFixed(1));
+    this.tag.opacity = eo(seg(t, 0.2, 0.7));
+    TextFx.fadeFromRight(this.line, t, 0.4);
+    this.sub.opacity = eo(seg(t, 1.6, 2.2));
+    this.sub.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 1.6, 2.2))).toFixed(1) + 'px)';
+    const a = eo(seg(t, 3.6, 4.2));
+    this.inset.opacity = a;
+    this.inset.transform = 'translateY(' + lerp(20, 0, a).toFixed(1) + 'px)';
+  },
+});
+}});
+SCENES.push({id:"crunch",name:"Crunch test",dur:9,run:function(kit){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+const CR_Y = 540, CR_R = 95, CR_T = 635, CR_GX = 600, CR_HX = 1320, CR_L = 360, CR_PY = CR_Y - CR_R - 62;
+function crHammer(cls) {
+  return '<g class="' + cls + '"><rect x="' + -CR_L + '" y="-11" width="' + (CR_L + 34) + '" height="22" rx="11" style="fill:color-mix(in srgb, var(--accent) 32%, var(--ground));stroke:var(--main);stroke-width:3"/>' +
+    '<rect x="' + (-CR_L - 38) + '" y="-62" width="76" height="124" rx="12" style="fill:color-mix(in srgb, var(--second) 40%, var(--ground));stroke:var(--main);stroke-width:3"/>' +
+    '<rect x="' + (-CR_L - 38) + '" y="44" width="76" height="18" rx="6" style="fill:color-mix(in srgb, var(--second) 60%, var(--ground));stroke:var(--main);stroke-width:3"/></g>';
+}
+function crBottom(a) { const r = a * Math.PI / 180; return CR_PY - CR_L * Math.sin(r) + 62 * Math.cos(r); }
+kit.scene('crunch', {
+  init(kit) {
+    const r = GR.rng(5150);
+    this.fr = [];
+    let fs = '';
+    for (let i = 0; i < 28; i++) {
+      const a = r() * Math.PI * 2, d = r() * CR_R * 0.8, s = 9 + r() * 14, side = Math.cos(a) < 0 ? -1 : 1;
+      const f = { x: CR_GX + d * Math.cos(a), y: CR_Y + 40 + d * Math.sin(a) * 0.5, s, vx: side * (120 + r() * 300), vy: -60 - r() * 260, w: (r() - 0.5) * 500 };
+      this.fr.push(f);
+      const pts = [];
+      for (let k = 0; k < 5; k++) { const b = k / 5 * Math.PI * 2, rr = s * (0.6 + r() * 0.5); pts.push((rr * Math.cos(b)).toFixed(1) + ',' + (rr * Math.sin(b)).toFixed(1)); }
+      fs += '<polygon class="rime cr-fr" points="' + pts.join(' ') + '" style="stroke:var(--main);stroke-width:2.5"/>';
+    }
+    let burst = '';
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + 0.2; burst += '<line class="mark" x1="' + (CR_GX + 125 * Math.cos(a)).toFixed(1) + '" y1="' + (CR_Y + 125 * Math.sin(a)).toFixed(1) + '" x2="' + (CR_GX + 170 * Math.cos(a)).toFixed(1) + '" y2="' + (CR_Y + 170 * Math.sin(a)).toFixed(1) + '"/>'; }
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' +
+      '<rect class="earth" x="280" y="' + CR_T + '" width="640" height="8" rx="4"/><rect class="earth" x="1000" y="' + CR_T + '" width="640" height="8" rx="4"/>' +
+      '<g class="pellet cr-g">' + GR.ball(CR_R, 7) + '</g>' + fs +
+      '<g class="cr-h"><circle class="hail" r="' + CR_R + '"/><circle class="hail-ring" r="70"/><circle class="hail-ring" r="46"/><circle class="hail-ring" r="22"/></g>' +
+      '<g class="cr-burst">' + burst + '</g>' +
+      crHammer('cr-gm') + crHammer('cr-hm') + '</svg>' +
+      '<div class="words" style="left:690px;top:90px;width:540px;align-items:center;text-align:center"><p class="tag cr-tag">Graupel or hail?</p>' +
+      '<h2 class="line cr-line">The crush test</h2></div>' +
+      '<div class="words" style="left:340px;top:670px;width:520px;align-items:center;text-align:center;gap:10px"><p class="cap cr-c1">Graupel</p><p class="note cr-n1">Brittle. A light tap makes it crunch and crumble.</p></div>' +
+      '<div class="words" style="left:1060px;top:670px;width:520px;align-items:center;text-align:center;gap:10px"><p class="cap cr-c2">Hail</p><p class="note cr-n2">Solid ice. It is hard and resists crushing.</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    ['g', 'h', 'gm', 'hm', 'burst'].forEach(k => { this[k] = q('.cr-' + k); });
+    this.frEls = [...kit.stage.querySelectorAll('.cr-fr')];
+    this.line = q('.cr-line');
+    this.tag = q('.cr-tag').style;
+    for (const k of ['c1', 'n1', 'c2', 'n2']) this[k] = q('.cr-' + k).style;
+  },
+  render(t) {
+    const tr = t; t = t < 9 ? t : 0.4 + (t - 9) % 8.6;
+    let ga = lerp(35, 55, eio(seg(t, 0.8, 1.6)));
+    ga = lerp(ga, 0, ei(seg(t, 1.6, 1.95)));
+    ga = lerp(ga, -16, eo(seg(t, 1.95, 2.15)));
+    ga = lerp(ga, 35, eio(seg(t, 3.0, 4.0)));
+    let ha = lerp(35, 55, eio(seg(t, 2.4, 3.1)));
+    ha = lerp(ha, 0, ei(seg(t, 3.1, 3.45)));
+    ha = lerp(ha, 14, eo(seg(t, 3.45, 3.65)));
+    ha = lerp(ha, 1, eio(seg(t, 3.65, 3.95)));
+    ha = lerp(ha, 35, eio(seg(t, 5.0, 6.0)));
+    this.gm.setAttribute('transform', 'translate(' + (CR_GX - CR_L) + ' ' + CR_PY + ') scale(-1 1) rotate(' + ga.toFixed(2) + ')');
+    this.hm.setAttribute('transform', 'translate(' + (CR_HX + CR_L) + ' ' + CR_PY + ') rotate(' + ha.toFixed(2) + ')');
+    const gs = Math.max(0.5, Math.min(1, (CR_T - crBottom(ga)) / (2 * CR_R)));
+    this.g.style.opacity = t < 2.0 ? (tr > 9 ? eo(seg(t, 0.4, 0.9)) : 1) : 0;
+    this.g.setAttribute('transform', 'translate(' + CR_GX + ' ' + (CR_T - CR_R * gs).toFixed(1) + ') scale(' + (1 + (1 - gs) * 0.3).toFixed(3) + ' ' + gs.toFixed(3) + ')');
+    const shake = (t > 3.45 && t < 3.85) ? 3 * Math.sin((t - 3.45) * 2 * Math.PI * 5) * (1 - seg(t, 3.45, 3.85)) : 0;
+    this.h.setAttribute('transform', 'translate(' + (CR_HX + shake).toFixed(1) + ' ' + (CR_T - CR_R) + ')');
+    this.fr.forEach((f, i) => {
+      const el = this.frEls[i];
+      if (t < 2.0) { el.style.opacity = 0; return; }
+      el.style.opacity = 1 - seg(t, 8.3, 8.95);
+      const u = t - 2.0;
+      const floor = CR_T - f.s * 0.6;
+      const tl = (-f.vy + Math.sqrt(f.vy * f.vy + 2 * 1400 * Math.max(0, floor - f.y))) / 1400;
+      const uu = Math.min(u, tl);
+      const x = f.x + f.vx * uu * 0.9, y = Math.min(floor, f.y + f.vy * uu + 700 * uu * uu);
+      el.setAttribute('transform', 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + (f.w * uu).toFixed(1) + ')');
+    });
+    this.burst.style.opacity = eo(seg(t, 2.0, 2.2)) * (1 - eio(seg(t, 2.6, 3.1)));
+    this.burst.setAttribute('transform', 'translate(' + CR_GX + ' ' + CR_Y + ') scale(' + lerp(0.8, 1.1, eo(seg(t, 2.0, 2.7))).toFixed(3) + ') translate(' + -CR_GX + ' ' + -CR_Y + ')');
+    this.tag.opacity = eo(seg(tr, 0.1, 0.6));
+    TextFx.fadeFromRight(this.line, tr, 0.3);
+    this.c1.opacity = eo(seg(tr, 0.6, 1.1));
+    this.c2.opacity = eo(seg(tr, 0.8, 1.3));
+    this.n1.opacity = eo(seg(tr, 2.6, 3.2));
+    this.n2.opacity = eo(seg(tr, 4.2, 4.8));
+  },
+});
+}});
+SCENES.push({id:"recap",name:"Graupel",dur:5,run:function(kit){
+const { seg, eo, eob, lerp, TextFx } = kit;
+const RC_Y = 360;
+kit.scene('recap', {
+  init(kit) {
+    this.T0 = kit.start;
+    const drops = [[-40, -30, 30], [36, -46, 24], [20, 30, 34], [-46, 44, 22], [64, 18, 18]].map(d => '<circle class="drop" cx="' + d[0] + '" cy="' + d[1] + '" r="' + d[2] + '" style="stroke-width:3"/>').join('');
+    kit.stage.append(kit.h('<div class="ground" style="background:color-mix(in srgb, var(--main) 5%, var(--ground))">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' +
+      '<g class="rc-i rc-flake">' + GR.flake('rc') + '</g>' +
+      '<g class="rc-i">' + drops + '</g>' +
+      '<g class="rc-i"><g class="pellet">' + GR.ball(118, 21) + '</g></g></svg>' +
+      '<div class="words rc-l" style="left:360px;top:525px;width:240px;align-items:center;text-align:center"><p class="cap">Snowflake</p></div>' +
+      '<div class="words rc-l" style="left:810px;top:525px;width:300px;align-items:center;text-align:center"><p class="cap">Supercooled droplets</p></div>' +
+      '<div class="words rc-l" style="left:1300px;top:525px;width:280px;align-items:center;text-align:center"><p class="cap">Graupel</p></div>' +
+      '<div class="words" style="left:260px;top:690px;width:1400px;align-items:center;text-align:center;gap:46px">' +
+      '<h2 class="line rc-line" style="font-size:150px">Graupel</h2>' +
+      '<p class="sub rc-sub">Also called snow pellets</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.items = [...kit.stage.querySelectorAll('.rc-i')];
+    this.xs = [480, 960, 1440];
+    this.labels = [...kit.stage.querySelectorAll('.rc-l')].map(e => e.style);
+    this.flake = kit.stage.querySelector('.rc-flake > g');
+    this.line = q('.rc-line');
+    this.sub = q('.rc-sub').style;
+  },
+  render(t) {
+    const T = this.T0 + t;
+    this.items.forEach((el, i) => {
+      const a = seg(t, -0.3 + i * 0.45, 0.3 + i * 0.45);
+      const s = Math.max(0.001, eob(a, 1.7)) * (1 + 0.012 * Math.sin(T * 2 + i));
+      el.style.opacity = Math.min(1, a * 3);
+      el.setAttribute('transform', 'translate(' + this.xs[i] + ' ' + RC_Y + ') scale(' + s.toFixed(4) + ')');
+    });
+    this.flake.setAttribute('transform', 'rotate(' + (GR.spin(T) * 0.6).toFixed(2) + ') scale(0.72)');
+    this.labels.forEach((l, i) => { const a = eo(seg(t, 0.2 + i * 0.45, 0.7 + i * 0.45)); l.opacity = a; l.transform = 'translateY(' + lerp(14, 0, a).toFixed(1) + 'px)'; });
+    TextFx.fadeFromRight(this.line, t, 1.4, { dx: 34 });
+    this.sub.opacity = eo(seg(t, 2.2, 2.8));
+  },
+});
+}});
+
+  var stage = document.getElementById('stage'), viewport = document.getElementById('viewport');
+  var defs = [], kits = [], start = 0;
+  SCENES.forEach(function (sc) {
+    var el = document.createElement('div'); el.className = 'scene'; el.hidden = true; stage.appendChild(el);
+    var kit = { stage: el, start: start, dur: sc.dur, W: 1920, H: 1080, h: h, seg: seg, lerp: lerp, clamp01: clamp01, eo: eo, ei: ei, eio: eio, eob: eob, TextFx: TextFx, rng: GR.rng,
+      scene: function (id, def) { defs[SCENES.indexOf(sc)] = def; } };
+    kits.push(kit); start += sc.dur;
+    try { sc.run(kit); } catch (e) { console.error('scene ' + sc.id, e); }
+  });
+  function fit() {
+    var w = viewport.clientWidth, hh = viewport.clientHeight, s = Math.min(w / 1920, hh / 1080);
+    stage.style.transform = 'translate(' + ((w - 1920 * s) / 2) + 'px,' + ((hh - 1080 * s) / 2) + 'px) scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+  var idx = 0, t = 0, playing = true, last = null, seen = {};
+  var dots = document.getElementById('dots'), label = document.getElementById('label');
+  var bNext = document.getElementById('next'), bBack = document.getElementById('back'), bPause = document.getElementById('pause');
+  SCENES.forEach(function (sc, i) {
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-label', 'Scene ' + (i + 1) + ': ' + sc.name);
+    b.addEventListener('click', function () { show(i); }); dots.appendChild(b);
+  });
+  function ui() {
+    [].forEach.call(dots.children, function (b, i) { b.setAttribute('aria-current', i === idx ? 'true' : 'false'); b.classList.toggle('seen', !!seen[i] && i !== idx); });
+    label.innerHTML = '<b>' + (idx + 1) + ' / ' + SCENES.length + '</b> &middot; ' + SCENES[idx].name;
+    bBack.disabled = idx === 0; bNext.disabled = idx === SCENES.length - 1;
+    bPause.textContent = playing ? 'Pause' : 'Play'; bPause.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  }
+  function show(i) {
+    if (i < 0 || i >= SCENES.length) return;
+    kits[idx].stage.hidden = true; seen[idx] = true; idx = i; t = 0; kits[idx].stage.hidden = false; playing = true; draw(); ui();
+  }
+  function draw() {
+    var d = defs[idx]; if (!d) return;
+    try { d.render.call(d, t, kits[idx]); } catch (e) { console.error(e); }
+    bNext.classList.toggle('ready', t > SCENES[idx].dur && idx < SCENES.length - 1);
+  }
+  function frame(now) {
+    var dt = last == null ? 0 : Math.min(0.1, (now - last) / 1000); last = now;
+    if (playing) { t += dt; draw(); }
+    requestAnimationFrame(frame);
+  }
+  function full() {
+    var app = document.getElementById('app');
+    try {
+      if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+      else if (app.requestFullscreen) app.requestFullscreen().catch(function () {});
+    } catch (e) {}
+  }
+  document.addEventListener('fullscreenchange', function () { document.getElementById('full').textContent = document.fullscreenElement ? 'Exit full screen' : 'Full screen'; setTimeout(fit, 50); });
+  bNext.addEventListener('click', function () { show(idx + 1); });
+  bBack.addEventListener('click', function () { show(idx - 1); });
+  bPause.addEventListener('click', function () { playing = !playing; ui(); });
+  document.getElementById('replay').addEventListener('click', function () { show(idx); });
+  document.getElementById('full').addEventListener('click', full);
+  document.addEventListener('keydown', function (e) {
+    if (e.target && e.target.tagName === 'BUTTON' && (e.key === ' ' || e.key === 'Enter')) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(idx + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(idx - 1); }
+    else if (e.key === 'r' || e.key === 'R') show(idx);
+    else if (e.key === 'f' || e.key === 'F') full();
+    else if (e.key === 'p' || e.key === 'P') { playing = !playing; ui(); }
+  });
+  var ready = (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(function () {}) : Promise.resolve();
+  ready.then(function () {
+    return Promise.all(defs.map(function (d, i) { return d && d.init ? Promise.resolve(d.init.call(d, kits[i])) : null; }).map(function (p) { return Promise.resolve(p).catch(function (e) { console.error(e); }); }));
+  }).then(function () {
+    kits[0].stage.hidden = false; ui(); draw(); requestAnimationFrame(frame);
+  });
+})();
+</script>
+
+</body></html>

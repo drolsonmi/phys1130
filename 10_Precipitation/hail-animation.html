@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Hail Forms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;800&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root { --page:#eef0f4; --bar:#ffffff; --barText:#25282b; --muted:#5b6170; --line:#d6dae3; --navy:#1e376c; --orange:#f47920; color-scheme:light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#101218; --bar:#1a1d25; --barText:#eceef3; --muted:#a3a9b8; --line:#2c303b; color-scheme:dark; } }
+:root[data-theme="dark"] { --page:#101218; --bar:#1a1d25; --barText:#eceef3; --muted:#a3a9b8; --line:#2c303b; color-scheme:dark; }
+*, *::before, *::after { box-sizing:border-box }
+html { scroll-padding-top:env(safe-area-inset-top,0px) }
+html, body { height:100%; margin:0 }
+body { background:var(--page); color:var(--barText); font-family:'Nunito Sans', system-ui, sans-serif; display:flex; flex-direction:column; overflow:hidden }
+#view { flex:1; min-height:0; position:relative; display:flex; align-items:center; justify-content:center; padding:16px }
+#frame { position:relative; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,.12) }
+#scaler { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0 }
+.stage { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:none;
+  --display:'Zilla Slab', Georgia, serif; --sans:'Nunito Sans', system-ui, sans-serif }
+.stage.on { display:block }
+#bar { flex:none; display:flex; align-items:center; gap:12px; padding:12px 20px; background:var(--bar); border-top:1px solid var(--line) }
+#where { flex:1; min-width:0; font-size:15px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+#where b { color:var(--barText); font-weight:800 }
+#dots { display:flex; gap:6px }
+#dots i { width:8px; height:8px; border-radius:4px; background:var(--line) }
+#dots i.on { background:var(--orange); width:22px }
+button { font:inherit; font-size:15px; font-weight:800; border-radius:10px; padding:10px 16px; cursor:pointer; border:1px solid var(--line); background:transparent; color:var(--barText) }
+button:hover { border-color:var(--muted) }
+button:disabled { opacity:.4; cursor:default }
+#next { background:var(--navy); border-color:var(--navy); color:#fff; padding:10px 26px }
+#next:hover { background:#16295200; background:#2a4a8c }
+@media (max-width:640px) { #dots { display:none } #replay, #full { display:none } }
+</style>
+<style>
+.stage { --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; color:var(--second); font-family:var(--sans, system-ui, sans-serif) }
+.ground { position:absolute; inset:0; background:var(--ground) }
+.words { position:absolute; margin:0; display:flex; flex-direction:column; gap:20px } .words > * { margin:0 }
+.line { font-family:var(--display, var(--sans, system-ui, sans-serif)); font-size:84px; line-height:1.05; font-weight:700; color:var(--main) } .sub { font-size:36px; line-height:1.3 }
+.tag { font-size:26px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--accent) }
+.lbl { position:absolute; font-size:28px; font-weight:800; color:var(--main); white-space:nowrap }
+.sub { color:color-mix(in srgb, var(--second) 78%, var(--ground)) }
+.art { position:absolute; inset:0; width:100%; height:100%; overflow:visible }
+.cloud { fill:color-mix(in srgb, var(--main) 9%, var(--ground)); stroke:color-mix(in srgb, var(--main) 35%, var(--ground)); stroke-width:4; stroke-linejoin:round }
+.cloud-deep { fill:color-mix(in srgb, var(--main) 16%, var(--ground)) }
+.freeze { stroke:var(--main); stroke-width:4; stroke-dasharray:18 14; fill:none }
+.up { fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; stroke-linejoin:round }
+.down { fill:none; stroke:color-mix(in srgb, var(--main) 60%, var(--ground)); stroke-width:10; stroke-linecap:round; stroke-linejoin:round }
+.ice-clear { fill:color-mix(in srgb, var(--main) 22%, var(--ground)) }
+.ice-opaque { fill:color-mix(in srgb, var(--main) 5%, var(--ground)) }
+.ice-edge { fill:none; stroke:var(--main); stroke-width:3 }
+.seed { fill:var(--accent) }
+.drop { fill:color-mix(in srgb, var(--main) 45%, var(--ground)) }
+.ink { fill:var(--main) }
+.panel { position:absolute; border-radius:24px; background:color-mix(in srgb, var(--ground) 94%, var(--main)); border:3px solid color-mix(in srgb, var(--main) 20%, var(--ground)) }
+.cap { font-size:40px; font-weight:800; color:var(--main); line-height:1.2 }
+.big { font-family:var(--display, var(--sans, system-ui, sans-serif)); font-size:150px; font-weight:700; line-height:1; color:var(--main) }
+</style>
+</head>
+<body>
+<div id="view"><div id="frame"><div id="scaler"></div></div></div>
+<div id="bar">
+  <div id="where"></div>
+  <div id="dots"></div>
+  <button id="back" title="Previous scene (Left arrow)">Back</button>
+  <button id="replay" title="Replay this scene (R)">Replay</button>
+  <button id="full" title="Full screen (F)">Full screen</button>
+  <button id="next" title="Next scene (Right arrow or Space)">Next</button>
+</div>
+<script>
+(function () {
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+  const eo = p => 1 - Math.pow(1 - p, 3);
+  const ei = p => p * p * p;
+  const eio = p => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  const eob = (p, s) => { s = s == null ? 1.70158 : s; const q = p - 1; return 1 + (s + 1) * q * q * q + s * q * q; };
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const rng = seed => { let a = seed >>> 0 || 1; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+  const cutPaper = (seed, n, irr) => { const r = rng(seed * 7919 + 13); const pts = []; for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + (r() - 0.5) * (Math.PI / n) * 0.6; const rad = 1 + (r() * 2 - 1) * irr; pts.push([Math.cos(a) * rad, Math.sin(a) * rad]); } return pts; };
+  const polyStr = (pts, cx, cy, sx, sy, rot) => { const c = Math.cos(rot || 0), s = Math.sin(rot || 0); return pts.map(([x, y]) => { x *= sx; y *= sy; return (cx + x * c - y * s).toFixed(1) + ',' + (cy + x * s + y * c).toFixed(1); }).join(' '); };
+  const h = html => { const tp = document.createElement('template'); tp.innerHTML = html; return tp.content; };
+  const TextFx = { fadeFromRight(el, t, start) { const p = eo(seg(t, start, start + 0.6)); el.style.opacity = p; el.style.transform = 'translateX(' + lerp(40, 0, p) + 'px)'; } };
+  const defs = {};
+  window.kit = { seg, eo, ei, eio, eob, lerp, rng, cutPaper, polyStr, h, TextFx, stage: null, scene(id, def) { defs[id] = def; }, scenes() {}, score() {} };
+  window.__defs = defs;
+})();
+</script>
+<script>window.HAIL = {
+  svg(n, r, grow) {
+    grow = grow == null ? 1 : grow;
+    var s = '', core = r * 0.22, step = (r - core) / Math.max(1, n);
+    for (var i = n; i >= 1; i--) {
+      var rr = core + step * i;
+      s += '<circle class="' + (i % 2 ? 'ice-opaque' : 'ice-clear') + '" r="' + rr.toFixed(1) + '"/>';
+      s += '<circle class="ice-edge" style="stroke-width:2;opacity:.55" r="' + rr.toFixed(1) + '"/>';
+    }
+    s += '<circle class="seed" r="' + core.toFixed(1) + '"/>';
+    return s;
+  }
+};</script>
+<script>(function(){
+const { seg, eo, eio, lerp, TextFx } = kit;
+const TITLE_CLOUD = 'M960 830 C930 770 990 720 1060 735 C1050 640 1120 570 1200 575 C1210 450 1250 360 1210 285 C1120 270 1010 255 970 228 C1060 180 1420 170 1730 200 C1830 212 1850 255 1760 266 C1570 280 1520 310 1500 370 C1570 430 1590 520 1565 585 C1650 595 1710 665 1690 735 C1755 755 1770 825 1700 845 Z';
+kit.scene('title', {
+  init(kit) {
+    let stones = '';
+    for (let i = 0; i < 9; i++) stones += '<circle class="ice-clear title-stone" r="' + (7 + (i % 3) * 3) + '"/>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080"><g class="title-cloud"><path class="cloud" d="' + TITLE_CLOUD + '"/>' +
+      '<path class="cloud-deep" d="M1080 800 C1070 720 1150 680 1230 690 C1240 600 1300 560 1380 580 C1460 560 1540 620 1530 700 C1610 710 1650 770 1620 830 Z"/></g>' +
+      '<g class="title-fall">' + stones + '</g></svg>' +
+      '<div class="words" style="left:150px;top:360px;width:760px"><p class="tag title-tag">Introduction to Meteorology</p>' +
+      '<h1 class="line title-line" style="font-size:132px">How hail forms</h1>' +
+      '<p class="sub title-sub">A hailstone grows one layer at a time</p></div></div>'));
+    this.cloud = kit.stage.querySelector('.title-cloud');
+    this.cloud.style.transformOrigin = '1350px 840px';
+    this.stones = [...kit.stage.querySelectorAll('.title-stone')];
+    this.line = kit.stage.querySelector('.title-line');
+    this.tag = kit.stage.querySelector('.title-tag').style;
+    this.sub = kit.stage.querySelector('.title-sub').style;
+  },
+  render(t) {
+    TextFx.fadeFromRight(this.line, t, -0.5);
+    this.tag.opacity = eo(seg(t, -0.3, 0.3));
+    this.sub.opacity = eo(seg(t, 0.9, 1.5));
+    this.sub.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 0.9, 1.5))) + 'px)';
+    const rise = eio(seg(t, -0.6, 2.2));
+    const s = lerp(0.9, 1, rise) * (1 + 0.01 * Math.sin(t * 2));
+    this.cloud.style.transform = 'translateY(' + (lerp(70, 0, rise) - t * 3) + 'px) scale(' + s + ')';
+    this.stones.forEach((c, i) => {
+      const ph = ((t * (0.55 + (i % 4) * 0.08) + i * 0.37) % 1);
+      const x = 1110 + i * 62 + Math.sin(i * 2.1) * 20;
+      c.setAttribute('cx', x - ph * 30);
+      c.setAttribute('cy', 850 + ph * 260);
+      c.style.opacity = eo(seg(t, 1.2, 2)) * (1 - seg(ph, 0.8, 1));
+    });
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, eob, lerp, TextFx } = kit;
+const EMB_X = [430, 960, 1490];
+kit.scene('embryo', {
+  init(kit) {
+    const lump = kit.polyStr(kit.cutPaper(5, 14, 0.2), 0, 0, 80, 80, 0);
+    const r = kit.rng(4); let dust = '';
+    for (let i = 0; i < 7; i++) {
+      const a = r() * 6.28, d = 14 + r() * 50;
+      dust += '<polygon class="seed" points="' + kit.polyStr(kit.cutPaper(20 + i, 5, 0.4), Math.cos(a) * d, Math.sin(a) * d, 7 + r() * 12, 7 + r() * 12, r() * 3) + '"/>';
+    }
+    const ring = i => '<g class="emb-r' + i + '"><circle class="ice-clear" r="122" style="opacity:.75"/><circle class="ice-edge" r="122" style="stroke-dasharray:14 10"/></g>';
+    const panel = (i, cap, fs) => '<div class="panel emb-p' + i + '" style="left:' + (EMB_X[i] - 210) + 'px;top:380px;width:420px;height:520px">' +
+      '<div class="cap" style="position:absolute;left:24px;right:24px;bottom:36px;text-align:center;font-size:' + fs + 'px">' + cap + '</div></div>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      panel(0, 'Graupel', 40) + panel(1, 'Frozen raindrop', 40) + panel(2, 'Particles (including dust and insects)', 32) +
+      '<svg class="art" viewBox="0 0 1920 1080">' +
+      '<g class="emb-g0">' + ring(0) + '<polygon class="seed" points="' + lump + '"/><polygon class="ice-edge" points="' + lump + '"/>' +
+      '<circle class="ice-opaque" cx="-26" cy="-20" r="12"/><circle class="ice-opaque" cx="22" cy="16" r="9"/><circle class="ice-opaque" cx="-6" cy="30" r="7"/></g>' +
+      '<g class="emb-g1">' + ring(1) + '<circle class="seed" r="80"/><circle class="ice-edge" r="80"/><ellipse cx="-28" cy="-32" rx="20" ry="13" style="fill:var(--ground);opacity:.7"/></g>' +
+      '<g class="emb-g2">' + ring(2) + '<g class="emb-dust">' + dust + '</g></g></svg>' +
+      '<div class="words" style="left:150px;top:110px;width:1620px"><h2 class="line emb-line" style="font-size:80px">Every hailstone starts as an embryo</h2>' +
+      '<p class="sub emb-sub">A small particle that water can freeze around</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.p = [0, 1, 2].map(i => q('.emb-p' + i).style);
+    this.g = [0, 1, 2].map(i => q('.emb-g' + i));
+    this.rings = [q('.emb-r0'), q('.emb-r1'), q('.emb-r2')];
+    this.dust = q('.emb-dust');
+    this.line = q('.emb-line'); this.sub = q('.emb-sub').style;
+  },
+  render(t) {
+    TextFx.fadeFromRight(this.line, t, 0.1);
+    this.sub.opacity = eo(seg(t, 1.0, 1.6));
+    for (let i = 0; i < 3; i++) {
+      const a = 1.6 + i * 0.6, p = seg(t, a, a + 0.6);
+      this.p[i].opacity = eo(p);
+      this.p[i].transform = 'translateY(' + lerp(40, 0, eo(p)) + 'px)';
+      const sp = seg(t, a + 0.2, a + 0.9);
+      const s = sp <= 0 ? 0.001 : eob(sp, 1.7) * (1 + 0.015 * Math.sin(t * 2.2 + i));
+      const rot = i === 2 ? 0 : Math.sin(t * 1.3 + i) * 4;
+      this.g[i].setAttribute('transform', 'translate(' + EMB_X[i] + ' 610) rotate(' + rot + ') scale(' + s + ')');
+    }
+    this.dust.setAttribute('transform', 'rotate(' + t * 8 + ')');
+    this.rings.forEach((g, i) => {
+      const rp = seg(t, 4.4 + i * 0.4, 5.3 + i * 0.4);
+      g.setAttribute('transform', 'scale(' + (rp <= 0 ? 0.001 : lerp(0.55, 1, eo(rp))) + ')');
+      g.style.opacity = eo(rp);
+    });
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+const CY = { S0: 1.0, P: 6.5, N: 4, A: 0.5, cx: 520, cy: 540, rx: 140, ry: 250, END: 33.5 };
+const PI = Math.PI;
+const cyG = x => x - CY.A * Math.sin(2 * PI * x) / (2 * PI);
+const cyInv = v => { let a = 0, b = 1; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (cyG(m) < v) a = m; else b = m; } return (a + b) / 2; };
+const cyPos = th => [CY.cx - CY.rx * Math.sin(th), CY.cy - CY.ry * Math.cos(th)];
+kit.scene('cycle', {
+  init(kit) {
+    this.xf = cyInv(0.375); this.xz = cyInv(0.675);
+    const r = kit.rng(9); let dots = '';
+    for (let i = 0; i < 40; i++) dots += '<circle class="drop" cx="' + (200 + r() * 900).toFixed(0) + '" cy="' + (570 + r() * 300).toFixed(0) + '" r="' + (3 + r() * 4).toFixed(1) + '"/>';
+    const CL = 'M140 880 C100 800 150 700 230 700 C200 560 260 430 360 410 C380 300 480 230 600 240 C680 180 860 180 940 250 C1060 250 1140 340 1120 450 C1170 520 1170 640 1110 700 C1170 760 1150 870 1060 885 Z';
+    const item = (cls, n, txt) => '<div class="' + cls + '" style="display:flex;gap:16px;align-items:flex-start"><span style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--accent);color:var(--ground);font-weight:800;font-size:26px;display:flex;align-items:center;justify-content:center">' + n + '</span><span class="sub" style="font-size:31px;line-height:1.25">' + txt + '</span></div>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<div class="panel" style="left:1220px;top:120px;width:600px;height:900px"></div>' +
+      '<svg class="art" viewBox="0 0 1920 1080"><defs><clipPath id="cy-clip"><path d="' + CL + '"/></clipPath></defs>' +
+      '<rect x="0" y="960" width="1180" height="120" style="fill:color-mix(in srgb, var(--main) 14%, var(--ground))"/>' +
+      '<path class="cloud" d="' + CL + '"/>' +
+      '<rect class="cloud-deep" x="0" y="0" width="1200" height="540" clip-path="url(#cy-clip)"/>' +
+      '<g class="cy-dots" clip-path="url(#cy-clip)">' + dots + '</g>' +
+      '<line class="freeze" x1="150" y1="540" x2="1150" y2="540"/>' +
+      '<path class="up" d="M710 880 L710 320"/><path class="up" d="M678 360 L710 316 L742 360"/>' +
+      '<path class="down" d="M1010 360 L1010 930"/><path class="down" d="M978 892 L1010 936 L1042 892"/>' +
+      '<circle class="drop cy-coat" r="10" style="opacity:.65"/><g class="cy-stone"></g>' +
+      '<circle class="drop cy-incoat" cx="1520" cy="350" r="10" style="opacity:.6"/><g class="cy-in"></g></svg>' +
+      '<div class="lbl" style="left:740px;top:268px">Freezing layer</div>' +
+      '<div class="lbl" style="left:190px;top:820px">Supercooled water</div>' +
+      '<div class="lbl" style="left:728px;top:600px;color:var(--accent);font-size:32px">Updraft</div>' +
+      '<div class="lbl" style="left:1028px;top:400px;font-size:32px">Downdraft</div>' +
+      '<div class="words" style="left:140px;top:50px;width:1000px"><h2 class="line cy-line" style="font-size:64px">Up and down, layer by layer</h2></div>' +
+      '<div class="words cy-list" style="left:1264px;top:566px;width:516px;gap:16px"><p class="cap">Layer <span class="cy-n" style="color:var(--accent)">1</span></p>' +
+      item('cy-i0', 1, 'Falls into supercooled water and grows') + item('cy-i1', 2, 'Caught by the updraft and lifted to the freezing layer') + item('cy-i2', 3, 'The collected water freezes into a new layer') +
+      item('cy-i3', 4, 'This process continues until the stone is too heavy') + '</div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.stone = q('.cy-stone'); this.inn = q('.cy-in'); this.coat = q('.cy-coat'); this.incoat = q('.cy-incoat');
+    this.nEl = q('.cy-n'); this.list = q('.cy-list').style;
+    this.li = [0, 1, 2, 3].map(i => q('.cy-i' + i).style);
+    this.dots = q('.cy-dots').style; this.line = q('.cy-line'); this.last = -1; this.lastK = -1;
+  },
+  render(t) {
+    TextFx.fadeFromRight(this.line, t, -0.4);
+    const { S0, P, N, END } = CY;
+    const show = (st, a) => { const p = eo(seg(t, a, a + 0.45)); st.opacity = p; st.transform = 'translateX(' + lerp(24, 0, p) + 'px)'; };
+    const s = (t - S0) / P, k = Math.floor(s), u = s - k;
+    const [x, y] = cyPos(0.25 * PI + 2 * PI * (k + cyG(u)));
+    let n = 0, coat = 0;
+    if (k < 0) { this.list.opacity = 0; }
+    else {
+      const kk = Math.min(k, N - 1), ts = S0 + kk * P;
+      if (k >= N) { n = N; coat = 0; }
+      else {
+        n = k;
+        if (u < this.xf) coat = eo(u / this.xf);
+        else if (u < this.xz) coat = 1;
+        else { const pz = (u - this.xz) / (1 - this.xz); if (pz >= 0.5) { n = k + 1; coat = 1 - eo((pz - 0.5) / 0.5); } else coat = 1; }
+      }
+      const out = kk < N - 1 ? 1 - eo(seg(t, ts + P - 0.35, ts + P)) : 1;
+      this.list.opacity = eo(seg(t, ts, ts + 0.3)) * out;
+      if (kk !== this.lastK) { this.nEl.textContent = String(kk + 1); this.lastK = kk; }
+      show(this.li[0], ts + 0.1); show(this.li[1], ts + this.xf * P); show(this.li[2], ts + this.xz * P);
+      if (kk === N - 1) show(this.li[3], S0 + N * P); else this.li[3].opacity = 0;
+    }
+    this.li[3].display = this.lastK === N - 1 ? 'flex' : 'none';
+    if (n !== this.last) { this.stone.innerHTML = window.HAIL.svg(n, 10 + 4.5 * n); this.inn.innerHTML = window.HAIL.svg(n, 50 + 36 * n); this.last = n; }
+    this.stone.setAttribute('transform', 'translate(' + x + ' ' + y + ')');
+    this.coat.setAttribute('cx', x); this.coat.setAttribute('cy', y);
+    this.coat.setAttribute('r', 10 + 4.5 * n + 4.5 * coat);
+    this.coat.style.opacity = coat > 0 ? 0.65 : 0;
+    this.incoat.setAttribute('r', 50 + 36 * n + 36 * coat);
+    this.incoat.style.opacity = coat > 0 ? 0.6 : 0;
+    this.inn.setAttribute('transform', 'translate(1520 350) rotate(' + t * 5 + ')');
+    this.dots.transform = 'translateY(' + Math.sin(t * 1.2) * 5 + 'px)';
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, ei, eio, lerp } = kit;
+const HV = { P: 6.5, A: 0.5, cx: 520, cy: 540, rx: 140, ry: 250, PREV: 33.5 };
+const hvG = x => x - HV.A * Math.sin(2 * Math.PI * x) / (2 * Math.PI);
+const hvInv = v => { let a = 0, b = 1; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (hvG(m) < v) a = m; else b = m; } return (a + b) / 2; };
+const hvPos = th => [HV.cx - HV.rx * Math.sin(th), HV.cy - HV.ry * Math.cos(th)];
+const hvBez = (p, a, b, c, d) => { const u = 1 - p; return u * u * u * a + 3 * u * u * p * b + 3 * u * p * p * c + p * p * p * d; };
+kit.scene('heavy', {
+  init(kit) {
+    this.tA = hvInv(0.375) * HV.P; this.tB = this.tA + 1.6; this.tC = this.tB + 1.2;
+    const r = kit.rng(9); let dots = '';
+    for (let i = 0; i < 40; i++) dots += '<circle class="drop" cx="' + (200 + r() * 900).toFixed(0) + '" cy="' + (570 + r() * 300).toFixed(0) + '" r="' + (3 + r() * 4).toFixed(1) + '"/>';
+    const CL = 'M140 880 C100 800 150 700 230 700 C200 560 260 430 360 410 C380 300 480 230 600 240 C680 180 860 180 940 250 C1060 250 1140 340 1120 450 C1170 520 1170 640 1110 700 C1170 760 1150 870 1060 885 Z';
+    const item = (cls, n, txt) => '<div class="' + cls + '" style="display:flex;gap:16px;align-items:flex-start"><span style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--accent);color:var(--ground);font-weight:800;font-size:26px;display:flex;align-items:center;justify-content:center">' + n + '</span><span class="sub" style="font-size:31px;line-height:1.25">' + txt + '</span></div>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<div class="panel" style="left:1220px;top:120px;width:600px;height:900px"></div>' +
+      '<svg class="art" viewBox="0 0 1920 1080"><defs><clipPath id="hv-clip"><path d="' + CL + '"/></clipPath></defs>' +
+      '<rect x="0" y="960" width="1180" height="120" style="fill:color-mix(in srgb, var(--main) 14%, var(--ground))"/>' +
+      '<path class="cloud" d="' + CL + '"/>' +
+      '<rect class="cloud-deep" x="0" y="0" width="1200" height="540" clip-path="url(#hv-clip)"/>' +
+      '<g class="hv-dots" clip-path="url(#hv-clip)">' + dots + '</g>' +
+      '<line class="freeze" x1="150" y1="540" x2="1150" y2="540"/>' +
+      '<path class="up" d="M710 880 L710 320"/><path class="up" d="M678 360 L710 316 L742 360"/>' +
+      '<path class="down" d="M1010 360 L1010 930"/><path class="down" d="M978 892 L1010 936 L1042 892"/>' +
+      '<g class="hv-stone">' + window.HAIL.svg(4, 28) + '</g>' +
+      '<g transform="translate(1520 350)">' + window.HAIL.svg(4, 194) + '</g></svg>' +
+      '<div class="lbl" style="left:740px;top:268px">Freezing layer</div>' +
+      '<div class="lbl" style="left:190px;top:820px">Supercooled water</div>' +
+      '<div class="lbl" style="left:728px;top:600px;color:var(--accent);font-size:32px">Updraft</div>' +
+      '<div class="lbl" style="left:1028px;top:400px;font-size:32px">Downdraft</div>' +
+      '<div class="words" style="left:140px;top:50px;width:1000px"><h2 class="line" style="font-size:64px">Up and down, layer by layer</h2></div>' +
+      '<div class="words hv-fin" style="left:1264px;top:566px;width:516px;gap:16px"><p class="cap">Too heavy to lift</p>' +
+      item('hv-f0', 1, 'Falls through the cloud again') + item('hv-f1', 2, 'Updraft can no longer lift the hailstone') + item('hv-f2', 3, 'Hailstone falls as it is caught by the downdraft') + item('hv-f3', 4, 'It falls to the ground as hail') + '</div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.stone = q('.hv-stone'); this.fin = q('.hv-fin').style;
+    this.fi = [0, 1, 2, 3].map(i => q('.hv-f' + i).style); this.dots = q('.hv-dots').style;
+  },
+  render(t) {
+    const PI = Math.PI, { tA, tB, tC } = this;
+    const E = window.HV_ENTRY || { skip: 0, wait: 0, u0: 0 };
+    if (t < E.wait) {
+      const [wx, wy] = hvPos(0.25 * PI + 2 * PI * hvG(E.u0 + t / HV.P));
+      this.stone.setAttribute('transform', 'translate(' + wx + ' ' + wy + ')');
+      this.fin.opacity = eo(seg(t, 0, 0.3)); this.fi.forEach(s => { s.opacity = 0; });
+      return;
+    }
+    t = t - E.wait + E.skip;
+    const show = (st, a) => { const p = eo(seg(t, a, a + 0.45)); st.opacity = p; st.transform = 'translateX(' + lerp(24, 0, p) + 'px)'; };
+    let x, y;
+    if (t < tA) [x, y] = hvPos(0.25 * PI + 2 * PI * hvG(t / HV.P));
+    else if (t < tB) { const p = eio(seg(t, tA, tB)) * 0.6 + seg(t, tA, tB) * 0.4; x = hvBez(p, 520, 660, 770, 880); y = hvBez(p, 790, 790, 680, 660); }
+    else { const p = seg(t, tB, tC); x = lerp(880, 960, eo(p)); y = lerp(660, 960 - 28, ei(p)) - 30 * Math.sin(PI * seg(t, tC, tC + 0.3)); }
+    this.stone.setAttribute('transform', 'translate(' + x + ' ' + y + ')');
+    this.fin.opacity = eo(seg(t, 0, 0.3));
+    show(this.fi[0], 0.1); show(this.fi[1], tA + 0.3); show(this.fi[2], tB); show(this.fi[3], tC);
+    this.dots.transform = 'translateY(' + Math.sin((t + HV.PREV) * 1.2) * 5 + 'px)';
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+const HD = { floor: 800, hx: 560, gx: 1360, R: 60, gr: 50, up: 38 };
+const HD_HAMMER = '<rect x="-300" y="-13" width="300" height="26" rx="13" style="fill:color-mix(in srgb, var(--accent) 35%, var(--ground));stroke:var(--main);stroke-width:4"/>' +
+  '<rect x="-350" y="-62" width="84" height="122" rx="10" style="fill:color-mix(in srgb, var(--main) 55%, var(--ground));stroke:var(--main);stroke-width:4"/>' +
+  '<rect x="-350" y="44" width="84" height="16" rx="6" style="fill:var(--main)"/>';
+kit.scene('hard', {
+  init(kit) {
+    const r = kit.rng(3); this.fr = [];
+    let frags = '';
+    for (let i = 0; i < 11; i++) {
+      const side = i % 2 ? 1 : -1;
+      this.fr.push({ dx: side * (30 + r() * 150), hop: 30 + r() * 60, s: 9 + r() * 12, rot: r() * 360, y0: -20 + r() * 40 });
+      frags += '<polygon class="ice-opaque hd-fr" style="stroke:var(--main)" points="' + kit.polyStr(kit.cutPaper(40 + i, 6, 0.35), 0, 0, 1, 1, 0) + '"/>';
+    }
+    const lump = kit.polyStr(kit.cutPaper(5, 14, 0.2), 0, 0, HD.gr, HD.gr, 0);
+    const fl = x => '<line x1="' + (x - 300) + '" y1="' + HD.floor + '" x2="' + (x + 300) + '" y2="' + HD.floor + '" style="stroke:var(--main);stroke-width:6;stroke-linecap:round"/>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' + fl(HD.hx) + fl(HD.gx) +
+      '<line x1="960" y1="300" x2="960" y2="960" style="stroke:color-mix(in srgb, var(--main) 20%, var(--ground));stroke-width:3"/>' +
+      '<g class="hd-hail">' + window.HAIL.svg(4, HD.R) + '</g>' +
+      '<g class="hd-gr"><polygon class="ice-opaque" style="stroke:var(--main);stroke-width:3" points="' + lump + '"/>' +
+      '<circle class="ice-clear" cx="-16" cy="-12" r="8"/><circle class="ice-clear" cx="14" cy="10" r="6"/><circle class="ice-clear" cx="-4" cy="20" r="5"/></g>' +
+      '<g class="hd-frs">' + frags + '</g>' +
+      '<g class="hd-h1">' + HD_HAMMER + '</g><g class="hd-h2">' + HD_HAMMER + '</g></svg>' +
+      '<div class="words" style="left:0;top:60px;width:1920px;align-items:center;text-align:center"><h2 class="line hd-line" style="font-size:80px">Hail or graupel? Tap it.</h2></div>' +
+      '<div class="words hd-l" style="left:260px;top:840px;width:600px;align-items:center;text-align:center"><p class="cap">Hail</p><p class="sub" style="font-size:32px">Solid, layered ice: hard, it holds firm</p></div>' +
+      '<div class="words hd-r" style="left:1060px;top:840px;width:600px;align-items:center;text-align:center"><p class="cap">Graupel</p><p class="sub" style="font-size:32px">Soft, airy rime: brittle, it crunches</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.hail = q('.hd-hail'); this.gr = q('.hd-gr'); this.frs = [...kit.stage.querySelectorAll('.hd-fr')];
+    this.h1 = q('.hd-h1'); this.h2 = q('.hd-h2');
+    this.l = q('.hd-l').style; this.r = q('.hd-r').style; this.line = q('.hd-line');
+  },
+  render(t) {
+    TextFx.fadeFromRight(this.line, t, -0.4);
+    const F = HD.floor, R = HD.R, U = HD.up, PI = Math.PI;
+    const t1 = 1.3;
+    let a1 = t < t1 ? lerp(U, 0, ei(seg(t, 0.75, t1))) : 16 * Math.sin(PI * seg(t, t1, t1 + 0.45)) * (1 - seg(t, t1, t1 + 0.45) * 0.4) + lerp(0, U, eio(seg(t, 2.0, 2.6)));
+    a1 = Math.max(0, a1) + 6 * eo(seg(t, 0.55, 0.75)) * (1 - seg(t, 0.75, 1.0));
+    this.h1.setAttribute('transform', 'translate(' + (HD.hx + 308) + ' ' + (F - 2 * R - 60) + ') rotate(' + a1 + ')');
+    const hit1 = Math.max(0, 1 - Math.abs(t - t1) / 0.1);
+    const sq = 1 - 0.04 * hit1;
+    this.hail.setAttribute('transform', 'translate(' + HD.hx + ' ' + (F - R * sq) + ') scale(' + (1 + 0.025 * hit1) + ' ' + sq + ')');
+    const tc = 3.0;
+    let a2;
+    if (t < tc) a2 = lerp(U, 0, ei(seg(t, 2.45, tc)));
+    else a2 = -lerp(0, 9, eo(seg(t, tc, tc + 0.12))) + lerp(0, 9 + U, eio(seg(t, 3.6, 4.2)));
+    this.h2.setAttribute('transform', 'translate(' + (HD.gx + 308) + ' ' + (F - 2 * HD.gr - 60) + ') rotate(' + a2 + ')');
+    this.gr.setAttribute('transform', 'translate(' + HD.gx + ' ' + (F - HD.gr) + ')');
+    this.gr.style.opacity = t < tc ? 1 : 0;
+    const tau = seg(t, tc, tc + 0.6);
+    this.frs.forEach((f, i) => {
+      const d = this.fr[i];
+      const x = HD.gx + d.dx * eo(tau);
+      const y = lerp(F - HD.gr + d.y0, F - d.s * 0.6, eo(tau)) - d.hop * Math.sin(PI * tau) * (1 - tau);
+      f.setAttribute('transform', 'translate(' + x + ' ' + y + ') rotate(' + (d.rot + tau * 120) + ') scale(' + d.s + ')');
+      f.style.opacity = t < tc ? 0 : 1;
+      f.style.strokeWidth = (3 / d.s).toFixed(3);
+    });
+    this.l.opacity = eo(seg(t, 2.0, 2.5)); this.l.transform = 'translateY(' + lerp(20, 0, eo(seg(t, 2.0, 2.5))) + 'px)';
+    this.r.opacity = eo(seg(t, 3.6, 4.1)); this.r.transform = 'translateY(' + lerp(20, 0, eo(seg(t, 3.6, 4.1))) + 'px)';
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+const SL = { cx: 1180, cy: 540, R: 260 };
+kit.scene('slice', {
+  init(kit) {
+    const R = SL.R;
+    const leader = (cls, x1, y1, x2, y2) => '<g class="' + cls + '"><line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" pathLength="1" style="stroke:var(--second);stroke-width:4;stroke-dasharray:1 1"/><circle cx="' + x1 + '" cy="' + y1 + '" r="9" style="fill:var(--second)"/></g>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' +
+      '<g class="sl-l"><path class="ice-clear" d="M0 ' + (-R) + ' A' + R + ' ' + R + ' 0 0 0 0 ' + R + ' Z"/><path class="ice-edge" d="M0 ' + (-R) + ' A' + R + ' ' + R + ' 0 0 0 0 ' + R + ' Z"/></g>' +
+      '<g transform="translate(' + SL.cx + ' ' + SL.cy + ')"><path class="ice-clear sl-d"/><path class="ice-edge sl-de"/><path class="sl-sh" style="fill:color-mix(in srgb, var(--main) 12%, transparent)"/></g>' +
+      '<g class="sl-f">' + window.HAIL.svg(4, R) + '<circle class="ice-edge" r="' + R + '" style="stroke-width:4"/></g>' +
+      '<line class="sl-cut" x1="' + SL.cx + '" y1="200" x2="' + SL.cx + '" y2="880" pathLength="1" style="stroke:var(--accent);stroke-width:8;stroke-linecap:round;stroke-dasharray:1 1"/>' +
+      leader('sl-g0', 1372, 405, 1520, 330) + leader('sl-g1', 1353, 603, 1520, 700) + leader('sl-g2', SL.cx, SL.cy, SL.cx, 880) + '</svg>' +
+      '<div class="lbl sl-t0" style="left:1535px;top:300px">Clear ice</div>' +
+      '<div class="lbl sl-t1" style="left:1535px;top:672px">Cloudy ice</div>' +
+      '<div class="lbl sl-t2" style="left:' + (SL.cx - 70) + 'px;top:892px;color:var(--accent)">Embryo</div>' +
+      '<div class="words" style="left:130px;top:330px;width:620px"><h2 class="line sl-line">Slice it open</h2>' +
+      '<p class="sub sl-sub">Each ring records one trip up and down through the cloud</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.lh = q('.sl-l'); this.d = q('.sl-d'); this.de = q('.sl-de'); this.sh = q('.sl-sh'); this.f = q('.sl-f');
+    this.cut = q('.sl-cut').style;
+    this.g = [0, 1, 2].map(i => q('.sl-g' + i)); this.gl = this.g.map(g => g.querySelector('line').style);
+    this.tx = [0, 1, 2].map(i => q('.sl-t' + i).style);
+    this.line = q('.sl-line'); this.sub = q('.sl-sub').style;
+  },
+  render(t) {
+    const R = SL.R;
+    TextFx.fadeFromRight(this.line, t, -0.4);
+    this.sub.opacity = eo(seg(t, 3.7, 4.3));
+    const pc = eio(seg(t, 0.5, 1.0));
+    this.cut.strokeDashoffset = 1 - pc; this.cut.opacity = 1 - eo(seg(t, 1.1, 1.4));
+    const pd = seg(t, 1.2, 2.1);
+    this.lh.setAttribute('transform', 'translate(' + (SL.cx - 30 * eo(pd)) + ' ' + (SL.cy + 820 * ei(pd)) + ') rotate(' + (-14 * ei(pd)) + ')');
+    this.lh.style.opacity = pd < 1 ? 1 : 0;
+    const ph = eio(seg(t, 2.0, 3.6)) * Math.PI / 2;
+    const rx = Math.max(0.01, R * Math.cos(ph)), fx = Math.max(0.001, Math.sin(ph));
+    const dd = 'M0 ' + (-R) + ' A' + rx.toFixed(2) + ' ' + R + ' 0 0 1 0 ' + R + ' Z';
+    this.d.setAttribute('d', dd); this.de.setAttribute('d', dd);
+    this.sh.setAttribute('d', 'M0 ' + (-R) + ' A' + (rx * 0.45).toFixed(2) + ' ' + R + ' 0 0 1 0 ' + R + ' A' + rx.toFixed(2) + ' ' + R + ' 0 0 0 0 ' + (-R) + ' Z');
+    this.f.setAttribute('transform', 'translate(' + SL.cx + ' ' + SL.cy + ') scale(' + fx + ' 1)');
+    this.f.style.opacity = ph > 0.02 ? 1 : 0;
+    for (let i = 0; i < 3; i++) {
+      const a = 4.2 + i * 0.8, p = eo(seg(t, a, a + 0.4));
+      this.gl[i].strokeDashoffset = 1 - p; this.g[i].style.opacity = p > 0 ? 1 : 0;
+      this.tx[i].opacity = eo(seg(t, a + 0.2, a + 0.55));
+    }
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, eob, lerp, TextFx } = kit;
+kit.scene('end', {
+  init(kit) {
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080"><g class="end-st">' + window.HAIL.svg(4, 190) + '</g>' +
+      '<line class="end-ul" x1="760" y1="448" x2="1060" y2="448" pathLength="1" style="stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:1 1"/></svg>' +
+      '<div class="words" style="left:760px;top:270px;width:1040px"><h2 class="big end-line" style="font-size:160px">Hail</h2>' +
+      '<p class="sub end-s1" style="margin-top:52px;font-size:42px">Hail forms one layer at a time.</p>' +
+      '<p class="sub end-s2" style="font-size:42px">Hail grows until the updraft can no longer hold it up.</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.st = q('.end-st'); this.ul = q('.end-ul').style; this.line = q('.end-line');
+    this.s = [q('.end-s1').style, q('.end-s2').style];
+  },
+  render(t) {
+    const p = seg(t, 0, 0.7);
+    const s = (p <= 0 ? 0.001 : eob(p, 1.7)) * (1 + 0.012 * Math.sin(t * 2));
+    this.st.setAttribute('transform', 'translate(440 540) rotate(' + t * 5 + ') scale(' + s + ')');
+    TextFx.fadeFromRight(this.line, t, 0.2);
+    this.ul.strokeDashoffset = 1 - eo(seg(t, 0.7, 1.1));
+    this.s.forEach((st, i) => { const a = 0.9 + i * 0.6, q = eo(seg(t, a, a + 0.5)); st.opacity = q; st.transform = 'translateX(' + lerp(26, 0, q) + 'px)'; });
+  },
+});
+})();</script>
+<script>
+(function () {
+  const ORDER = [["title", "How hail forms"], ["embryo", "The embryo"], ["cycle", "Up and down"], ["heavy", "Too heavy to lift"], ["hard", "Hail or graupel"], ["slice", "Slice it open"], ["end", "Hail"]];
+  const defs = window.__defs, scaler = document.getElementById('scaler'), frame = document.getElementById('frame'), view = document.getElementById('view');
+  const scenes = ORDER.map(([id, name]) => {
+    const el = document.createElement('div'); el.className = 'stage'; scaler.appendChild(el);
+    window.kit.stage = el; const def = defs[id]; def.init.call(def, window.kit);
+    return { id, name, el, def };
+  });
+  const dots = document.getElementById('dots');
+  scenes.forEach(() => dots.appendChild(document.createElement('i')));
+  let cur = 0, start = performance.now();
+  const P = 6.5, A = 0.5, g = x => x - A * Math.sin(2 * Math.PI * x) / (2 * Math.PI);
+  const inv = v => { let a = 0, b = 1; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (g(m) < v) a = m; else b = m; } return (a + b) / 2; };
+  const XF = inv(0.375);
+  function go(i) {
+    i = Math.max(0, Math.min(scenes.length - 1, i));
+    if (scenes[cur].id === 'cycle' && scenes[i].id === 'heavy') {
+      const tc = (performance.now() - start) / 1000, s = (tc - 1) / P, u = s - Math.floor(s);
+      window.HV_ENTRY = tc < 1 ? { skip: 0, wait: 0, u0: 0 } : (u < XF ? { skip: u * P, wait: 0, u0: 0 } : { skip: 0, wait: (1 - u) * P, u0: u });
+    } else window.HV_ENTRY = { skip: 0, wait: 0, u0: 0 };
+    scenes[cur].el.classList.remove('on'); cur = i; scenes[cur].el.classList.add('on'); start = performance.now();
+    document.getElementById('where').innerHTML = '<b>' + scenes[cur].name + '</b>&nbsp;&nbsp;' + (cur + 1) + ' of ' + scenes.length;
+    [...dots.children].forEach((d, k) => d.classList.toggle('on', k === cur));
+    document.getElementById('back').disabled = cur === 0;
+    const nx = document.getElementById('next'); nx.disabled = cur === scenes.length - 1;
+  }
+  function fit() {
+    const w = view.clientWidth - 32, hh = view.clientHeight - 32, s = Math.min(w / 1920, hh / 1080);
+    frame.style.width = 1920 * s + 'px'; frame.style.height = 1080 * s + 'px'; scaler.style.transform = 'scale(' + s + ')';
+  }
+  function tick(now) { const sc = scenes[cur]; try { sc.def.render.call(sc.def, (now - start) / 1000); } catch (e) { console.error(e); } requestAnimationFrame(tick); }
+  document.getElementById('next').onclick = () => go(cur + 1);
+  document.getElementById('back').onclick = () => { window.HV_ENTRY = null; go(cur - 1); };
+  document.getElementById('replay').onclick = () => go(cur);
+  document.getElementById('full').onclick = () => { const d = document; if (d.fullscreenElement) d.exitFullscreen && d.exitFullscreen(); else d.documentElement.requestFullscreen && d.documentElement.requestFullscreen().catch(() => {}); };
+  addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+    else if (e.key === 'r' || e.key === 'R') go(cur);
+    else if (e.key === 'f' || e.key === 'F') document.getElementById('full').click();
+  });
+  addEventListener('resize', fit); fit(); go(0); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
