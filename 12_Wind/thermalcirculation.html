@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thermal circulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --page: #f2f5fa; --ink: #25282b; --muted: #55595e; --rule: #cfd1d3;
+  --btn: #1e376c; --btn-ink: #ffffff; --btn2: #ffffff; --btn2-ink: #1e376c; --btn2-line: #c3cfe4;
+  --seg: #c3cfe4; --seg-done: #7e96c4; --seg-on: #f47920; --focus: #faa634;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0d1830; --ink: #e3e9f3; --muted: #c3cfe4; --rule: #2a4a8c;
+    --btn: #faa634; --btn-ink: #0d1830; --btn2: #132349; --btn2-ink: #e3e9f3; --btn2-line: #2a4a8c;
+    --seg: #2a4a8c; --seg-done: #7e96c4; --seg-on: #faa634; --focus: #faa634;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0d1830; --ink: #e3e9f3; --muted: #c3cfe4; --rule: #2a4a8c;
+  --btn: #faa634; --btn-ink: #0d1830; --btn2: #132349; --btn2-ink: #e3e9f3; --btn2-line: #2a4a8c;
+  --seg: #2a4a8c; --seg-done: #7e96c4; --seg-on: #faa634; --focus: #faa634;
+  color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: inherit; }
+html, body { margin: 0; }
+body {
+  background: var(--page); color: var(--ink);
+  font-family: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  display: flex; justify-content: center; padding: 16px;
+}
+.wrap { width: 100%; max-width: max(320px, min(1400px, calc((100vh - 150px) * 16 / 9))); }
+.frame {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+  border-radius: 10px; background: #ffffff; box-shadow: 0 4px 12px rgba(30,55,108,.12);
+}
+.bar { display: flex; align-items: center; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
+.where { flex: 1 1 220px; min-width: 0; }
+.count { font-size: 14px; color: var(--muted); font-weight: 700; }
+.name { font-size: 20px; font-weight: 700; line-height: 1.2; margin-top: 2px; }
+.segs { display: flex; gap: 6px; margin-top: 8px; }
+.segs button {
+  flex: 1; height: 8px; padding: 0; border: 0; border-radius: 4px;
+  background: var(--seg); cursor: pointer; min-width: 10px;
+}
+.segs button.done { background: var(--seg-done); }
+.segs button.on { background: var(--seg-on); }
+.btns { display: flex; gap: 8px; flex: none; }
+.btn {
+  font: inherit; font-size: 17px; font-weight: 700; padding: 12px 20px; border-radius: 8px;
+  cursor: pointer; border: 2px solid var(--btn2-line); background: var(--btn2); color: var(--btn2-ink);
+  min-height: 48px;
+}
+.btn.primary { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); padding: 12px 30px; }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn:focus-visible, .segs button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.hint { font-size: 13px; color: var(--muted); margin-top: 10px; }
+@media (max-width: 640px) { .btns { width: 100%; } .btn { flex: 1; padding: 12px 10px; } .hint { display: none; } }
+
+/* The diagram stage: fixed 1920 x 1080, scaled to fit */
+#stage {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
+  --ground: #ffffff; --main: #1e376c; --second: #25282b; --accent: #f47920;
+  color: var(--second); font-family: "Nunito Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color-scheme: light;
+}
+#stage .ground { position: absolute; inset: 0; background: var(--ground); }
+#stage .words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 18px; }
+#stage .words > * { margin: 0; }
+#stage .line { font-family: "Zilla Slab", Georgia, serif; font-size: 72px; line-height: 1.05; font-weight: 700; color: var(--main); }
+#stage .sub { font-size: 34px; line-height: 1.3; color: color-mix(in srgb, var(--second) 80%, var(--ground)); }
+#stage .cap { left: 1040px; top: 60px; width: 820px; }
+#stage .cap .line { font-size: 62px; }
+#stage .cap .sub { font-size: 30px; }
+#stage .title-big { font-size: 112px; }
+#stage .w { display: inline-block; white-space: pre; }
+#stage .art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+#stage .tc-land { fill: color-mix(in srgb, var(--second) 10%, var(--ground)); stroke: color-mix(in srgb, var(--second) 45%, var(--ground)); stroke-width: 3; }
+#stage .tc-iso { fill: none; stroke: color-mix(in srgb, var(--main) 55%, var(--ground)); stroke-width: 4; stroke-linecap: round; }
+#stage .tc-lab { font-size: 24px; font-weight: 700; fill: color-mix(in srgb, var(--main) 75%, var(--ground)); }
+#stage .tc-tube { fill: var(--ground); stroke: var(--second); stroke-width: 3; }
+#stage .tc-merc-w { fill: var(--accent); }
+#stage .tc-merc-c { fill: var(--main); }
+#stage .tc-temp { font-size: 30px; font-weight: 700; fill: var(--second); }
+#stage .tc-region { font-size: 32px; font-weight: 700; fill: var(--second); }
+#stage .tc-arrow { fill: none; stroke: var(--main); stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
+#stage .tc-dot { fill: var(--ground); }
+#stage .tc-big { font-family: "Zilla Slab", Georgia, serif; font-weight: 700; font-size: 110px; fill: var(--main); }
+#stage .tc-read { font-size: 28px; font-weight: 700; fill: var(--second); }
+#stage .tc-alt { stroke: var(--second); stroke-width: 3; stroke-dasharray: 14 12; fill: none; }
+#stage .tc-altlab { font-size: 26px; font-weight: 700; fill: var(--second); }
+#stage .tc-drop { stroke: var(--main); stroke-width: 4; stroke-linecap: round; }
+#stage .tc-cback { stroke: var(--second); stroke-width: 6; fill: var(--second); }
+#stage .sum-row { display: flex; gap: 30px; align-items: center; }
+#stage .sum-num {
+  width: 68px; height: 68px; border-radius: 50%; background: var(--accent); color: var(--ground);
+  font-size: 36px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none;
+}
+#stage .sum-txt { font-size: 40px; line-height: 1.3; color: var(--second); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1 class="sr-only">Thermal circulation, step by step</h1>
+  <div class="frame" id="frame" role="img" aria-live="polite" aria-label="">
+    <div id="stage"></div>
+  </div>
+  <div class="bar">
+    <div class="where">
+      <div class="count" id="count"></div>
+      <div class="name" id="name"></div>
+      <div class="segs" id="segs"></div>
+    </div>
+    <div class="btns">
+      <button class="btn" id="back" type="button">Back</button>
+      <button class="btn" id="replay" type="button">Replay step</button>
+      <button class="btn primary" id="next" type="button">Next</button>
+    </div>
+  </div>
+  <p class="hint">Keyboard: right arrow for next, left arrow to go back, R to replay the step.</p>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  /* ---------- timing helpers ---------- */
+  const clamp01 = function (x) { return Math.max(0, Math.min(1, x)); };
+  const seg = function (t, a, b) { return clamp01((t - a) / (b - a)); };
+  const eo = function (x) { return 1 - Math.pow(1 - x, 3); };
+  const ei = function (x) { return x * x * x; };
+  const eio = function (x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+  const eob = function (x, o) { o = o == null ? 1.4 : o; const c = o + 1; return 1 + c * Math.pow(x - 1, 3) + o * Math.pow(x - 1, 2); };
+  let clock = 0;
+  const h = function (html) { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; };
+
+  function fadeFromRight(el, t, t0) {
+    if (!el._w) {
+      const words = el.textContent.split(' ');
+      el.textContent = '';
+      el._w = words.map(function (w, i) {
+        const s = document.createElement('span'); s.className = 'w';
+        s.textContent = w + (i < words.length - 1 ? ' ' : '');
+        el.appendChild(s); return s.style;
+      });
+    }
+    el._w.forEach(function (st, i) {
+      const p = eo(seg(t, t0 + i * 0.11, t0 + i * 0.11 + 0.5));
+      st.opacity = p; st.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)';
+    });
+  }
+
+  /* ---------- the shared cross-section drawing ---------- */
+  const TC = {
+    LV: [{p:900,y:740,k:30},{p:800,y:600,k:65},{p:700,y:460,k:100},{p:600,y:320,k:135}],
+    A: {aloft:[[560,400],[1360,400]], down:[[1450,480],[1450,775]], surf:[[1360,830],[560,830]], up:[[470,775],[470,480]]},
+    sh: function (x) { return Math.tanh((960 - x) / 170); },
+    yOf: function (L, x, s) { return L.y - ((s.lift || 0) * L.k - (s.mass || 0) * 45) * this.sh(x); },
+    pAt: function (x, y, s) {
+      const pts = [{p:1000, y:880}].concat(TC.LV.map(function (L) { return {p:L.p, y:TC.yOf(L, x, s)}; }));
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1];
+        if (y <= a.y && y >= b.y)  return Math.round((a.p + (b.p - a.p) * (a.y - y) / (a.y - b.y)) / 10) * 10;
+      }
+      return 600;
+    },
+    build: function (id) {
+      const g = 'tc' + id;
+      let land = 'M0 1080 ';
+      for (let x = 0; x <= 1920; x += 40) land += 'L' + x + ' ' + (874 + 10 * Math.sin(x / 150) + 5 * Math.sin(x / 53)).toFixed(1) + ' ';
+      land += 'L1920 1080 Z';
+      let iso = '';
+      TC.LV.forEach(function (L) { iso += '<path class="tc-iso" pathLength="1"/><text class="tc-lab" x="1798">' + L.p + ' hPa</text>'; });
+      let arr = '';
+      Object.keys(TC.A).forEach(function (k) {
+        arr += '<g class="tc-a-' + k + '"><path class="tc-arrow"/><path class="tc-arrow"/>';
+        for (let i = 0; i < 5; i++) arr += '<circle class="tc-dot" r="4"/>';
+        arr += '</g>';
+      });
+      const th = function (x, c) {
+        return '<g class="tc-th-' + c + '"><text class="tc-temp" x="' + x + '" y="630" text-anchor="middle"></text>' +
+          '<rect class="tc-tube" x="' + (x - 14) + '" y="660" width="28" height="200" rx="14"/>' +
+          '<circle class="tc-tube" cx="' + x + '" cy="866" r="26"/><circle class="tc-merc-' + c + '" cx="' + x + '" cy="866" r="18"/>' +
+          '<rect class="tc-merc-' + c + '" x="' + (x - 7) + '" width="14" rx="7"/></g>';
+      };
+      let rain = '<g class="tc-rain">';
+      for (let i = 0; i < 20; i++) rain += '<line class="tc-drop"/>';
+      rain += '</g>';
+      const cloudShapes = '<circle cx="395" cy="291" r="48"/><circle cx="470" cy="253" r="66"/><circle cx="550" cy="285" r="50"/><rect x="353" y="283" width="236" height="52" rx="26"/>';
+      const root = h('<svg class="art" viewBox="0 0 1920 1080" aria-hidden="true"><defs>' +
+        '<linearGradient id="' + g + 'w" x1="0" x2="1"><stop offset="0" style="stop-color:#f47920;stop-opacity:.22"/><stop offset="1" style="stop-color:#f47920;stop-opacity:0"/></linearGradient>' +
+        '<linearGradient id="' + g + 'c" x1="1" x2="0"><stop offset="0" style="stop-color:#1e376c;stop-opacity:.16"/><stop offset="1" style="stop-color:#1e376c;stop-opacity:0"/></linearGradient></defs>' +
+        '<path class="tc-land" d="' + land + '"/>' +
+        '<rect class="tc-warm" x="0" y="0" width="1000" height="1080" fill="url(#' + g + 'w)"/>' +
+        '<rect class="tc-cold" x="920" y="0" width="1000" height="1080" fill="url(#' + g + 'c)"/>' +
+        iso +
+        '<g class="tc-altg"><path class="tc-alt" d="M120 460 H1780"/><text class="tc-altlab" x="960" y="505" text-anchor="middle">Same altitude</text></g>' +
+        th(210, 'w') + th(1710, 'c') +
+        '<text class="tc-region tc-rw" x="700" y="990" text-anchor="middle">Warm region</text>' +
+        '<text class="tc-region tc-rc" x="1220" y="990" text-anchor="middle">Cool region</text>' +
+        rain +
+        '<g class="tc-cloud"><g class="tc-cback">' + cloudShapes + '</g><g class="tc-cfill">' + cloudShapes + '</g></g>' +
+        '<g class="tc-hl"><text class="tc-big" x="470" y="440" text-anchor="middle">H</text><text class="tc-big" x="1450" y="440" text-anchor="middle">L</text></g>' +
+        '<g class="tc-rd"><text class="tc-read tc-rdw" x="470" y="505" text-anchor="middle"></text><text class="tc-read tc-rdc" x="1450" y="505" text-anchor="middle"></text></g>' +
+        '<g class="tc-sf"><text class="tc-big" x="470" y="868" text-anchor="middle">L</text><text class="tc-big" x="1450" y="868" text-anchor="middle">H</text></g>' +
+        arr + '</svg>');
+      const q = function (c) { return root.querySelector(c); };
+      const isoP = root.querySelectorAll('.tc-iso'), labs = root.querySelectorAll('.tc-lab');
+      const el = { warm:q('.tc-warm'), cold:q('.tc-cold'), altg:q('.tc-altg'), alt:q('.tc-alt'), rw:q('.tc-rw'), rc:q('.tc-rc'),
+        hl:q('.tc-hl'), rd:q('.tc-rd'), rdw:q('.tc-rdw'), rdc:q('.tc-rdc'), sf:q('.tc-sf'), thw:q('.tc-th-w'), thc:q('.tc-th-c'),
+        cloud:q('.tc-cloud'), cfill:q('.tc-cfill'), drops:root.querySelectorAll('.tc-drop') };
+      const arrows = {};
+      Object.keys(TC.A).forEach(function (k) {
+        const gq = q('.tc-a-' + k);
+        arrows[k] = { g: gq, ps: gq.querySelectorAll('path'), dots: gq.querySelectorAll('circle') };
+      });
+      el.cloud.style.transformOrigin = '470px 335px';
+      return { root: root, set: function (t, s) {
+        const T = clock, heat = s.heat || 0, iv = s.iso == null ? 1 : s.iso;
+        el.warm.style.opacity = heat; el.cold.style.opacity = heat;
+        TC.LV.forEach(function (L, i) {
+          let d = '';
+          for (let x = 100; x <= 1780; x += 30) d += (x === 100 ? 'M' : 'L') + x + ' ' + TC.yOf(L, x, s).toFixed(1) + ' ';
+          isoP[i].setAttribute('d', d);
+          const p = clamp01(iv * 1.6 - i * 0.2);
+          isoP[i].style.strokeDasharray = p + ' 1';
+          labs[i].setAttribute('y', (TC.yOf(L, 1780, s) + 8).toFixed(1));
+          labs[i].style.opacity = clamp01(p * 3 - 2);
+        });
+        [['w', 20 + 10 * heat, el.thw], ['c', 20 - 10 * heat, el.thc]].forEach(function (a) {
+          const hh = 20 + a[1] / 40 * 170, g2 = a[2];
+          g2.style.opacity = s.therm == null ? 1 : s.therm;
+          g2.querySelector('text').textContent = Math.round(a[1]) + ' \u00b0C';
+          const r = g2.querySelector('rect.tc-merc-' + a[0]);
+          r.setAttribute('y', 866 - hh); r.setAttribute('height', hh);
+        });
+        el.rw.style.opacity = el.rc.style.opacity = s.reg || 0;
+        el.altg.style.opacity = s.alt ? (s.altO == null ? 1 : s.altO) : 0;
+        el.alt.style.clipPath = 'inset(0 ' + (100 - 100 * (s.alt || 0)) + '% 0 0)';
+        el.hl.style.opacity = s.hl || 0; el.rd.style.opacity = s.rd || 0; el.sf.style.opacity = s.sf || 0;
+        el.rdw.textContent = '\u2248 ' + TC.pAt(470, 460, s) + ' hPa';
+        el.rdc.textContent = '\u2248 ' + TC.pAt(1450, 460, s) + ' hPa';
+        const cv = s.cloud || 0, rv = s.rain || 0;
+        el.cloud.style.opacity = clamp01(cv * 3);
+        const sx = (0.15 + 0.85 * eob(clamp01(cv), 1.3)) * (1 + 0.012 * Math.sin(T * 2.1));
+        el.cloud.style.transform = 'scale(' + sx.toFixed(4) + ')';
+        el.cfill.style.fill = 'color-mix(in srgb, var(--second) ' + (4 + 30 * rv).toFixed(1) + '%, var(--ground))';
+        const reach = clamp01(rv * 1.4);
+        el.drops.forEach(function (ln, i) {
+          const x = (i % 2 ? 525 : 335) + (i * 37) % 80, f = (T * 1.15 + (i * 0.37) % 1) % 1, y = 340 + f * 520;
+          ln.setAttribute('x1', (x + 6).toFixed(1)); ln.setAttribute('y1', y.toFixed(1));
+          ln.setAttribute('x2', x.toFixed(1)); ln.setAttribute('y2', (y + 30).toFixed(1));
+          ln.style.opacity = f < reach ? clamp01(rv * 3) * Math.min(1, (1 - f) * 6) * 0.85 : 0;
+        });
+        Object.keys(TC.A).forEach(function (k) {
+          const p = (s.ar && s.ar[k]) || 0, A = arrows[k], a = TC.A[k][0], b = TC.A[k][1];
+          A.g.style.opacity = p > 0.01 ? 1 : 0;
+          if (p <= 0.01) return;
+          const ex = a[0] + (b[0] - a[0]) * p, ey = a[1] + (b[1] - a[1]) * p, len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+          const ux = (b[0] - a[0]) / len, uy = (b[1] - a[1]) / len, nx = -uy, ny = ux;
+          A.ps[0].setAttribute('d', 'M' + a[0] + ' ' + a[1] + ' L' + ex.toFixed(1) + ' ' + ey.toFixed(1));
+          A.ps[1].setAttribute('d', 'M' + (ex - 30 * ux + 22 * nx).toFixed(1) + ' ' + (ey - 30 * uy + 22 * ny).toFixed(1) +
+            ' L' + ex.toFixed(1) + ' ' + ey.toFixed(1) + ' L' + (ex - 30 * ux - 22 * nx).toFixed(1) + ' ' + (ey - 30 * uy - 22 * ny).toFixed(1));
+          A.ps[1].style.opacity = clamp01(p * 6 - 0.3);
+          A.dots.forEach(function (cd, i) {
+            const f = (T * 0.45 + i / 5) % 1;
+            cd.setAttribute('cx', (a[0] + (b[0] - a[0]) * f).toFixed(1));
+            cd.setAttribute('cy', (a[1] + (b[1] - a[1]) * f).toFixed(1));
+            cd.style.opacity = f < p - 0.06 ? Math.min(1, f * 8, (1 - f) * 8) : 0;
+          });
+        });
+      } };
+    }
+  };
+
+  /* ---------- scene helpers ---------- */
+  const stage = document.getElementById('stage');
+  function base(id) {
+    const g = h('<div class="ground"></div>');
+    const d = TC.build(id);
+    g.appendChild(d.root);
+    stage.appendChild(g);
+    return { g: g, d: d };
+  }
+  function caption(g, head, sub) {
+    const w = h('<div class="words cap"><h2 class="line"></h2><p class="sub"></p></div>');
+    w.children[0].textContent = head; w.children[1].textContent = sub;
+    g.appendChild(w);
+    return { line: w.children[0], sub: w.children[1].style };
+  }
+  function showCaption(c, t, subAt) {
+    fadeFromRight(c.line, t, 0.3);
+    const p = eo(seg(t, subAt, subAt + 0.6));
+    c.sub.opacity = p; c.sub.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)';
+  }
+  function pop(node, p, ox, oy) {
+    node.style.transformOrigin = ox + 'px ' + oy + 'px';
+    node.style.opacity = eo(p);
+    node.style.transform = 'scale(' + (0.4 + 0.6 * eob(p, 1.7)) + ')';
+  }
+  const DONE = { iso: 1, therm: 1, heat: 1, reg: 1, lift: 1 };
+  const mix = function (o) { return Object.assign({}, DONE, o); };
+
+  /* ---------- the steps ---------- */
+  const SCENES = [
+    { name: 'Thermal circulation', alt: 'A side view of a landscape with four level pressure surfaces drawn above it.',
+      init: function () {
+        const b = base('title'); this.d = b.d;
+        const w = h('<div class="words" style="left:120px;top:70px;width:1000px"><h1 class="line title-big">Thermal circulation</h1><p class="sub">How uneven heating sets the air in motion</p></div>');
+        b.g.appendChild(w);
+        this.line = w.children[0]; this.sub = w.children[1].style;
+      },
+      render: function (t) {
+        fadeFromRight(this.line, t, 0.2);
+        const p = eo(seg(t, 1.0, 1.6));
+        this.sub.opacity = p; this.sub.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)';
+        this.d.set(t, { iso: eio(seg(t, 1.8, 4.4)), therm: eo(seg(t, 4.2, 5.0)) });
+      } },
+    { name: 'Even start', alt: 'Both regions read 20 degrees Celsius; pressure surfaces are level and evenly spaced.',
+      init: function () {
+        const b = base('even'); this.d = b.d;
+        this.c = caption(b.g, 'Equal temperatures', 'Pressure surfaces lie level and evenly spaced over the whole landscape');
+        this.thw = b.d.root.querySelector('.tc-th-w'); this.thc = b.d.root.querySelector('.tc-th-c');
+        this.thw.style.transformOrigin = '210px 760px'; this.thc.style.transformOrigin = '1710px 760px';
+        this.isos = b.d.root.querySelectorAll('.tc-iso');
+      },
+      render: function (t) {
+        showCaption(this.c, t, 1.0);
+        this.d.set(t, { iso: 1, therm: 1 });
+        const pw = Math.sin(Math.PI * seg(t, 2.0, 3.2)), pc = Math.sin(Math.PI * seg(t, 2.4, 3.6));
+        this.thw.style.transform = 'scale(' + (1 + 0.08 * pw) + ')';
+        this.thc.style.transform = 'scale(' + (1 + 0.08 * pc) + ')';
+        for (let i = 0; i < this.isos.length; i++) {
+          const p = Math.sin(Math.PI * seg(t, 3.8 + i * 0.35, 4.6 + i * 0.35));
+          this.isos[i].style.strokeWidth = 4 + 3 * p;
+        }
+      } },
+    { name: 'Heat and cool', alt: 'The left region warms to 30 degrees and the right region cools to 10 degrees.',
+      init: function () {
+        const b = base('heat'); this.d = b.d;
+        this.c = caption(b.g, 'One side heats, one side cools', 'Sunlit ground warms the air above it, while the other region loses heat');
+      },
+      render: function (t) {
+        showCaption(this.c, t, 1.1);
+        this.d.set(t, { iso: 1, therm: 1, heat: eio(seg(t, 1.4, 5.6)), reg: eo(seg(t, 3.0, 3.8)) });
+      } },
+    { name: 'Columns stretch', alt: 'Pressure surfaces bow upward over the warm region and downward over the cool region.',
+      init: function () {
+        const b = base('stretch'); this.d = b.d;
+        this.c = caption(b.g, 'Warm air expands, cold air contracts', 'Pressure surfaces rise over the warm region and drop over the cold region');
+      },
+      render: function (t) {
+        showCaption(this.c, t, 1.2);
+        this.d.set(t, mix({ lift: eio(seg(t, 1.6, 6.0)) }));
+      } },
+    { name: 'High and low aloft', alt: 'Along a dashed line at one altitude, pressure is about 760 hectopascals over the warm side and 600 over the cool side, marked H and L.',
+      init: function () {
+        const b = base('aloft'); this.d = b.d;
+        this.c = caption(b.g, 'Higher pressure aloft over the warm side', 'At the same altitude, more of the air column still lies above the warm region');
+        this.hs = b.d.root.querySelectorAll('.tc-hl text');
+      },
+      render: function (t) {
+        showCaption(this.c, t, 1.2);
+        this.d.set(t, mix({ alt: eio(seg(t, 1.6, 2.8)), hl: 1, rd: eo(seg(t, 4.6, 5.2)) }));
+        pop(this.hs[0], seg(t, 3.0, 3.5), 470, 400);
+        pop(this.hs[1], seg(t, 3.6, 4.1), 1450, 400);
+      } },
+    { name: 'Winds aloft', alt: 'An arrow aloft points from the high over the warm region toward the low over the cool region.',
+      init: function () {
+        const b = base('winds'); this.d = b.d;
+        this.c = caption(b.g, 'Winds aloft blow from high to low', 'Air high above the warm region flows toward the cold region');
+      },
+      render: function (t) {
+        showCaption(this.c, t, 1.1);
+        this.d.set(t, mix({ alt: 1, altO: 1 - eio(seg(t, 0.8, 1.6)), hl: 1, rd: 1, ar: { aloft: eio(seg(t, 1.6, 3.4)) } }));
+      } },
+    { name: 'Rising and sinking', alt: 'Air rises over the warm region and sinks over the cool region; a cloud forms over the rising air and begins to rain.',
+      init: function () {
+        const b = base('rise'); this.d = b.d;
+        this.c = caption(b.g, 'Warm air rises, cool air sinks', 'Rising air cools and condenses into cloud, then rain');
+      },
+      render: function (t) {
+        showCaption(this.c, t, 3.0);
+        this.d.set(t, mix({ hl: 1, rd: 1 - eio(seg(t, 0.3, 0.9)),
+          ar: { aloft: 1, up: eio(seg(t, 0.9, 2.5)), down: eio(seg(t, 1.5, 3.1)) },
+          cloud: eo(seg(t, 3.2, 5.0)), rain: eio(seg(t, 5.6, 7.6)) }));
+      } },
+    { name: 'Surface pressure', alt: 'A new surface low appears under the warm region and a new surface high under the cool region.',
+      init: function () {
+        const b = base('surface'); this.d = b.d;
+        this.c = caption(b.g, 'Surface pressure shifts', 'Air leaving the warm column lowers its surface pressure; air piling up over the cold region raises it');
+        this.ss = b.d.root.querySelectorAll('.tc-sf text');
+      },
+      render: function (t) {
+        showCaption(this.c, t, 1.0);
+        this.d.set(t, mix({ hl: 1, mass: eio(seg(t, 1.4, 4.8)), sf: 1, cloud: 1, tower: 1, rain: 1, ar: { aloft: 1, up: 1, down: 1 } }));
+        pop(this.ss[0], seg(t, 3.0, 3.5), 470, 830);
+        pop(this.ss[1], seg(t, 3.5, 4.0), 1450, 830);
+      } },
+    { name: 'The full loop', alt: 'A surface arrow points from the cool region to the warm region, closing the circulation loop.',
+      init: function () {
+        const b = base('loop'); this.d = b.d;
+        this.c = caption(b.g, 'Surface wind blows from cold to warm', 'From the surface high to the surface low, closing the thermal circulation');
+      },
+      render: function (t) {
+        showCaption(this.c, t, 3.0);
+        this.d.set(t, mix({ mass: 1, hl: 1, sf: 1, cloud: 1, tower: 1, rain: 1, ar: { aloft: 1, up: 1, down: 1, surf: eio(seg(t, 1.2, 2.9)) } }));
+      } },
+    { name: 'Summary', alt: 'Summary: unequal heating drives the circulation, in three numbered points.',
+      init: function () {
+        const b = base('summary'); this.d = b.d;
+        const w = h('<div class="words" style="left:300px;top:190px;width:1320px;gap:44px">' +
+          '<h2 class="line" style="font-size:84px">Unequal heating drives the circulation</h2>' +
+          '<div class="sum-row"><span class="sum-num">1</span><p class="sum-txt">Uneven heating warms one region and cools another.</p></div>' +
+          '<div class="sum-row"><span class="sum-num">2</span><p class="sum-txt">That temperature difference creates pressure differences, both aloft and at the surface.</p></div>' +
+          '<div class="sum-row"><span class="sum-num">3</span><p class="sum-txt">Air flows from higher to lower pressure: rising over the warm region, sinking over the cool one, and closing the loop.</p></div></div>');
+        b.g.appendChild(w);
+        this.head = w.children[0];
+        this.rows = Array.prototype.slice.call(w.querySelectorAll('.sum-row')).map(function (r) { return r.style; });
+      },
+      render: function (t) {
+        this.d.set(t, mix({ mass: 1, hl: 1, sf: 1, cloud: 1, tower: 1, rain: 1, ar: { aloft: 1, up: 1, down: 1, surf: 1 } }));
+        this.d.root.style.opacity = 1 - 0.88 * eio(seg(t, 0.2, 1.2));
+        fadeFromRight(this.head, t, 1.0);
+        for (let i = 0; i < 3; i++) {
+          const p = eo(seg(t, 2.4 + i * 1.3, 3.0 + i * 1.3));
+          this.rows[i].opacity = p;
+          this.rows[i].transform = 'translateX(' + ((1 - p) * 28).toFixed(1) + 'px)';
+        }
+      } }
+  ];
+
+  /* ---------- player ---------- */
+  const frame = document.getElementById('frame');
+  const btnNext = document.getElementById('next'), btnBack = document.getElementById('back'), btnReplay = document.getElementById('replay');
+  const countEl = document.getElementById('count'), nameEl = document.getElementById('name'), segsEl = document.getElementById('segs');
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let cur = 0, start = 0, scene = null;
+
+  SCENES.forEach(function (s, i) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Go to step ' + (i + 1) + ': ' + s.name);
+    b.addEventListener('click', function () { go(i); });
+    segsEl.appendChild(b);
+  });
+
+  function fit() { stage.style.transform = 'scale(' + (frame.clientWidth / 1920) + ')'; }
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(frame);
+  window.addEventListener('resize', fit);
+  fit();
+
+  function go(i) {
+    cur = (i + SCENES.length) % SCENES.length;
+    scene = SCENES[cur];
+    stage.textContent = '';
+    scene.init();
+    start = performance.now() - (reduce ? 60000 : 0);
+    countEl.textContent = 'Step ' + (cur + 1) + ' of ' + SCENES.length;
+    nameEl.textContent = scene.name;
+    frame.setAttribute('aria-label', scene.alt);
+    btnBack.disabled = cur === 0;
+    btnNext.textContent = cur === SCENES.length - 1 ? 'Start over' : 'Next';
+    Array.prototype.forEach.call(segsEl.children, function (b, k) {
+      b.className = k === cur ? 'on' : (k < cur ? 'done' : '');
+      if (k === cur) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    });
+    tick(performance.now());
+  }
+  function tick(now) {
+    clock = now / 1000;
+    try { scene.render((now - start) / 1000); } catch (e) { console.error(e); }
+  }
+  function loop(now) { tick(now); requestAnimationFrame(loop); }
+
+  btnNext.addEventListener('click', function () { go(cur + 1); });
+  btnBack.addEventListener('click', function () { if (cur > 0) go(cur - 1); });
+  btnReplay.addEventListener('click', function () { go(cur); });
+  document.addEventListener('keydown', function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); if (cur > 0) go(cur - 1); }
+    else if (e.key === 'r' || e.key === 'R') { go(cur); }
+  });
+
+  go(0);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

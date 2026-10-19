@@ -149,5 +149,8 @@ I look forward to exploring the science of the atmosphere with you!
 ### Segment 2: Motions of the Atmosphere
 * Chapter 9: Atmospheric Stability
 * Chapter 10: Precipitation
-    * [Growth of Water Droplets](./10_Precipitation/10_2_DropletGrowth.md)
-    * [Growth of Ice Crystals](./10_Precipitation/10_3_IceGrowth.md)
+    * [10.2 Forms of Rain (Liquid Precipitation)](./10_Precipitation/10_2_Rain.md)
+    * [10.3 Forms of Snow (Solid Precipitation)](./10_Precipitation/10_3_Snow.md)
+    * [10.4 Forms of Ice Precipitation](./10_Precipitation/10_4_Ice.md)
+    * [10.5 Graupel and Hail](./10_Precipitation/10_5_Hail.md)
+* Chapter 11: Pressure

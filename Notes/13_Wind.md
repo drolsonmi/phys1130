@@ -1,1 +1,0 @@
-> __Class Activity__: Beufort Scale (estimate wind speed in videos, then go outside and estimate)

@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How upwelling happens off the West Coast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&family=Zilla+Slab:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root { box-sizing:border-box; padding-top:env(safe-area-inset-top, 0px); padding-bottom:env(safe-area-inset-bottom, 0px);
+  color-scheme:light;
+  --bg:#e3e9f3; --surface:#ffffff; --ink:#25282b; --muted:#55595e; --line:#c3cfe4;
+  --btn:#ffffff; --btn-ink:#1e376c; --primary:#1e376c; --primary-ink:#ffffff; --accent:#f47920; --track:#c3cfe4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  color-scheme:dark; --bg:#0d1830; --surface:#132349; --ink:#f2f5fa; --muted:#c3cfe4; --line:#2a4a8c;
+  --btn:#1e376c; --btn-ink:#f2f5fa; --primary:#faa634; --primary-ink:#0d1830; --accent:#faa634; --track:#2a4a8c; } }
+:root[data-theme="dark"] { color-scheme:dark; --bg:#0d1830; --surface:#132349; --ink:#f2f5fa; --muted:#c3cfe4; --line:#2a4a8c;
+  --btn:#1e376c; --btn-ink:#f2f5fa; --primary:#faa634; --primary-ink:#0d1830; --accent:#faa634; --track:#2a4a8c; }
+*, *::before, *::after { box-sizing:inherit }
+html, body { height:100%; margin:0 }
+body { background:var(--bg); color:var(--ink); font-family:"Nunito Sans", "Helvetica Neue", Arial, sans-serif; overflow:hidden }
+.app { height:100%; display:flex; flex-direction:column; background:var(--bg) }
+.viewport { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; padding:16px 16px 8px }
+.frame { position:relative; overflow:hidden; border-radius:6px; box-shadow:0 12px 28px rgba(0,0,0,.18); background:#fff }
+#stage { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0; overflow:hidden; background:#fff;
+  --sans:"Nunito Sans", system-ui, sans-serif; --display:"Zilla Slab", Georgia, serif }
+.scene { position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity .35s ease }
+.scene.on { opacity:1 }
+.bar { display:flex; align-items:center; gap:20px; padding:6px 20px 14px; position:relative }
+.where { flex:1 1 0 }
+.prog { position:absolute; left:20px; right:20px; top:0; height:4px; border-radius:2px; background:var(--track); overflow:hidden }
+.prog i { display:block; height:100%; width:0; background:var(--accent) }
+.where { min-width:0; display:flex; align-items:baseline; gap:12px; padding-top:8px }
+.count { font-weight:900; color:var(--accent); font-variant-numeric:tabular-nums; white-space:nowrap }
+.name { font-family:"Zilla Slab", Georgia, serif; font-weight:700; font-size:22px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.dots { display:flex; gap:6px; padding-top:8px }
+.dot { width:14px; height:14px; padding:0; border-radius:50%; border:2px solid var(--muted); background:transparent; cursor:pointer }
+.dot.done { background:var(--muted) }
+.dot.cur { background:var(--accent); border-color:var(--accent) }
+.btns { display:flex; justify-content:flex-end; gap:8px; padding-top:8px; flex:none }
+button.b { font:inherit; font-weight:700; font-size:16px; min-height:44px; padding:0 16px; border-radius:6px; border:2px solid var(--line); background:var(--btn); color:var(--btn-ink); cursor:pointer }
+button.b:hover { border-color:var(--btn-ink) }
+button.b.primary { background:var(--primary); color:var(--primary-ink); border-color:var(--primary); min-width:120px; font-size:18px }
+button.b:disabled { opacity:.4; cursor:default }
+button:focus-visible { outline:3px solid var(--accent); outline-offset:2px }
+.keys { color:var(--muted); font-size:13px; text-align:center; padding:0 20px 10px; margin:0 }
+.app:fullscreen .keys, .app:fullscreen .viewport { padding-bottom:4px }
+@media (max-width: 760px) {
+  .bar { flex-wrap:wrap; gap:8px } .where { flex:1 1 100% }
+  .dots { justify-content:center } .btns { justify-content:center } .keys { display:none }
+  button.b.ghosty { display:none }
+}
+#stage { --ground:#FFFFFF; --main:#1E376C; --second:#25282B; --accent:#F47920; color:var(--second); font-family:var(--sans, system-ui, sans-serif) }
+.ground { position:absolute; inset:0; background:var(--ground) }
+.words { position:absolute; margin:0; display:flex; flex-direction:column; gap:20px } .words > * { margin:0 }
+.line { font-family:var(--display, var(--sans, system-ui, sans-serif)); font-size:84px; line-height:1.05; font-weight:700; color:var(--main) } .sub { font-size:36px; line-height:1.3; color:color-mix(in srgb, var(--second) 78%, var(--ground)) }
+.eyebrow { font-size:26px; font-weight:900; letter-spacing:.14em; text-transform:uppercase; color:var(--accent) }
+.box { position:absolute; margin:0; border:2px solid var(--second); box-sizing:border-box; font-size:30px; letter-spacing:.12em } .box::after { content:attr(data-label); position:absolute; left:14px; bottom:10px }
+.panel { position:absolute; padding:28px 34px; border-radius:10px; background:color-mix(in srgb, var(--ground) 90%, var(--main)); border-top:6px solid var(--accent); box-shadow:0 12px 28px rgba(0,0,0,.12) }
+.art { position:absolute; inset:0; width:100%; height:100%; overflow:visible }
+.sea { fill:color-mix(in srgb, var(--main) 16%, var(--ground)) }
+.land { fill:color-mix(in srgb, var(--second) 8%, var(--ground)) }
+.coast { fill:none; stroke:var(--main); stroke-width:4; stroke-linejoin:round }
+.border { fill:none; stroke:color-mix(in srgb, var(--second) 35%, var(--ground)); stroke-width:2; stroke-dasharray:10 10 }
+.sky { fill:color-mix(in srgb, var(--main) 4%, var(--ground)) }
+.deep { fill:color-mix(in srgb, var(--main) 72%, var(--ground)) }
+.warm { fill:color-mix(in srgb, var(--accent) 42%, var(--ground)) }
+.floor { fill:color-mix(in srgb, var(--second) 30%, var(--ground)) }
+.iso { fill:none; stroke:color-mix(in srgb, var(--main) 45%, var(--ground)); stroke-width:3 }
+.flow { fill:none; stroke:var(--main); stroke-width:10; stroke-linecap:round; stroke-linejoin:round } .flow.hot { stroke:var(--accent) } .flow.pale { stroke:var(--ground) }
+.head { fill:var(--main) } .head.hot { fill:var(--accent) } .head.pale { fill:var(--ground) }
+.lbl { font-family:var(--sans, system-ui, sans-serif); font-size:32px; font-weight:700; fill:var(--second) } .lbl.sm { font-size:26px; font-weight:400 } .lbl.on-deep { fill:var(--ground) } .lbl.hot { fill:var(--accent) }
+.big { font-family:var(--display, var(--sans, system-ui, sans-serif)); font-weight:700; font-size:150px; fill:var(--main) }
+.tag { position:absolute; font-size:26px; font-weight:700; letter-spacing:.06em; padding:8px 16px; border-radius:6px; background:var(--main); color:var(--ground) }
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <div class="viewport" id="vp"><div class="frame" id="frame"><div id="stage" role="img" aria-label="Animated diagram of coastal upwelling"></div></div></div>
+  <nav class="bar" aria-label="Animation controls">
+    <div class="prog" aria-hidden="true"><i id="prog"></i></div>
+    <div class="where" aria-live="polite"><span class="count" id="count">1 of 9</span><span class="name" id="name"></span></div>
+    <div class="dots" id="dots"></div>
+    <div class="btns">
+      <button class="b" id="back" type="button">Back</button>
+      <button class="b ghosty" id="replay" type="button">Replay</button>
+      <button class="b ghosty" id="pause" type="button">Pause</button>
+      <button class="b ghosty" id="fs" type="button">Full screen</button>
+      <button class="b primary" id="next" type="button">Next</button>
+    </div>
+  </nav>
+  <p class="keys">Right arrow, space or a slide clicker goes to the next scene. Left arrow goes back, R replays, P pauses, F toggles full screen.</p>
+</main>
+<script>
+const SCENES = [{"id": "title", "name": "A cold coast", "dur": 5}, {"id": "setup", "name": "The pressure map", "dur": 7}, {"id": "winds", "name": "Northerly winds", "dur": 9}, {"id": "ekman", "name": "Ekman transport", "dur": 19}, {"id": "aloft", "name": "Winds aloft", "dur": 9}, {"id": "offshore", "name": "Water moves out", "dur": 8}, {"id": "rise", "name": "Cold water rises", "dur": 10}, {"id": "fog", "name": "Fog and life", "dur": 7}, {"id": "recap", "name": "Recap", "dur": 6}];
+const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const ei = x => x * x * x;
+const eio = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eob = (x, s = 1.4) => 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2);
+const rng = seed => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const hEl = html => { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; };
+const TextFx = {
+  fadeFromRight(el, t, t0, o) {
+    o = o || {}; const st = o.stagger == null ? 0.11 : o.stagger, dur = o.dur == null ? 0.5 : o.dur, dx = o.dx == null ? 26 : o.dx;
+    if (!el._w) {
+      const parts = []; el.childNodes.forEach(n => { if (n.nodeName === 'BR') parts.push(null); else n.textContent.split(/\s+/).filter(Boolean).forEach(w => parts.push(w)); });
+      el.textContent = ''; el._w = [];
+      parts.forEach((w, i) => { if (w === null) { el.appendChild(document.createElement('br')); return; } const s = document.createElement('span'); s.textContent = w; s.style.display = 'inline-block'; el.appendChild(s); el._w.push(s); if (i < parts.length - 1 && parts[i + 1] !== null) el.appendChild(document.createTextNode(' ')); });
+    }
+    let end = t0;
+    el._w.forEach((s, i) => { const a = t0 + i * st, p = eo(seg(t, a, a + dur)); s.style.opacity = p; s.style.transform = 'translateX(' + (dx * (1 - p)).toFixed(2) + 'px)'; end = a + dur; });
+    return end;
+  },
+};
+const stage = document.getElementById('stage');
+const REG = {};
+function makeKit(id) {
+  const box = document.createElement('div'); box.className = 'scene'; box.dataset.id = id; stage.appendChild(box);
+  const kit = { seg, lerp, eo, ei, eio, eob, clamp01, clamp, rng, TextFx, h: hEl, W: 1920, H: 1080, stage: box,
+    scene(name, obj) { REG[name] = { obj, kit, box }; } };
+  return kit;
+}
+</script>
+<script>
+(function () {
+  var COAST = 'M1010 0 L1002 120 L995 250 L990 360 L962 440 L985 470 L1008 540 L1030 600 L1060 660 L1095 740 L1125 810 L1160 840 L1235 860 L1275 930 L1300 1000 L1320 1080';
+  function arrow(x1, y1, x2, y2, cls, size) {
+    size = size || 26;
+    var a = Math.atan2(y2 - y1, x2 - x1), c = Math.cos(a), s = Math.sin(a);
+    var bx = x2 - c * size * 1.3, by = y2 - s * size * 1.3;
+    var p = [x2, y2, bx - s * size, by + c * size, bx + s * size, by - c * size].map(function (v) { return v.toFixed(1); });
+    return '<path class="flow ' + cls + '" d="M' + (+x1).toFixed(1) + ' ' + (+y1).toFixed(1) + ' L' + bx.toFixed(1) + ' ' + by.toFixed(1) + '"/>' +
+      '<polygon class="head ' + cls + '" points="' + p[0] + ',' + p[1] + ' ' + p[2] + ',' + p[3] + ' ' + p[4] + ',' + p[5] + '"/>';
+  }
+  function map() {
+    return '<rect class="sea" x="0" y="0" width="1920" height="1080"/>' +
+      '<path class="land" d="' + COAST + ' L1920 1080 L1920 0 Z"/>' +
+      '<path class="border" d="M990 330 L1920 330"/>' +
+      '<path class="coast" d="' + COAST + '"/>' +
+      '<text class="lbl sm" x="1260" y="300">Oregon</text>' +
+      '<text class="lbl sm" x="1330" y="600">California</text>' +
+      '<text class="lbl sm" x="120" y="1010">Pacific Ocean</text>';
+  }
+  var SURF = 470, COASTX = 1340;
+  function warmPts(k) {
+    var pts = [], x;
+    for (x = 0; x <= COASTX; x += 40) pts.push(x + ',' + SURF);
+    for (x = COASTX; x >= 0; x -= 40) {
+      var r = Math.max(0, Math.min(1, (x - 700) / (COASTX - 700)));
+      r = r * r * (3 - 2 * r);
+      pts.push(x + ',' + (SURF + 95 - k * 92 * r).toFixed(1));
+    }
+    return pts.join(' ');
+  }
+  function cut() {
+    return '<rect class="sky" x="0" y="0" width="1920" height="' + SURF + '"/>' +
+      '<rect class="deep" x="0" y="' + SURF + '" width="' + COASTX + '" height="' + (1080 - SURF) + '"/>' +
+      '<polygon class="warm cut-warm" points="' + warmPts(0) + '"/>' +
+      '<path class="floor" d="M0 1000 L560 985 L820 730 L1060 650 L1340 470 L1340 1080 L0 1080 Z"/>' +
+      '<path class="land" d="M1340 470 L1430 420 L1530 330 L1610 300 L1710 350 L1810 318 L1920 350 L1920 1080 L1340 1080 Z"/>' +
+      '<path class="coast" d="M0 1000 L560 985 L820 730 L1060 650 L1340 470 L1430 420 L1530 330 L1610 300 L1710 350 L1810 318 L1920 350"/>';
+  }
+  var CX = 900, CY = 640;
+  function P(x, y, z) { return [CX + x + 0.5 * y, CY - z - 0.35 * y]; }
+  function pts(a) { return a.map(function (v) { var p = P(v[0], v[1], v[2]); return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' '); }
+  function arrow3(a, b, cls, size) { var p = P(a[0], a[1], a[2]), q = P(b[0], b[1], b[2]); return arrow(p[0], p[1], q[0], q[1], cls, size); }
+  function warm3(k) {
+    var out = [], x;
+    for (x = -700; x <= 200; x += 30) out.push([x, 0, 0]);
+    for (x = 200; x >= -700; x -= 30) {
+      var r = Math.max(0, Math.min(1, (x + 250) / 450)); r = r * r * (3 - 2 * r);
+      out.push([x, 0, -75 + k * 72 * r]);
+    }
+    return pts(out);
+  }
+  function block(glass) {
+    var edge = 'fill="none" stroke="var(--main)" stroke-width="3" stroke-linejoin="round"';
+    return '<polygon class="sea b3-top" points="' + pts([[-700, 0, 0], [200, 0, 0], [200, 800, 0], [-700, 800, 0]]) + '"' + (glass ? ' style="fill-opacity:.55"' : '') + '/>' +
+      '<polygon class="b3-cold" points="' + pts([[40, 0, 0], [200, 0, 0], [200, 800, 0], [40, 800, 0]]) + '" style="fill:color-mix(in srgb, var(--main) 55%, var(--ground));opacity:0"/>' +
+      '<g class="b3-front"' + (glass ? ' style="opacity:.3"' : '') + '>' +
+      '<polygon class="deep" points="' + pts([[-700, 0, 0], [200, 0, 0], [200, 0, -400], [-700, 0, -400]]) + '"/>' +
+      '<polygon class="warm b3-warm" points="' + warm3(0) + '"/>' +
+      '<polygon class="floor" points="' + pts([[-700, 0, -380], [-300, 0, -372], [-60, 0, -210], [100, 0, -110], [200, 0, 0], [300, 0, 90], [500, 0, 100], [500, 0, -400], [-700, 0, -400]]) + '"/></g>' +
+      '<polygon points="' + pts([[500, 0, 100], [500, 800, 100], [500, 800, -400], [500, 0, -400]]) + '" style="fill:color-mix(in srgb, var(--second) 40%, var(--ground))"/>' +
+      '<polygon class="land" points="' + pts([[200, 0, 0], [300, 0, 90], [500, 0, 100], [500, 800, 100], [300, 800, 90], [200, 800, 0]]) + '"/>' +
+      '<polyline points="' + pts([[300, 0, 90], [300, 800, 90]]) + '" fill="none" stroke="color-mix(in srgb, var(--second) 30%, var(--ground))" stroke-width="2"/>' +
+      '<polyline points="' + pts([[-700, 0, 0], [200, 0, 0], [300, 0, 90], [500, 0, 100], [500, 800, 100], [300, 800, 90], [200, 800, 0], [-700, 800, 0], [-700, 0, 0], [-700, 0, -400], [500, 0, -400], [500, 0, 100]]) + '" ' + edge + '/>' +
+      '<polyline points="' + pts([[500, 800, 100], [500, 800, -400], [500, 0, -400]]) + '" ' + edge + '/>' +
+      '<polyline class="coast" points="' + pts([[200, 0, 0], [200, 800, 0]]) + '"/>' +
+      arrow3([-640, 600, 0], [-640, 780, 0], '', 14).replace(/class="flow /, 'style="stroke-width:5" class="flow ') +
+      '<text class="lbl sm" x="' + P(-640, 800, 0)[0] + '" y="' + (P(-640, 800, 0)[1] - 12) + '" text-anchor="middle">N</text>' +
+      '<text class="lbl sm" x="' + P(310, 420, 95)[0] + '" y="' + P(310, 420, 95)[1] + '">California</text>' +
+      (glass ? '' : '<text class="lbl on-deep" x="' + P(-670, 0, -340)[0] + '" y="' + P(-670, 0, -340)[1] + '">Pacific Ocean</text>');
+  }
+  function veil() {
+    var s = '<polygon points="' + pts([[-700, 0, 0], [200, 0, 0], [200, 800, 0], [-700, 800, 0]]) + '" style="fill:color-mix(in srgb, var(--main) 10%, var(--ground));fill-opacity:.55"/>';
+    [[-560, 120], [-420, 520], [-220, 300], [-80, 680], [60, 140], [-620, 700], [-300, 60], [80, 440]].forEach(function (c) {
+      var d = 'M', i;
+      for (i = 0; i <= 8; i++) { var p = P(c[0] + i * 12, c[1] - i * 6, 0); d += (i ? ' L' : '') + p[0].toFixed(1) + ' ' + (p[1] + 5 * Math.sin(i * 1.6)).toFixed(1); }
+      s += '<path d="' + d + '" fill="none" stroke="var(--main)" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>';
+    });
+    return s;
+  }
+  window.UI = { veil: veil, COAST: COAST, SURF: SURF, COASTX: COASTX, arrow: arrow, map: map, cut: cut, warmPts: warmPts, P: P, pts: pts, arrow3: arrow3, warm3: warm3, block: block };
+})();
+</script>
+<script>
+try { (function (kit) {
+const { seg, eo, eio, lerp, TextFx } = kit;
+kit.scene('title', {
+  init(kit) {
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art title-map" viewBox="0 0 1920 1080">' + UI.map() +
+      '<path class="title-strip" d="' + UI.COAST + '" fill="none" stroke="var(--main)" stroke-width="26" stroke-opacity=".35" stroke-linejoin="round" pathLength="1" stroke-dasharray="1 1"/></svg>' +
+      '<div class="title-veil" style="position:absolute;inset:0;background:linear-gradient(90deg, var(--ground) 38%, color-mix(in srgb, var(--ground) 30%, transparent) 70%)"></div>' +
+      '<div class="words" style="left:140px;top:300px;width:900px">' +
+      '<p class="eyebrow title-eye">Coastal upwelling</p>' +
+      '<h1 class="line" style="font-size:104px">Why the California coast runs cold in summer</h1>' +
+      '<p class="sub title-sub">From the pressure map to the rising ocean water</p></div></div>'));
+    this.map = kit.stage.querySelector('.title-map').style;
+    this.strip = kit.stage.querySelector('.title-strip');
+    this.eye = kit.stage.querySelector('.title-eye').style;
+    this.sub = kit.stage.querySelector('.title-sub').style;
+    this.line = kit.stage.querySelector('.line');
+  },
+  render(t) {
+    this.eye.opacity = eo(seg(t, -0.4, 0.2));
+    TextFx.fadeFromRight(this.line, t, -0.7, { stagger: 0.08 });
+    this.sub.opacity = eo(seg(t, 1.0, 1.6));
+    this.sub.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 1.0, 1.6))) + 'px)';
+    this.map.transformOrigin = '1150px 600px';
+    this.map.transform = 'scale(' + lerp(1.0, 1.05, eio(seg(t, 0, 5))) + ')';
+    this.strip.setAttribute('stroke-dashoffset', String(1 - eio(seg(t, 1.6, 3.6))));
+  },
+});
+})(makeKit("title")); } catch (e) { console.error("scene title", e); }
+try { (function (kit) {
+const { seg, eo, eob, eio, lerp, TextFx } = kit;
+kit.scene('setup', {
+  init(kit) {
+    const iso = (cx, cy, rs, cls) => rs.map((r, i) => '<ellipse class="iso ' + cls + '" cx="' + cx + '" cy="' + cy + '" rx="' + r + '" ry="' + (r * 0.68).toFixed(0) + '"/>').join('');
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art setup-cam" viewBox="0 0 1920 1080">' + UI.map() +
+      iso(560, 380, [150, 260, 370], 'setup-hi') + iso(1560, 800, [110, 200], 'setup-lo') +
+      '<g class="setup-H"><text class="big" x="560" y="432" text-anchor="middle">H</text></g>' +
+      '<g class="setup-L"><text class="big" x="1560" y="852" text-anchor="middle" style="fill:var(--accent)">L</text></g>' +
+      '<text class="lbl setup-hl" x="560" y="490" text-anchor="middle">Pacific High</text>' +
+      '<text class="lbl sm setup-hl2" x="560" y="530" text-anchor="middle">sinking air, clear skies</text>' +
+      '<text class="lbl setup-ll" x="1560" y="660" text-anchor="middle">Thermal low</text>' +
+      '<text class="lbl sm setup-ll2" x="1560" y="700" text-anchor="middle">hot inland deserts</text></svg>' +
+      '<div class="words" style="left:100px;top:740px;width:820px"><p class="eyebrow">Summer pattern</p>' +
+      '<h2 class="line" style="font-size:60px">High pressure offshore, low pressure inland</h2></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.cam = q('.setup-cam').style;
+    this.H = q('.setup-H'); this.L = q('.setup-L');
+    this.hi = [...kit.stage.querySelectorAll('.setup-hi')];
+    this.lo = [...kit.stage.querySelectorAll('.setup-lo')];
+    this.labs = ['.setup-hl', '.setup-hl2', '.setup-ll', '.setup-ll2'].map(s => q(s).style);
+    this.eye = q('.eyebrow').style; this.line = q('.line');
+  },
+  render(t) {
+    this.cam.transformOrigin = '1000px 560px';
+    this.cam.transform = 'scale(' + lerp(1.0, 1.04, eio(seg(t, 0, 7))) + ')';
+    const pop = (g, cx, cy, a) => {
+      const p = seg(t, a, a + 0.55);
+      g.style.opacity = eo(seg(t, a, a + 0.2));
+      g.style.transformOrigin = cx + 'px ' + cy + 'px';
+      g.style.transform = 'scale(' + (p <= 0 ? 0.4 : lerp(0.4, 1, eob(p, 1.7))) + ')';
+    };
+    pop(this.H, 560, 380, 0.6);
+    pop(this.L, 1560, 800, 3.0);
+    const ring = (els, cx, cy, a) => els.forEach((e, i) => {
+      const p = eo(seg(t, a + i * 0.25, a + i * 0.25 + 0.7));
+      const b = 1 + 0.012 * Math.sin((t - i) * 2 * Math.PI / 3.2);
+      e.style.opacity = p; e.style.transformOrigin = cx + 'px ' + cy + 'px';
+      e.style.transform = 'scale(' + (lerp(0.7, 1, p) * b) + ')';
+    });
+    ring(this.hi, 560, 380, 1.0);
+    ring(this.lo, 1560, 800, 3.3);
+    [1.5, 1.75, 3.9, 4.15].forEach((a, i) => { this.labs[i].opacity = eo(seg(t, a, a + 0.4)); });
+    this.eye.opacity = eo(seg(t, 0.2, 0.6));
+    TextFx.fadeFromRight(this.line, t, 0.4);
+  },
+});
+})(makeKit("setup")); } catch (e) { console.error("scene setup", e); }
+try { (function (kit) {
+const { seg, eo, eio, lerp, TextFx } = kit;
+const HI = { cx: 560, cy: 380, rx: 300, ry: 205 }, LO = { cx: 1560, cy: 800, rx: 165, ry: 112 };
+const COASTFLOW = 'M880 70 L878 250 L872 380 L868 470 L905 580 L960 700 L1010 800 L1080 930';
+kit.scene('winds', {
+  init(kit) {
+    const iso = (cx, cy, rs) => rs.map(r => '<ellipse class="iso" cx="' + cx + '" cy="' + cy + '" rx="' + r + '" ry="' + (r * 0.68).toFixed(0) + '"/>').join('');
+    const heads = (cls, n, hot) => { let s = ''; for (let i = 0; i < n; i++) s += '<polygon class="head ' + (hot ? 'hot ' : '') + cls + '" points="16,0 -14,-15 -14,15"/>'; return s; };
+    const ell = (o, cls, hot) => '<ellipse class="flow ' + (hot ? 'hot ' : '') + cls + '" cx="' + o.cx + '" cy="' + o.cy + '" rx="' + o.rx + '" ry="' + o.ry + '" stroke-dasharray="30 24" style="stroke-width:7"/>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art winds-cam" viewBox="0 0 1920 1080">' + UI.map() +
+      '<g class="winds-press">' + iso(560, 380, [150, 260, 370]) + iso(1560, 800, [110, 200]) +
+      '<text class="big" x="560" y="432" text-anchor="middle">H</text>' +
+      '<text class="big" x="1560" y="852" text-anchor="middle" style="fill:var(--accent)">L</text></g>' +
+      '<g class="winds-hi">' + ell(HI, 'winds-hie') + heads('winds-hih', 4) + '</g>' +
+      '<g class="winds-lo">' + ell(LO, 'winds-loe', true) + heads('winds-loh', 3, true) + '</g>' +
+      '<g class="winds-cf"><path class="flow winds-cfp" d="' + COASTFLOW + '" stroke-dasharray="34 22" style="stroke-width:12"/>' + heads('winds-cfh', 4) + '</g>' +
+      '<text class="lbl winds-t1" x="560" y="640" text-anchor="middle">Clockwise around the High</text>' +
+      '<text class="lbl hot winds-t2" x="1480" y="950" text-anchor="middle">Counter-clockwise around the Low</text>' +
+      '<g class="winds-tag"><rect x="1065" y="400" width="420" height="90" rx="8" style="fill:var(--main)"/>' +
+      '<text class="lbl" x="1275" y="440" text-anchor="middle" style="fill:var(--ground);font-size:28px">Northerly winds</text>' +
+      '<text class="lbl" x="1275" y="474" text-anchor="middle" style="fill:var(--ground);font-size:28px">between High and Low</text></g></svg>' +
+      '<div class="words" style="left:100px;top:720px;width:780px"><p class="eyebrow">The winds</p>' +
+      '<h2 class="line" style="font-size:46px">Air circles each pressure center.<br>Air between flows north-to-south<br>along the coast.</h2></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    const all = s => [...kit.stage.querySelectorAll(s)];
+    this.cam = q('.winds-cam').style;
+    this.hi = q('.winds-hi').style; this.lo = q('.winds-lo').style; this.cf = q('.winds-cf').style;
+    this.hie = q('.winds-hie'); this.loe = q('.winds-loe');
+    this.hih = all('.winds-hih'); this.loh = all('.winds-loh'); this.cfh = all('.winds-cfh');
+    this.cfp = q('.winds-cfp'); this.cfl = this.cfp.getTotalLength();
+    this.t1 = q('.winds-t1').style; this.t2 = q('.winds-t2').style; this.tag = q('.winds-tag').style;
+    this.press = q('.winds-press').style;
+    this.eye = q('.eyebrow').style; this.line = q('.line');
+  },
+  render(t) {
+    this.cam.transformOrigin = '1000px 560px';
+    this.cam.transform = 'scale(' + lerp(1.04, 1.1, eio(seg(t, 0.4, 9))) + ')';
+    this.press.opacity = lerp(1, 0.5, eo(seg(t, 0.4, 1.2)));
+    const orbit = (o, heads, dir, w) => heads.forEach((h, i) => {
+      const th = dir * t * w + i * 2 * Math.PI / heads.length;
+      const x = o.cx + o.rx * Math.cos(th), y = o.cy + o.ry * Math.sin(th);
+      const a = Math.atan2(dir * o.ry * Math.cos(th), -dir * o.rx * Math.sin(th)) * 180 / Math.PI;
+      h.setAttribute('transform', 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') rotate(' + a.toFixed(1) + ')');
+    });
+    orbit(HI, this.hih, 1, 0.55);
+    orbit(LO, this.loh, -1, 0.8);
+    this.hie.setAttribute('stroke-dashoffset', String(-t * 90));
+    this.loe.setAttribute('stroke-dashoffset', String(t * 70));
+    const hiOn = eo(seg(t, 0.8, 1.4)), loOn = eo(seg(t, 3.4, 4.0)), cfOn = eo(seg(t, 5.8, 6.4));
+    const dim = lerp(1, 0.3, eo(seg(t, 5.6, 6.2)));
+    this.hi.opacity = hiOn * dim; this.lo.opacity = loOn * dim;
+    this.t1.opacity = eo(seg(t, 1.4, 1.8)) * dim; this.t2.opacity = eo(seg(t, 4.0, 4.4)) * dim;
+    this.cf.opacity = cfOn;
+    this.cfp.setAttribute('stroke-dashoffset', String(-t * 150));
+    this.cfh.forEach((h, i) => {
+      const f = (t * 0.12 + i / 4) % 1, s = f * this.cfl;
+      const p = this.cfp.getPointAtLength(s), p2 = this.cfp.getPointAtLength(Math.min(this.cfl, s + 4));
+      h.style.opacity = Math.min(1, f / 0.06, (1 - f) / 0.06);
+      h.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ') rotate(' + (Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI).toFixed(1) + ') scale(1.3)');
+    });
+    this.tag.opacity = eo(seg(t, 6.6, 7.0));
+    this.tag.transform = 'translateY(' + lerp(16, 0, eo(seg(t, 6.6, 7.0))) + 'px)';
+    this.eye.opacity = eo(seg(t, 0.2, 0.6));
+    TextFx.fadeFromRight(this.line, t, 0.4);
+  },
+});
+})(makeKit("winds")); } catch (e) { console.error("scene winds", e); }
+try { (function (kit) {
+const { seg, eo, eio, eob, lerp, TextFx } = kit;
+const X0 = -300, Y0 = 300, N = 5, LAYER = 72, HS = 180, K = 2.6, CXC = 1080, CYC = 560;
+const LEN = [170, 140, 110, 85, 60];
+const DIRS = [0, 1, 2, 3, 4].map(i => { const a = (45 + 45 * i / (N - 1)) * Math.PI / 180; return [-Math.sin(a), -Math.cos(a)]; });
+const ZS = [0, 1, 2, 3, 4].map(i => -LAYER * i / (N - 1));
+const KEYS = [[7.0, -30, 25], [9.0, 0, 88], [10.6, 0, 88], [12.6, 0, 8], [14.0, 0, 8], [15.6, -30, 25]];
+function view(t) {
+  if (t <= KEYS[0][0]) return [KEYS[0][1], KEYS[0][2]];
+  for (let i = 1; i < KEYS.length; i++) {
+    const a = KEYS[i - 1], b = KEYS[i];
+    if (t <= b[0]) { const p = eio(seg(t, a[0], b[0])); return [lerp(a[1], b[1], p), lerp(a[2], b[2], p)]; }
+  }
+  const l = KEYS[KEYS.length - 1]; return [l[1], l[2]];
+}
+function ag(p, q, size) {
+  const a = Math.atan2(q[1] - p[1], q[0] - p[0]), c = Math.cos(a), s = Math.sin(a);
+  const bx = q[0] - c * size * 1.3, by = q[1] - s * size * 1.3;
+  return ['M' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ' L' + bx.toFixed(1) + ' ' + by.toFixed(1),
+    q[0].toFixed(1) + ',' + q[1].toFixed(1) + ' ' + (bx - s * size).toFixed(1) + ',' + (by + c * size).toFixed(1) + ' ' + (bx + s * size).toFixed(1) + ',' + (by - c * size).toFixed(1)];
+}
+kit.scene('ekman', {
+  init(kit) {
+    const P = UI.P, w = (s, n) => s.replace('class="flow ', 'style="stroke-width:' + n + '" class="flow ');
+    let spiral = '';
+    for (let i = 0; i < N; i++) {
+      const end = [X0 + DIRS[i][0] * LEN[i], Y0 + DIRS[i][1] * LEN[i], ZS[i]];
+      spiral += '<g style="opacity:' + (1 - i * 0.1).toFixed(2) + '">' + w(UI.arrow3([X0, Y0, ZS[i]], end, i === N - 1 ? 'hot' : '', 9), 4) + '</g>';
+    }
+    const top = P(X0, Y0, 0), bot = P(X0, Y0, -LAYER);
+    this.o = top;
+    let cu = '<g class="cu">';
+    for (let f = 0; f < 6; f++) cu += '<polygon class="cu-f"/>';
+    cu += '<line class="cu-pole" stroke="var(--second)" stroke-width="3" stroke-dasharray="6 6"/>';
+    cu += '<g class="cu-wind"><path class="flow" style="stroke-width:12"/><polygon class="head"/></g>';
+    for (let i = 0; i < N; i++) cu += '<g class="cu-a" style="opacity:0"><path class="flow' + (i === N - 1 ? ' hot' : '') + '" style="stroke-width:' + (11 - i) + '"/><polygon class="head' + (i === N - 1 ? ' hot' : '') + '"/></g>';
+    cu += '<polyline class="cu-curve" fill="none" stroke="var(--main)" stroke-width="3" stroke-dasharray="6 7"/>';
+    cu += '<text class="lbl cu-lw">Wind</text><text class="lbl cu-l0" text-anchor="end">Surface: 45° right of the wind</text>' +
+      '<text class="lbl hot cu-l4">Bottom of the layer: 90° right</text><text class="lbl sm cu-n" text-anchor="middle">N</text><text class="lbl sm cu-wl" text-anchor="middle">W</text></g>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art ek-map" viewBox="0 0 1920 1080">' + UI.map() + '</svg>' +
+      '<svg class="art ek-3d" viewBox="0 0 1920 1080"><g class="ek-cam">' + UI.block(true) +
+      '<line class="ek-pole" x1="' + top[0] + '" y1="' + top[1] + '" x2="' + bot[0] + '" y2="' + bot[1] + '" stroke="var(--second)" stroke-width="2" stroke-dasharray="4 4"/>' +
+      '<g class="ek-wind">' + w(UI.arrow3([X0, 520, 60], [X0, 120, 60], '', 14), 7) + '</g>' +
+      '<g class="ek-sp">' + spiral + '</g>' +
+      '<g class="ek-net">' + w(UI.arrow3([X0, Y0, 4], [X0 - 400, Y0, 4], 'hot', 34), 18) + '</g></g></svg>' +
+      '<svg class="art ek-cu" viewBox="0 0 1920 1080">' + cu + '</svg>' +
+      '<svg class="art" viewBox="0 0 1920 1080"><text class="lbl hot ek-ln" style="font-size:34px">Net transport: 90° right, offshore</text></svg>' +
+      '<div class="panel ek-panel" style="left:40px;top:40px;width:560px"><div class="words" style="position:relative">' +
+      '<p class="eyebrow">Ekman transport</p>' +
+      '<h2 class="line" style="font-size:40px">Within the surface layer, the flow turns from 45° to 90° right of the wind</h2>' +
+      '<p class="sub ek-sub" style="font-size:26px">Coriolis effect, Northern Hemisphere: the layer as a whole moves offshore</p></div></div>' +
+      '<div class="panel ek-c1" style="left:40px;top:420px;width:500px"><p class="sub" style="margin:0;font-size:30px">Seen from above: each layer turns a little farther right of the wind</p></div>' +
+      '<div class="panel ek-c2" style="left:40px;top:420px;width:500px"><p class="sub" style="margin:0;font-size:30px">Seen from the side: each layer down moves more slowly</p></div></div>'));
+    const q = s => kit.stage.querySelector(s), all = s => [...kit.stage.querySelectorAll(s)];
+    this.map = q('.ek-map').style; this.d3 = q('.ek-3d').style; this.cam = q('.ek-cam');
+    q('.b3-front').style.opacity = 0.6;
+    this.pole = q('.ek-pole').style; this.wind = q('.ek-wind').style; this.sp = q('.ek-sp').style; this.net = q('.ek-net').style;
+    this.cu = q('.ek-cu').style;
+    this.faces = all('.cu-f');
+    this.faces.forEach((f, i) => { f.setAttribute('style', i === 5 ? 'fill:color-mix(in srgb, var(--main) 16%, var(--ground));fill-opacity:.55;stroke:var(--main);stroke-width:3' : 'fill:color-mix(in srgb, var(--accent) 30%, transparent);stroke:color-mix(in srgb, var(--accent) 70%, var(--ground));stroke-width:2'); });
+    this.cpole = q('.cu-pole');
+    const pair = g => [g.querySelector('path'), g.querySelector('polygon')];
+    this.cwind = pair(q('.cu-wind'));
+    this.ca = all('.cu-a').map(g => ({ g, pp: pair(g) }));
+    this.curve = q('.cu-curve');
+    this.lab = { w: q('.cu-lw'), l0: q('.cu-l0'), l4: q('.cu-l4'), n: q('.cu-n'), wl: q('.cu-wl') };
+    this.ln = q('.ek-ln'); this.netEnd = P(X0 - 400, Y0, 0);
+    this.c1 = q('.ek-c1').style; this.c2 = q('.ek-c2').style;
+    this.panel = q('.ek-panel').style; this.line = q('.line'); this.sub = q('.ek-sub').style;
+  },
+  render(t) {
+    this.map.transformOrigin = '1000px 560px';
+    this.map.transform = 'scale(' + lerp(1.1, 1.3, eio(seg(t, 0, 1.6))) + ')';
+    this.map.opacity = 1 - eo(seg(t, 0.8, 1.6));
+    const up = eo(seg(t, 0.9, 2.0));
+    const cuOn = eo(seg(t, 3.3, 3.7)) * (1 - eo(seg(t, 15.6, 16.0)));
+    this.d3.opacity = up * (1 - cuOn);
+    this.d3.transformOrigin = '960px 640px';
+    this.d3.transform = 'translateY(' + lerp(70, 0, up) + 'px) scale(' + lerp(0.94, 1, up) + ')';
+    const zk = eio(seg(t, 2.1, 3.3)) * (1 - eio(seg(t, 16.0, 17.0)));
+    const z = Math.exp(Math.log(K) * zk), o = this.o;
+    const ox = lerp(o[0], CXC, zk), oy = lerp(o[1], CYC, zk);
+    this.cam.setAttribute('transform', 'translate(' + ox.toFixed(2) + ' ' + oy.toFixed(2) + ') scale(' + z.toFixed(4) + ') translate(' + (-o[0]) + ' ' + (-o[1]) + ')');
+    this.pole.opacity = eo(seg(t, 2.0, 2.4));
+    const w = eo(seg(t, 2.0, 2.6));
+    this.wind.opacity = w;
+    this.wind.transform = 'translate(' + lerp(20, 0, w) + 'px,' + lerp(-14, 0, w) + 'px)';
+    this.sp.opacity = eo(seg(t, 15.6, 16.0));
+    this.cu.opacity = cuOn;
+    if (cuOn > 0) {
+      const [yaw, pitch] = view(t), ps = yaw * Math.PI / 180, ph = pitch * Math.PI / 180;
+      const c = Math.cos(ps), s = Math.sin(ps), cp = Math.cos(ph), sp = Math.sin(ph);
+      const pr = (x, y, zz) => { const xr = x * c - y * s, yr = x * s + y * c; return [CXC + K * xr, CYC + K * (-zz * cp - yr * sp)]; };
+      const str = a => a.map(v => { const p = pr(v[0], v[1], v[2]); return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+      const B = -LAYER, H = HS;
+      const F = [[[-H, -H, B], [H, -H, B], [H, H, B], [-H, H, B]], [[-H, -H, 0], [H, -H, 0], [H, -H, B], [-H, -H, B]], [[H, -H, 0], [H, H, 0], [H, H, B], [H, -H, B]],
+        [[H, H, 0], [-H, H, 0], [-H, H, B], [H, H, B]], [[-H, H, 0], [-H, -H, 0], [-H, -H, B], [-H, H, B]], [[-H, -H, 0], [H, -H, 0], [H, H, 0], [-H, H, 0]]];
+      this.faces.forEach((f, i) => f.setAttribute('points', str(F[i])));
+      const p0 = pr(0, 0, 0), p1 = pr(0, 0, B);
+      this.cpole.setAttribute('x1', p0[0]); this.cpole.setAttribute('y1', p0[1]); this.cpole.setAttribute('x2', p1[0]); this.cpole.setAttribute('y2', p1[1]);
+      const wa = pr(0, 150, 50), wb = pr(0, -120, 50), wg = ag(wa, wb, 24);
+      this.cwind[0].setAttribute('d', wg[0]); this.cwind[1].setAttribute('points', wg[1]);
+      const tips = [];
+      this.ca.forEach((a, i) => {
+        const at = 3.9 + i * 0.5, g = seg(t, at, at + 0.5);
+        const L = LEN[i] * (g <= 0 ? 0.3 : lerp(0.3, 1, eob(g, 1.4)));
+        const st = pr(0, 0, ZS[i]), en = pr(DIRS[i][0] * L, DIRS[i][1] * L, ZS[i]);
+        tips.push(en);
+        const gg = ag(st, en, 20 - i * 1.5);
+        a.pp[0].setAttribute('d', gg[0]); a.pp[1].setAttribute('points', gg[1]);
+        a.g.style.opacity = eo(seg(t, at, at + 0.2)) * (1 - i * 0.08);
+      });
+      this.curve.setAttribute('points', tips.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '));
+      this.curve.style.opacity = eo(seg(t, 6.2, 6.6));
+      const put = (el, p, dx, dy, op) => { el.setAttribute('x', (p[0] + dx).toFixed(1)); el.setAttribute('y', (p[1] + dy).toFixed(1)); el.style.opacity = op; };
+      put(this.lab.w, wa, 18, -14, eo(seg(t, 3.6, 4.0)));
+      put(this.lab.l0, tips[0], -18, -18, eo(seg(t, 4.2, 4.6)));
+      put(this.lab.l4, tips[N - 1], -40, 48, eo(seg(t, 6.2, 6.6)));
+      put(this.lab.n, pr(0, H + 40, 0), 0, 10, eo(seg(t, 6.8, 7.4)));
+      put(this.lab.wl, pr(-H - 44, 0, 0), 0, 10, eo(seg(t, 6.8, 7.4)));
+    }
+    this.c1.opacity = eo(seg(t, 8.6, 9.0)) * (1 - eo(seg(t, 10.8, 11.2)));
+    this.c2.opacity = eo(seg(t, 12.4, 12.8)) * (1 - eo(seg(t, 14.4, 14.8)));
+    const n = seg(t, 17.0, 17.6);
+    this.net.opacity = eo(seg(t, 17.0, 17.2));
+    this.net.transform = 'translateX(' + lerp(60, 0, eo(n)) + 'px)';
+    this.ln.setAttribute('x', this.netEnd[0] - 10); this.ln.setAttribute('y', this.netEnd[1] - 44);
+    this.ln.style.opacity = eo(seg(t, 17.3, 17.7));
+    this.panel.opacity = eo(seg(t, 1.6, 2.0));
+    TextFx.fadeFromRight(this.line, t, 1.8);
+    this.sub.opacity = eo(seg(t, 17.4, 17.9));
+  },
+});
+})(makeKit("ekman")); } catch (e) { console.error("scene ekman", e); }
+try { (function (kit) {
+const { seg, eo, eio, lerp, TextFx } = kit;
+const WINDS = [[-520, 30, 10], [-260, 34, 12], [0, 40, 14], [140, 44, 16]];
+const SINK = [[-150, 400], [20, 620], [120, 250]];
+const SURFLOW = [[120, 160], [-140, 480], [100, 640], [-380, 220]];
+kit.scene('aloft', {
+  init(kit) {
+    const P = UI.P, w = (s, n) => s.replace('class="flow ', 'style="stroke-width:' + n + '" class="flow ');
+    let sink = '', winds = '', flow = '';
+    SINK.forEach(([x, y]) => { sink += '<g class="al-sink">' + w(UI.arrow3([x, y, 340], [x, y, 232], '', 16), 7) + '</g>'; });
+    WINDS.forEach(([x, z, sw]) => { winds += '<g class="al-w">' + w(UI.arrow3([x, 760, 60 + z], [x, 40, 60 + z], '', 18 + sw), sw) + '</g>'; });
+    SURFLOW.forEach(([x, y]) => { flow += '<g class="al-f">' + w(UI.arrow3([x, y, -12], [x - 260, y, -12], 'hot', 22), 11) + '</g>'; });
+    const inv = UI.pts([[-300, 0, 220], [200, 0, 220], [200, 800, 220], [-300, 800, 220]]);
+    const il = P(-300, 0, 220), sl = P(170, 640, 330), wl = P(140, 40, 104), fl = P(-640, 220, 2);
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' + UI.block(false) +
+      flow + '<g class="al-veil">' + UI.veil() + '</g>' + winds +
+      '<polygon class="al-inv" points="' + inv + '" style="fill:color-mix(in srgb, var(--accent) 10%, transparent)" stroke="var(--accent)" stroke-width="4" stroke-dasharray="16 10"/>' +
+      sink +
+      '<text class="lbl al-sl" x="' + (sl[0] + 30) + '" y="' + sl[1] + '">Sinking air from the High</text>' +
+      '<text class="lbl hot al-il" x="' + (il[0] - 16) + '" y="' + (il[1] + 10) + '" text-anchor="end">Inversion</text>' +
+      '<text class="lbl al-wl" x="' + (wl[0] + 30) + '" y="' + (wl[1] + 20) + '">Northerly wind, strongest near shore</text>' +
+      '<text class="lbl hot al-fl" x="' + fl[0] + '" y="' + (fl[1] + 48) + '">Surface water pushed offshore</text></svg>' +
+      '<div class="panel" style="left:40px;top:40px;width:560px"><div class="words" style="position:relative">' +
+      '<p class="eyebrow">Winds aloft</p>' +
+      '<h2 class="line" style="font-size:40px">Under a lid of sinking air, the wind drives the surface water west</h2></div></div></div>'));
+    const q = s => kit.stage.querySelector(s), all = s => [...kit.stage.querySelectorAll(s)];
+    this.sink = all('.al-sink'); this.w = all('.al-w'); this.f = all('.al-f');
+    this.inv = q('.al-inv');
+    this.labs = ['.al-sl', '.al-il', '.al-wl', '.al-fl'].map(s => q(s).style);
+    this.panel = q('.panel').style; this.line = q('.line');
+  },
+  render(t) {
+    this.panel.opacity = eo(seg(t, 0, 0.4));
+    TextFx.fadeFromRight(this.line, t, 0.2);
+    this.w.forEach((g, i) => {
+      const a = 0.9 + i * 0.25, p = eo(seg(t, a, a + 0.7));
+      g.style.opacity = p;
+      g.style.transform = 'translate(' + (lerp(40, 0, p) + 5 * Math.sin((t + i) * 2 * Math.PI / 2)) + 'px,' + (lerp(-28, 0, p) - 3.5 * Math.sin((t + i) * 2 * Math.PI / 2)) + 'px)';
+    });
+    this.labs[2].opacity = eo(seg(t, 2.0, 2.4));
+    this.sink.forEach((g, i) => {
+      const a = 3.2 + i * 0.25, p = eo(seg(t, a, a + 0.6));
+      g.style.opacity = p;
+      g.style.transform = 'translateY(' + (lerp(-30, 0, p) + 6 * Math.sin((t + i * 0.7) * 2 * Math.PI / 2.2)) + 'px)';
+    });
+    this.labs[0].opacity = eo(seg(t, 3.8, 4.2));
+    this.inv.style.opacity = eo(seg(t, 4.5, 5.0));
+    this.inv.setAttribute('stroke-dashoffset', String(-t * 20));
+    this.labs[1].opacity = eo(seg(t, 4.8, 5.2));
+    this.f.forEach((g, i) => {
+      const a = 6.0 + i * 0.25;
+      g.style.opacity = eo(seg(t, a, a + 0.5));
+      g.style.transform = 'translateX(' + (-50 * eo(seg(t, a, a + 3))) + 'px)';
+    });
+    this.labs[3].opacity = eo(seg(t, 6.8, 7.2));
+  },
+});
+})(makeKit("aloft")); } catch (e) { console.error("scene aloft", e); }
+try { (function (kit) {
+const { seg, eo, eio, lerp, TextFx } = kit;
+const WINDS = [[-520, 30, 10], [-260, 34, 12], [0, 40, 14], [140, 44, 16]];
+const SURFLOW = [[120, 160], [-140, 480], [100, 640], [-380, 220]];
+kit.scene('offshore', {
+  init(kit) {
+    const P = UI.P, w = (s, n) => s.replace('class="flow ', 'style="stroke-width:' + n + '" class="flow ');
+    let winds = '', flow = '';
+    WINDS.forEach(([x, z, sw]) => { winds += '<g class="of-w">' + w(UI.arrow3([x, 760, 60 + z], [x, 40, 60 + z], '', 18 + sw), sw) + '</g>'; });
+    SURFLOW.forEach(([x, y]) => { flow += '<g class="of-f">' + w(UI.arrow3([x, y, -12], [x - 260, y, -12], 'hot', 22), 11) + '</g>'; });
+    const front = '<g class="of-ff">' + w(UI.arrow3([-60, 0, -30], [-620, 0, -30], '', 18), 8) + '</g>';
+    const l1 = P(-660, 0, -150), l2 = P(-660, 0, -200);
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' + UI.block(false) + flow + UI.veil() + front + winds +
+      '<text class="lbl on-deep of-l1" x="' + l1[0] + '" y="' + l1[1] + '">Warm surface layer moves offshore</text>' +
+      '<text class="lbl sm on-deep of-l2" x="' + l2[0] + '" y="' + l2[1] + '">and thins against the coast</text></svg>' +
+      '<div class="panel" style="left:40px;top:40px;width:560px"><div class="words" style="position:relative">' +
+      '<p class="eyebrow">Water moves out</p>' +
+      '<h2 class="line" style="font-size:40px">The warm surface layer is dragged away from the shore due to the Ekman transport</h2></div></div></div>'));
+    const q = s => kit.stage.querySelector(s), all = s => [...kit.stage.querySelectorAll(s)];
+    this.warm = q('.b3-warm');
+    this.w = all('.of-w'); this.f = all('.of-f'); this.ff = all('.of-ff');
+    this.l1 = q('.of-l1').style; this.l2 = q('.of-l2').style;
+    this.panel = q('.panel').style; this.line = q('.line');
+  },
+  render(t) {
+    this.panel.opacity = eo(seg(t, 0, 0.4));
+    TextFx.fadeFromRight(this.line, t, 0.2);
+    this.w.forEach((g, i) => {
+      g.style.transform = 'translate(' + (5 * Math.sin((t + i) * 2 * Math.PI / 2)) + 'px,' + (-3.5 * Math.sin((t + i) * 2 * Math.PI / 2)) + 'px)';
+    });
+    this.f.forEach((g, i) => {
+      const cyc = ((t + i * 0.4) % 2.2) / 2.2;
+      g.style.transform = 'translateX(' + (-40 * cyc) + 'px)';
+      g.style.opacity = Math.min(1, cyc / 0.15, (1 - cyc) / 0.15);
+    });
+    this.warm.setAttribute('points', UI.warm3(eio(seg(t, 1.4, 7.4)) * 0.75));
+    this.ff.forEach(g => {
+      g.style.opacity = eo(seg(t, 1.6, 2.0));
+      g.style.transform = 'translateX(' + (-40 * eo(seg(t, 1.6, 7.4))) + 'px)';
+    });
+    this.l1.opacity = eo(seg(t, 2.4, 2.8));
+    this.l2.opacity = eo(seg(t, 4.4, 4.8));
+  },
+});
+})(makeKit("offshore")); } catch (e) { console.error("scene offshore", e); }
+try { (function (kit) {
+const { seg, eo, eio, lerp, rng, TextFx } = kit;
+const RISE = ['M340 990 C660 960 860 830 960 740 C1040 680 1070 650 960 646', 'M240 930 C540 900 760 800 860 730 C940 680 960 662 840 656'];
+const WINDS = [[-520, 30, 10], [-260, 34, 12], [0, 40, 14], [140, 44, 16]];
+kit.scene('rise', {
+  init(kit) {
+    const P = UI.P, w = (s, n) => s.replace('class="flow ', 'style="stroke-width:' + n + '" class="flow ');
+    let winds = '', paths = '', dots = '', heads = '';
+    WINDS.forEach(([x, z, sw]) => { winds += w(UI.arrow3([x, 760, 60 + z], [x, 40, 60 + z], '', 18 + sw), sw); });
+    RISE.forEach(d => { paths += '<path class="ri-p" d="' + d + '" fill="none" stroke="var(--ground)" stroke-width="9" stroke-linecap="round" stroke-opacity=".85" pathLength="1" stroke-dasharray="1 1"/>'; });
+    for (let i = 0; i < 4; i++) heads += '<polygon class="ri-h" points="14,0 -12,-13 -12,13" fill="var(--ground)"/>';
+    for (let i = 0; i < 22; i++) dots += '<circle class="ri-d" r="6" fill="color-mix(in srgb, var(--accent) 35%, var(--ground))"/>';
+    const front = '<g class="ri-ff">' + w(UI.arrow3([-60, 0, -30], [-620, 0, -30], '', 18), 8) + '</g>';
+    const cl = P(30, 700, 0);
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' + UI.block(false) + '<g class="ri-w">' + winds + '</g>' + paths + front + dots + heads +
+      '<text class="lbl ri-l1" x="' + cl[0] + '" y="' + (cl[1] + 8) + '" text-anchor="end">Coldest water hugs the coast</text>' +
+      '<text class="lbl ri-l2" x="1180" y="940">Deep water rises</text>' +
+      '<text class="lbl sm ri-l3" x="1180" y="980">cold and full of nutrients</text></svg>' +
+      '<div class="panel" style="left:40px;top:40px;width:560px"><div class="words" style="position:relative">' +
+      '<p class="eyebrow">Upwelling</p>' +
+      '<h2 class="line" style="font-size:40px">Cold, deep water wells up to replace it</h2></div></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.warm = q('.b3-warm'); this.cold = q('.b3-cold').style;
+    this.wind = q('.ri-w').style; this.ff = q('.ri-ff').style;
+    this.p = [...kit.stage.querySelectorAll('.ri-p')];
+    this.len = this.p.map(p => p.getTotalLength());
+    this.h = [...kit.stage.querySelectorAll('.ri-h')];
+    const r = rng(11);
+    this.d = [...kit.stage.querySelectorAll('.ri-d')].map((el, i) => ({ el, path: i % 2, off: r(), sp: 0.05 + r() * 0.035, jx: (r() - 0.5) * 50, jy: (r() - 0.5) * 50 }));
+    this.labs = ['.ri-l1', '.ri-l2', '.ri-l3'].map(s => q(s).style);
+    this.panel = q('.panel').style; this.line = q('.line');
+  },
+  render(t) {
+    this.panel.opacity = eo(seg(t, 0, 0.4));
+    TextFx.fadeFromRight(this.line, t, 0.2);
+    this.wind.opacity = lerp(1, 0.35, eo(seg(t, 0.4, 1.2)));
+    this.ff.transform = 'translateX(' + (-40 - 30 * eio(seg(t, 0, 10))) + 'px)';
+    this.warm.setAttribute('points', UI.warm3(lerp(0.75, 1, eio(seg(t, 1.2, 6.5)))));
+    const at = (k, f) => { const L = this.len[k], s = f * L; return [this.p[k].getPointAtLength(s), this.p[k].getPointAtLength(Math.min(L, s + 4))]; };
+    this.p.forEach((p, k) => { p.setAttribute('stroke-dashoffset', String(1 - eio(seg(t, 1.2 + k * 0.5, 3.2 + k * 0.5)))); });
+    const on = eo(seg(t, 3.2, 3.8));
+    this.h.forEach((h, i) => {
+      const k = i % 2, f = (t * 0.1 + (i >> 1) * 0.5) % 1;
+      const [a, b] = at(k, f);
+      h.style.opacity = on * Math.min(1, f / 0.08, (1 - f) / 0.08);
+      h.setAttribute('transform', 'translate(' + a.x.toFixed(1) + ' ' + a.y.toFixed(1) + ') rotate(' + (Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI).toFixed(1) + ')');
+    });
+    const dOn = eo(seg(t, 4.2, 5.0));
+    this.d.forEach(o => {
+      const f = (o.off + t * o.sp) % 1;
+      const [a] = at(o.path, f);
+      o.el.setAttribute('cx', (a.x + o.jx * (1 - f)).toFixed(1));
+      o.el.setAttribute('cy', (a.y + o.jy * (1 - f)).toFixed(1));
+      o.el.style.opacity = dOn * Math.min(1, f / 0.1, (1 - f) / 0.1);
+    });
+    this.cold.opacity = 0.9 * eio(seg(t, 5.6, 7.0));
+    this.labs[1].opacity = eo(seg(t, 2.6, 3.0));
+    this.labs[2].opacity = eo(seg(t, 4.4, 4.8));
+    this.labs[0].opacity = eo(seg(t, 6.6, 7.1));
+  },
+});
+})(makeKit("rise")); } catch (e) { console.error("scene rise", e); }
+try { (function (kit) {
+const { seg, eo, eio, lerp, rng, TextFx } = kit;
+kit.scene('fog', {
+  init(kit) {
+    const P = UI.P, r = rng(5);
+    let fog = '', pl = '';
+    for (let i = 0; i < 11; i++) {
+      const y = 40 + i * 70 + (r() - 0.5) * 30, x = -40 + r() * 260, p = P(x, y, 45);
+      fog += '<ellipse class="fg-c" cx="' + p[0].toFixed(0) + '" cy="' + p[1].toFixed(0) + '" rx="' + (110 + r() * 50).toFixed(0) + '" ry="' + (34 + r() * 12).toFixed(0) + '" fill="color-mix(in srgb, var(--second) 14%, var(--ground))" stroke="color-mix(in srgb, var(--second) 22%, var(--ground))" stroke-width="2"/>';
+    }
+    for (let i = 0; i < 46; i++) {
+      const p = P(-260 + r() * 440, 20 + r() * 760, 0);
+      pl += '<circle class="fg-p" cx="' + p[0].toFixed(0) + '" cy="' + p[1].toFixed(0) + '" r="' + (4 + r() * 4).toFixed(1) + '" fill="color-mix(in srgb, var(--accent) 50%, var(--ground))" data-s="' + r().toFixed(3) + '"/>';
+    }
+    const fl = P(240, 700, 140), pl1 = P(-560, 120, 0);
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' + UI.block(false) + pl + '<g>' + fog + '</g>' +
+      '<text class="lbl fg-l1" x="' + fl[0] + '" y="' + fl[1] + '" text-anchor="middle">Fog: cold water chills the moist air</text>' +
+      '<text class="lbl fg-l2" x="' + pl1[0] + '" y="' + (pl1[1] - 30) + '">Nutrients feed plankton blooms</text></svg>' +
+      '<div class="panel" style="left:40px;top:40px;width:600px"><div class="words" style="position:relative">' +
+      '<p class="eyebrow">The results</p>' +
+      '<h2 class="line" style="font-size:40px">Summer fog and some of the richest fishing waters on Earth</h2>' +
+      '<p class="sub fg-sub" style="font-size:24px">Coastal upwelling zones cover about 1% of the ocean but yield roughly half the world’s fish catch</p></div></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    q('.b3-warm').setAttribute('points', UI.warm3(1));
+    q('.b3-cold').style.opacity = 0.9;
+    this.c = [...kit.stage.querySelectorAll('.fg-c')];
+    this.p = [...kit.stage.querySelectorAll('.fg-p')].map(el => ({ el, s: +el.dataset.s }));
+    this.l1 = q('.fg-l1').style; this.l2 = q('.fg-l2').style;
+    this.panel = q('.panel').style; this.line = q('.line'); this.sub = q('.fg-sub').style;
+  },
+  render(t) {
+    this.panel.opacity = eo(seg(t, 0, 0.4));
+    TextFx.fadeFromRight(this.line, t, 0.2);
+    this.c.forEach((e, i) => {
+      const a = 0.4 + i * 0.15, p = eo(seg(t, a, a + 1.6));
+      e.style.opacity = p * 0.95;
+      e.style.transformBox = 'fill-box'; e.style.transformOrigin = 'center';
+      e.style.transform = 'translate(' + (lerp(30, 0, p) - Math.min(t, 7) * 4) + 'px,' + (3 * Math.sin((t + i) * 2 * Math.PI / 3.4)) + 'px) scale(' + lerp(0.6, 1, p) + ')';
+    });
+    this.p.forEach(o => {
+      const a = 3.0 + o.s * 2.0;
+      o.el.style.opacity = eo(seg(t, a, a + 0.6)) * (0.75 + 0.25 * Math.sin((t + o.s * 7) * 2 * Math.PI / 2.6));
+    });
+    this.l1.opacity = eo(seg(t, 1.6, 2.0));
+    this.l2.opacity = eo(seg(t, 3.6, 4.0));
+    this.sub.opacity = eo(seg(t, 4.6, 5.1));
+  },
+});
+})(makeKit("fog")); } catch (e) { console.error("scene fog", e); }
+try { (function (kit) {
+const { seg, eo, eob, lerp, TextFx } = kit;
+const STEPS = ['Pacific High and inland low', 'Winds blow southward along the coast', 'Surface water moves offshore', 'Cold, nutrient-rich water rises'];
+kit.scene('recap', {
+  init(kit) {
+    let row = '';
+    STEPS.forEach((s, i) => {
+      row += '<div class="recap-step" style="position:absolute;left:' + (110 + i * 440) + 'px;top:470px;width:340px;height:220px;border-radius:10px;background:color-mix(in srgb, var(--ground) 90%, var(--main));display:flex;flex-direction:column;justify-content:center;padding:0 30px;box-sizing:border-box">' +
+        '<p style="margin:0 0 10px;font-size:52px;font-weight:900;color:var(--accent)">' + (i + 1) + '</p>' +
+        '<p style="margin:0;font-size:34px;font-weight:700;line-height:1.2;color:var(--main)">' + s + '</p></div>';
+      if (i < 3) row += '<svg class="recap-arr" style="position:absolute;left:' + (458 + i * 440) + 'px;top:556px;width:80px;height:50px" viewBox="0 0 80 50"><path d="M6 25 H58" stroke="var(--main)" stroke-width="8" stroke-linecap="round"/><polygon points="74,25 54,10 54,40" fill="var(--main)"/></svg>';
+    });
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<div class="words" style="left:110px;top:200px;width:1700px"><p class="eyebrow">Recap</p>' +
+      '<h2 class="line" style="font-size:96px">How summer upwelling happens</h2></div>' +
+      '<div class="recap-ul" style="position:absolute;left:110px;top:418px;width:520px;height:8px;border-radius:4px;background:var(--accent);transform-origin:0 50%"></div>' +
+      row +
+      '<div class="words recap-note" style="left:110px;top:790px;width:1700px"><p class="sub">In winter, winds turn to blow from the south, and the coast sees downwelling instead.</p></div></div>'));
+    this.line = kit.stage.querySelector('.line');
+    this.eye = kit.stage.querySelector('.eyebrow').style;
+    this.ul = kit.stage.querySelector('.recap-ul').style;
+    this.steps = [...kit.stage.querySelectorAll('.recap-step')].map(e => e.style);
+    this.arr = [...kit.stage.querySelectorAll('.recap-arr')].map(e => e.style);
+    this.note = kit.stage.querySelector('.recap-note').style;
+  },
+  render(t) {
+    this.eye.opacity = eo(seg(t, -0.2, 0.2));
+    TextFx.fadeFromRight(this.line, t, -0.1, { stagger: 0.08 });
+    this.ul.transform = 'scaleX(' + eo(seg(t, 0.5, 0.9)) + ')';
+    this.steps.forEach((s, i) => {
+      const a = 0.4 + i * 0.25, p = seg(t, a, a + 0.5);
+      s.opacity = eo(seg(t, a, a + 0.2));
+      s.transform = 'translateY(' + (p <= 0 ? 30 : lerp(30, 0, eob(p, 1.5))) + 'px) scale(' + (1 + 0.006 * Math.sin((t - i * 0.5) * 2 * Math.PI / 3.2)) + ')';
+    });
+    this.arr.forEach((s, i) => { const a = 0.6 + i * 0.25; s.opacity = eo(seg(t, a, a + 0.3)); s.transform = 'translateX(' + lerp(-14, 0, eo(seg(t, a, a + 0.3))) + 'px)'; });
+    this.note.opacity = eo(seg(t, 1.6, 2.0));
+    this.note.transform = 'translateX(' + (lerp(26, 0, eo(seg(t, 1.6, 2.1))) - Math.min(t, 6) * 1.5) + 'px)';
+  },
+});
+})(makeKit("recap")); } catch (e) { console.error("scene recap", e); }
+</script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const app = $('app'), vp = $('vp'), frame = $('frame');
+  let cur = 0, t0 = performance.now(), paused = false, pausedAt = 0, ready = false;
+  const dots = SCENES.map((s, i) => { const b = document.createElement('button'); b.className = 'dot'; b.type = 'button'; b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ': ' + s.name); b.onclick = () => go(i); $('dots').appendChild(b); return b; });
+  function fit() {
+    const r = vp.getBoundingClientRect(); const cs = getComputedStyle(vp);
+    const aw = r.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), ah = r.height - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    const s = Math.max(0.05, Math.min(aw / 1920, ah / 1080));
+    frame.style.width = (1920 * s) + 'px'; frame.style.height = (1080 * s) + 'px'; stage.style.transform = 'scale(' + s + ')';
+  }
+  new ResizeObserver(fit).observe(vp); fit();
+  const now = () => (paused ? pausedAt : performance.now() - t0) / 1000;
+  function show() {
+    const s = SCENES[cur];
+    for (const id in REG) REG[id].box.classList.toggle('on', id === s.id);
+    $('count').textContent = (cur + 1) + ' of ' + SCENES.length; $('name').textContent = s.name;
+    dots.forEach((d, i) => { d.classList.toggle('cur', i === cur); d.classList.toggle('done', i < cur); d.setAttribute('aria-current', i === cur ? 'step' : 'false'); });
+    $('back').disabled = cur === 0; $('next').disabled = cur === SCENES.length - 1;
+    $('next').textContent = cur === SCENES.length - 1 ? 'The end' : 'Next';
+  }
+  function go(i) {
+    cur = clamp(i, 0, SCENES.length - 1); t0 = performance.now(); pausedAt = 0;
+    if (paused) setPause(false);
+    show();
+  }
+  function setPause(p) {
+    if (p === paused) return;
+    if (p) { pausedAt = performance.now() - t0; } else { t0 = performance.now() - pausedAt; }
+    paused = p; $('pause').textContent = p ? 'Play' : 'Pause';
+  }
+  function draw(id, t) { const r = REG[id]; if (!r || !r.ok) return; try { r.obj.render.call(r.obj, t, r.kit); } catch (e) { console.error(id, e); r.ok = false; } }
+  let lastId = null;
+  function frameLoop() {
+    if (ready) {
+      const s = SCENES[cur], t = now();
+      draw(s.id, t);
+      $('prog').style.width = (Math.min(1, t / s.dur) * 100).toFixed(2) + '%';
+      lastId = s.id;
+    }
+    requestAnimationFrame(frameLoop);
+  }
+  $('next').onclick = () => go(cur + 1);
+  $('back').onclick = () => go(cur - 1);
+  $('replay').onclick = () => go(cur);
+  $('pause').onclick = () => setPause(!paused);
+  const fsOk = !!(document.fullscreenEnabled && app.requestFullscreen);
+  if (!fsOk) $('fs').hidden = true;
+  function toggleFs() { if (!fsOk) return; try { if (document.fullscreenElement) document.exitFullscreen(); else app.requestFullscreen().catch(() => {}); } catch (e) {} }
+  $('fs').onclick = toggleFs;
+  document.addEventListener('fullscreenchange', () => { $('fs').textContent = document.fullscreenElement ? 'Exit full screen' : 'Full screen'; fit(); });
+  document.addEventListener('keydown', e => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const k = e.key;
+    if (k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'Enter' && e.target === document.body) { e.preventDefault(); go(cur + 1); }
+    else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(cur - 1); }
+    else if (k === 'r' || k === 'R') go(cur);
+    else if (k === 'p' || k === 'P') setPause(!paused);
+    else if (k === 'f' || k === 'F') toggleFs();
+    else if (k === 'Home') go(0);
+    else if (k === 'End') go(SCENES.length - 1);
+  });
+  async function boot() {
+    try { await Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]); } catch (e) {}
+    for (const s of SCENES) {
+      const r = REG[s.id]; if (!r) continue;
+      try { if (r.obj.init) await r.obj.init.call(r.obj, r.kit); r.ok = true; r.obj.render.call(r.obj, 0, r.kit); } catch (e) { console.error('init ' + s.id, e); r.ok = false; }
+    }
+    ready = true; go(0);
+  }
+  show();
+  requestAnimationFrame(frameLoop);
+  boot();
+})();
+</script>
+</body>
+</html>

@@ -18,6 +18,10 @@ a
 * [Skew-T Diagram]()
 * [Animation of Conditional Instability](https://drolsonmi.github.io/phys1130/9_AtmosphericStability/parcel-lift-animation.html)
 
+### Material for lecture
+- __Can Crush Demo__
+    - Can with water, Hot plate (or other way to heat water), bowl of ice water
+
 # Weather Project
 * Discuss weather project and have students start submitting journal entries
 
@@ -71,6 +75,9 @@ Relate pressure, volume, and temperature
 - Let's hold the volume constant
     * As pressure rises, temperature rises also
     * As pressure drops, temperature drops also
+
+> __Demo__: Can crush (show that as temperature drops, the pressure also drops)
+>   - This demo can also be done with the pressure section
 
 Stable vs. Unstable 
 
