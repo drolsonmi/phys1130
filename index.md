@@ -157,6 +157,7 @@ I look forward to exploring the science of the atmosphere with you!
 
 ## Animations
 * [Cloud Formation](./animations/cloud-development-mobile1.html)
+* [Cloud Formation with variable temperatures](./animations/cloud-development-mobile2.html)
 * [Precipitation: Collision-Coalescence](./animations/collision-coalescence-mobile.html)
 * [Precipitation: Ice-Crystal (Bergeron) Process](./animations/ice-crystal-mobile.html)
 * [Precipitation: Accretion and Aggregation](./animations/accretion-aggregation-mobile.html)
