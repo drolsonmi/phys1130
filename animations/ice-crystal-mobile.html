@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Ice-Crystal Process (Bergeron Process)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- page tokens (light / dark) ---------- */
+:root {
+  --page: #e9eef6; --bar: #ffffff; --bar-text: #25282b; --muted: #545b67; --line: #d3dae6;
+  --btn: #1e376c; --btn-text: #ffffff; --btn2: #ffffff; --btn2-text: #1e376c; --dot: #b7c3da; --dot-on: #f47920;
+  --focus: #c25500; --panel: rgba(255, 255, 255, .97);
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0d1422; --bar: #162036; --bar-text: #e6ebf3; --muted: #a3afc2; --line: #2a3754;
+    --btn: #9db4e6; --btn-text: #0d1422; --btn2: #162036; --btn2-text: #c9d6f2; --dot: #3a4b72; --dot-on: #f47920;
+    --focus: #ffb26b; --panel: rgba(22, 32, 54, .97);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0d1422; --bar: #162036; --bar-text: #e6ebf3; --muted: #a3afc2; --line: #2a3754;
+  --btn: #9db4e6; --btn-text: #0d1422; --btn2: #162036; --btn2-text: #c9d6f2; --dot: #3a4b72; --dot-on: #f47920;
+  --focus: #ffb26b; --panel: rgba(22, 32, 54, .97);
+  color-scheme: dark;
+}
+html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; height: 100%; overflow-x: hidden; background: var(--page); color: var(--bar-text); font-family: "Nunito Sans", "Segoe UI", system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
+button { -webkit-tap-highlight-color: transparent; }
+
+.skip { position: absolute; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 8px); z-index: 50; padding: 12px 18px; border-radius: 10px; background: var(--btn); color: var(--btn-text); font-weight: 700; text-decoration: none; transform: translateY(-160%); }
+.skip:focus { transform: none; outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.viewer { height: 100%; display: flex; flex-direction: column; }
+.main { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.frame { position: relative; flex: 1; min-height: 0; overflow: hidden; touch-action: pan-y; }
+.turn { display: none; }
+
+/* ---------- the animation (its own fixed colors) ---------- */
+#stage {
+  position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0;
+  --ground: #ffffff; --main: #1e376c; --second: #25282b; --accent: #f47920; --s: 1;
+  color: var(--second); overflow: hidden; border-radius: 6px; box-shadow: 0 8px 40px rgba(20, 34, 66, .18);
+  font-family: "Nunito Sans", "Segoe UI", system-ui, sans-serif; user-select: none; -webkit-user-select: none;
+}
+.ground { position: absolute; inset: 0; background: radial-gradient(110% 80% at 50% 45%, var(--ground) 40%, color-mix(in srgb, var(--main) 7%, var(--ground))); }
+.art, #fx { position: absolute; inset: 0; width: 100%; height: 100%; }
+.drop { fill: color-mix(in srgb, var(--main) 16%, var(--ground)); stroke: var(--main); stroke-width: 5; }
+.drop-shine { fill: var(--ground); opacity: .7; }
+.ice { fill: color-mix(in srgb, var(--main) 6%, var(--ground)); stroke: var(--main); stroke-width: 5; stroke-linejoin: round; }
+.ice-side { fill: color-mix(in srgb, var(--main) 24%, var(--ground)); stroke: var(--main); stroke-width: 5; stroke-linejoin: round; }
+.ice-vein { fill: none; stroke: color-mix(in srgb, var(--main) 45%, var(--ground)); stroke-width: 3; stroke-linecap: round; }
+.words { position: absolute; left: 140px; top: 60px; width: 1640px; margin: 0; display: none; flex-direction: column; gap: 20px; }
+.words.on { display: flex; }
+.words > * { margin: 0; }
+.words.recap { top: 170px; width: 1060px; }
+.line { font-family: "Zilla Slab", Georgia, serif; font-size: 80px; line-height: 1.05; font-weight: 700; color: var(--main); }
+.line.big { font-size: 108px; }
+.sub { font-size: 36px; line-height: 1.3; color: color-mix(in srgb, var(--second) 80%, var(--ground)); }
+.recap .sub { max-width: 980px; }
+.swap { display: grid; }
+.swap > * { grid-area: 1 / 1; margin: 0; }
+.w { display: inline-block; opacity: 0; will-change: transform, opacity; }
+.tag { position: absolute; top: 770px; width: 500px; margin: 0; font-size: 34px; line-height: 1.2; font-weight: 700; color: var(--main); text-align: center; white-space: nowrap; display: none; }
+.tag.on { display: block; }
+#tag1 { left: 310px; } #tag2 { left: 1110px; }
+.tag small { display: block; font-size: 28px; font-weight: 400; color: color-mix(in srgb, var(--second) 75%, var(--ground)); }
+.gauge { position: absolute; left: 400px; top: 940px; width: 1120px; display: none; grid-template-columns: 260px 1fr 170px; align-items: center; gap: 14px 24px; font-size: 30px; }
+.gauge.on { display: grid; }
+.gauge-track { height: 26px; border-radius: 13px; background: color-mix(in srgb, var(--main) 9%, var(--ground)); overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 13px; background: var(--main); transform-origin: 0 50%; }
+.gauge-fill.lo { background: color-mix(in srgb, var(--main) 45%, var(--ground)); }
+.gauge-num { font-variant-numeric: tabular-nums; font-size: 28px; color: var(--main); white-space: nowrap; }
+.rule { height: 8px; width: 220px; border-radius: 4px; background: var(--accent); transform-origin: 0 50%; }
+
+/* larger labels when the picture is drawn small (class set from script below 55% scale) */
+#stage.big .words { top: 36px; padding: 14px 28px 18px; margin-left: -28px; border-radius: 28px; background: color-mix(in srgb, var(--ground) 92%, transparent); }
+#stage.big .words.recap { top: 120px; width: 1220px; background: none; }
+#stage.big .recap .sub { max-width: none; }
+#stage.big .sub { font-size: max(36px, calc(14.5px / var(--s))); line-height: 1.22; }
+#stage.big .tag { top: 720px; width: 720px; white-space: normal; font-size: max(34px, calc(15px / var(--s))); line-height: 1.1; }
+#stage.big #tag1 { left: 200px; } #stage.big #tag2 { left: 1000px; }
+#stage.big .tag small { font-size: max(28px, calc(13.5px / var(--s))); margin-top: .25em; line-height: 1.15; }
+#stage.big .gauge { top: auto; bottom: 26px; left: 150px; width: 1620px; grid-template-columns: auto 1fr auto; gap: 8px 30px; padding: 14px 34px; border-radius: 30px; background: color-mix(in srgb, var(--ground) 88%, transparent); font-size: max(30px, calc(13.5px / var(--s))); }
+#stage.big .gauge-num { font-size: max(28px, calc(13.5px / var(--s))); }
+#stage.big .gauge-track { height: max(26px, calc(8px / var(--s))); border-radius: 99px; }
+
+/* ---------- scene text panel ---------- */
+.desc { background: var(--bar); border-top: 1px solid var(--line); padding: 16px clamp(16px, 4vw, 40px) 18px; max-height: 34%; overflow-y: auto; outline: none; }
+.desc:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.desc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.desc h2 { margin: 0; font: 700 1.15rem/1.3 "Zilla Slab", Georgia, serif; color: var(--bar-text); }
+.desc p { margin: .45em 0 0; max-width: 72ch; font-size: 1.02rem; line-height: 1.55; }
+.close { display: none; }
+body:not(.text-on) .desc { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* ---------- controls ---------- */
+.controls {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "back where tools next";
+  align-items: center; gap: 12px 16px; padding: 10px max(clamp(12px, 3vw, 28px), env(safe-area-inset-right, 0px)) 10px max(clamp(12px, 3vw, 28px), env(safe-area-inset-left, 0px));
+  background: var(--bar); border-top: 1px solid var(--line);
+}
+#back { grid-area: back; } #next { grid-area: next; } .where { grid-area: where; } .tools { grid-area: tools; }
+.where { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 14px; }
+.dots { display: flex; gap: 8px; grid-row: 1 / span 2; }
+.dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--dot); transition: background .3s, transform .3s; }
+.dots span.done { background: var(--btn); }
+.dots span.now { background: var(--dot-on); transform: scale(1.3); }
+.label { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.label b { font-weight: 700; }
+.label span { color: var(--muted); }
+.hint { margin: 2px 0 0; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.counter { display: none; font-size: 14px; font-weight: 700; color: var(--muted); text-align: center; white-space: nowrap; }
+.tools { display: flex; gap: 6px; }
+button {
+  font: 700 16px/1 "Nunito Sans", system-ui, sans-serif; border-radius: 999px; padding: 0 20px; min-height: 44px; min-width: 44px; cursor: pointer;
+  border: 1.5px solid var(--btn); background: var(--btn2); color: var(--btn2-text);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+button.primary { background: var(--btn); color: var(--btn-text); }
+button:disabled { opacity: .35; cursor: default; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.tool { padding: 0 14px; border-color: var(--line); }
+.tool[aria-pressed="true"] { border-color: var(--btn); background: color-mix(in srgb, var(--btn) 14%, var(--btn2)); }
+.tool .t { font-weight: 700; }
+#fs[hidden] { display: none; }
+@media (max-width: 980px) { .tool .t { display: none; } .tool { padding: 0; width: 44px; } }
+
+/* ---------- phone held sideways ---------- */
+@media (orientation: landscape) and (max-height: 560px) {
+  .viewer { flex-direction: row; }
+  .main { padding-left: env(safe-area-inset-left, 0px); }
+  .controls {
+    width: calc(80px + env(safe-area-inset-right, 0px)); border-top: 0; border-left: 1px solid var(--line);
+    grid-template-columns: 1fr; grid-template-rows: auto auto 1fr auto auto; grid-template-areas: "where" "tools" "." "back" "next";
+    gap: 6px; padding: 8px max(8px, env(safe-area-inset-right, 0px)) 8px 8px; justify-items: stretch;
+  }
+  .where { display: block; }
+  .dots, .label, .hint { display: none; }
+  .counter { display: block; padding: 4px 0; }
+  .tools { flex-direction: column; align-items: center; gap: 4px; }
+  .tool { width: 44px; padding: 0; }
+  .tool .t { display: none; }
+  #back { padding: 0; min-height: 48px; font-size: 14px; }
+  #next { padding: 0 2px; min-height: 76px; font-size: 15px; flex-direction: column; gap: 2px; text-align: center; line-height: 1.1; }
+  #back svg { display: none; }
+  .desc { position: absolute; inset: 8px; z-index: 5; max-height: none; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 10px 30px rgba(0, 0, 0, .25); padding: 14px 18px; }
+  .close { display: inline-flex; flex: none; }
+}
+
+/* ---------- phone held upright ---------- */
+@media (orientation: portrait) and (max-width: 640px) {
+  .main { flex: 1; }
+  .frame { flex: none; width: 100%; aspect-ratio: 16 / 9; }
+  #stage { border-radius: 0; box-shadow: none; }
+  .turn { display: block; margin: 0; padding: 8px 16px; font-size: 14px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--line); }
+  body:not(.text-on) .desc, .desc { position: static; width: auto; height: auto; margin: 0; clip-path: none; white-space: normal; flex: 1; min-height: 0; max-height: none; overflow-y: auto; border-top: 0; padding: 14px max(18px, env(safe-area-inset-right, 0px)) 18px max(18px, env(safe-area-inset-left, 0px)); }
+  .controls { grid-template-columns: 1fr 1fr; grid-template-areas: "where tools" "back next"; padding: 8px 12px 12px; gap: 8px 12px; }
+  .dots, .label, .hint { display: none; }
+  .where { display: block; }
+  .counter { display: block; text-align: left; }
+  .tools { justify-content: flex-end; }
+  .tool { width: 44px; padding: 0; }
+  .tool .t { display: none; }
+  #textBtn { display: none; }
+  #back, #next { min-height: 54px; font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { .dots span { transition: none; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#desc" id="skip">Skip to scene text</a>
+<div class="viewer" id="viewer">
+  <main class="main">
+    <div class="frame" id="frame">
+      <div id="stage" aria-hidden="true">
+        <div class="ground"></div>
+        <svg class="art" viewBox="0 0 1920 1080" focusable="false">
+          <g id="drop"><circle class="drop" r="150"/><ellipse class="drop-shine" cx="-52" cy="-60" rx="36" ry="20" transform="rotate(-35 -52 -60)"/></g>
+          <g id="ice"></g>
+        </svg>
+        <canvas id="fx" width="1920" height="1080"></canvas>
+
+        <div class="words" id="w-cloud">
+          <h1 class="line" data-r>The Ice-Crystal Process (Bergeron Process)</h1>
+          <p class="sub" data-r>How ice crystals grow inside a cold cloud</p>
+        </div>
+        <p class="tag" id="tag1">Supercooled droplet<small>Still liquid at −15&nbsp;°C</small></p>
+        <p class="tag" id="tag2">Ice crystal<small>Frozen at −15&nbsp;°C</small></p>
+
+        <div class="words" id="w-pressure">
+          <p class="line" data-r>Unequal vapor pressure</p>
+          <p class="sub" data-r>Saturated air holds more vapor over liquid water than over ice</p>
+        </div>
+
+        <div class="words" id="w-drift">
+          <p class="line" data-r>Vapor moves to the ice</p>
+          <div class="swap">
+            <p class="sub" id="driftA" data-r>Molecules deposit on the crystal, thinning the vapor near the droplet</p>
+            <p class="sub" id="driftB" data-r>So the droplet evaporates to replace it, and the imbalance remains</p>
+          </div>
+        </div>
+
+        <div class="words" id="w-gone">
+          <p class="line" data-r>Until the droplet is gone</p>
+          <p class="sub" id="goneSub" data-r>Now large and heavy, the crystal begins to fall</p>
+        </div>
+
+        <div class="words recap" id="w-recap">
+          <p class="line big" data-r>The Ice-Crystal Process (Bergeron Process)</p>
+          <div class="rule" id="rule"></div>
+          <p class="sub" data-r>Vapor pressure around the water is higher than the pressure around the ice, so crystals grow while supercooled droplets evaporate</p>
+        </div>
+
+        <div class="gauge" id="gauge">
+          <span>Over water</span><div class="gauge-track"><div class="gauge-fill" id="gw"></div></div><span class="gauge-num">1.91 hPa</span>
+          <span>Over ice</span><div class="gauge-track"><div class="gauge-fill lo" id="gi"></div></div><span class="gauge-num">1.65 hPa</span>
+        </div>
+      </div>
+    </div>
+    <p class="turn">Turn your phone sideways for a bigger picture.</p>
+    <section class="desc" id="desc" tabindex="-1" aria-label="Scene description">
+      <div class="desc-head">
+        <div id="descLive" aria-live="polite" aria-atomic="true"><h2 id="descTitle"></h2></div>
+        <button type="button" class="close" id="closeText" aria-label="Close scene text">Close</button>
+      </div>
+      <p id="descBody"></p>
+    </section>
+  </main>
+
+  <nav class="controls" aria-label="Animation controls">
+    <button id="back" type="button" aria-label="Back to previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Back</span></button>
+    <div class="where">
+      <div class="dots" id="dots" aria-hidden="true"></div>
+      <div class="label" id="label"></div>
+      <p class="hint">Use ← and → to change scenes, T for text.</p>
+      <div class="counter" id="counter"></div>
+    </div>
+    <div class="tools">
+      <button type="button" class="tool" id="replay" aria-label="Replay this scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4.5H9"/></svg><span class="t">Replay</span></button>
+      <button type="button" class="tool" id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" id="pauseIcon"><path d="M9 5v14M15 5v14"/></svg><span class="t" id="pauseText">Pause</span></button>
+      <button type="button" class="tool" id="fs" aria-label="Full screen" hidden><svg viewBox="0 0 24 24" aria-hidden="true" id="fsIcon"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t" id="fsText">Full screen</span></button>
+      <button type="button" class="tool" id="textBtn" aria-label="Show scene text" aria-pressed="false" aria-controls="desc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 11h14M5 16h9"/></svg><span class="t">Text</span></button>
+    </div>
+    <button id="next" class="primary" type="button" aria-label="Next scene"><span id="nextText">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </nav>
+</div>
+
+<script>
+(() => {
+  const SLOW = 2;
+  const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+  const seg = (t, a, b) => clamp01((t - a) / (b - a));
+  const eo = x => 1 - Math.pow(1 - x, 3);
+  const ei = x => x * x * x;
+  const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const rng = seed => { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+  const $ = id => document.getElementById(id);
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  const RM = matchMedia('(prefers-reduced-motion: reduce)');
+  const LANDSCAPE = matchMedia('(orientation: landscape) and (max-height: 560px)');
+  const PORTRAIT = matchMedia('(orientation: portrait) and (max-width: 640px)');
+
+  // ---------- stage scaling and big-label mode ----------
+  const frame = $('frame'), stage = $('stage');
+  let CY = 580;
+  function fit() {
+    const w = frame.clientWidth, h = frame.clientHeight;
+    if (!w || !h) return;
+    const pad = PORTRAIT.matches ? 0 : LANDSCAPE.matches ? 6 : Math.min(24, w * 0.02);
+    const s = Math.max(0.05, Math.min((w - pad * 2) / 1920, (h - pad * 2) / 1080));
+    stage.style.transform = `scale(${s}) translate(-50%, -50%)`;
+    stage.style.setProperty('--s', s.toFixed(4));
+    const big = s < 0.55;
+    stage.classList.toggle('big', big);
+    CY = big ? 560 : 580;
+  }
+  new ResizeObserver(fit).observe(frame);
+  window.addEventListener('orientationchange', () => setTimeout(fit, 250));
+  fit();
+
+  // ---------- hexagonal plate crystal ----------
+  $('ice').innerHTML =
+    '<polygon class="ice-side" points="112,-12 56,36.5 56,60.5 112,12"/>' +
+    '<polygon class="ice-side" points="56,36.5 -56,36.5 -56,60.5 56,60.5"/>' +
+    '<polygon class="ice-side" points="-56,36.5 -112,-12 -112,12 -56,60.5"/>' +
+    '<polygon class="ice" points="112,-12 56,36.5 -56,36.5 -112,-12 -56,-60.5 56,-60.5"/>' +
+    '<g class="ice-vein"><polygon points="67,-12 34,17 -34,17 -67,-12 -34,-41 34,-41"/>' +
+    '<path d="M67 -12 L112 -12 M34 17 L56 36.5 M-34 17 L-56 36.5 M-67 -12 L-112 -12 M-34 -41 L-56 -60.5 M34 -41 L56 -60.5"/></g>';
+
+  // ---------- word reveals ----------
+  document.querySelectorAll('[data-r]').forEach(el => {
+    el.innerHTML = el.textContent.trim().split(/\s+/).map(w => `<span class="w">${w}</span>`).join(' ');
+    el._w = [...el.querySelectorAll('.w')];
+  });
+  function reveal(el, t, t0, stag = 0.1, dur = 0.8) {
+    el._w.forEach((w, i) => {
+      const p = eo(seg(t, t0 + i * stag, t0 + i * stag + dur));
+      w.style.opacity = p;
+      w.style.transform = p >= 1 ? 'none' : `translateX(${(1 - p) * 30}px)`;
+    });
+  }
+  function hideWords(el) { el._w.forEach(w => { w.style.opacity = 0; }); }
+
+  // ---------- molecules ----------
+  const ctx = $('fx').getContext('2d');
+  const COL = { main: '#1e376c', accent: '#f47920' };
+  function mol(x, y, s, rot, col, a) {
+    if (a <= 0.01) return;
+    ctx.globalAlpha = a; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(x, y, 9 * s, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = a * 0.55;
+    for (const d of [-0.91, 0.91]) { const an = rot + d; ctx.beginPath(); ctx.arc(x + Math.cos(an) * 10 * s, y + Math.sin(an) * 10 * s, 5 * s, 0, 6.2832); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------- world state ----------
+  const W = { rd: 150, ix: 1360, fall: 0, iyOver: null, Sover: null, rotX: 0, haloA: 0, iceHaloA: 1, vapA: 1, transfer: false, drain: false };
+  const iceY = () => W.iyOver ?? (CY + W.fall);
+  let slots = [], ihalo = [], transits = [];
+  const dropS = () => 0.75 + 0.85 * Math.sqrt(clamp01((150 - W.rd) / 150));
+  function resetVapor() {
+    const R = rng(11);
+    slots = [];
+    for (let i = 0; i < 70; i++) slots.push({ ang: R() * 6.2832, dr: R(), ph: R() * 6.28, sp: 0.4 + R() * 0.6, al: 0.55 + 0.45 * R(), st: 'occ', wait: (0.6 + R() * 4.5) * SLOW, rc: 0, drained: false });
+    const R2 = rng(23);
+    ihalo = [];
+    for (let i = 0; i < 26; i++) ihalo.push({ ang: R2() * 6.2832, d: 26 + R2() * 150, ph: R2() * 6.28, sp: 0.4 + R2() * 0.6, al: 0.55 + 0.45 * R2() });
+    transits = [];
+  }
+  resetVapor();
+  function slotPos(s, A) {
+    const d = Math.max(W.rd, 30) + 26 + s.dr * 150;
+    return [560 + Math.cos(s.ang) * d + Math.sin(A * s.sp * 2 + s.ph) * 14, CY + Math.sin(s.ang) * d + Math.cos(A * s.sp * 1.7 + s.ph) * 14];
+  }
+  const T1 = 1.4 * SLOW, T2 = 1.9 * SLOW, T3 = 2.3 * SLOW, TEND = 2.35 * SLOW, REFILL = 1.2 * SLOW, REFILL0 = 0.4 * SLOW;
+  const rand = rng(99);
+  function stepVapor(dt, A) {
+    for (const s of slots) {
+      if (s.st === 'occ') {
+        if (!W.transfer) continue;
+        if (W.drain && !s.drained) { s.wait = Math.min(s.wait, rand() * 1.2 * SLOW); s.drained = true; }
+        s.wait -= dt;
+        if (s.wait <= 0) {
+          const p = slotPos(s, A);
+          transits.push({ x0: p[0], y0: p[1], age: 0, phi: Math.PI + (rand() - 0.5) * 2.4, dist: 30 + rand() * 90,
+            bend: (Math.sin(s.ang) >= 0 ? 1 : -1) * (60 + rand() * 140 + Math.max(0, -Math.cos(s.ang)) * 220),
+            al: s.al, ph: s.ph, sp: s.sp, k: rand() * 20 });
+          if (W.rd > 20) { s.st = 'refill'; s.rc = 0; } else s.st = 'empty';
+        }
+      } else if (s.st === 'refill') {
+        s.rc += dt;
+        if (s.rc >= REFILL) { s.st = 'occ'; s.wait = (3 + rand() * 2) * SLOW; s.drained = false; }
+      }
+    }
+    for (const m of transits) m.age += dt;
+    transits = transits.filter(m => m.age < TEND);
+  }
+  function drawVapor(A) {
+    const Ri = 112 * (W.Sover ?? dropS()), iy = iceY();
+    for (const m of ihalo) {
+      const d = Ri + m.d;
+      mol(W.ix + Math.cos(m.ang) * d + Math.sin(A * m.sp * 2 + m.ph) * 14, iy + Math.sin(m.ang) * d + Math.cos(A * m.sp * 1.7 + m.ph) * 14, 1, m.ph + A * m.sp, COL.main, m.al * W.haloA * W.iceHaloA);
+    }
+    for (const s of slots) {
+      const rot = s.ph + A * s.sp;
+      if (s.st === 'occ') { const p = slotPos(s, A); mol(p[0], p[1], 1, rot, COL.main, s.al * W.haloA * W.vapA); }
+      else if (s.st === 'refill' && s.rc >= REFILL0) {
+        const q = eio(seg(s.rc, REFILL0, REFILL)), e = slotPos(s, A), r = W.rd * 0.45;
+        const x0 = 560 + Math.cos(s.ang) * r, y0 = CY + Math.sin(s.ang) * r;
+        mol(x0 + (e[0] - x0) * q, y0 + (e[1] - y0) * q, 0.6 + 0.4 * q, rot, COL.main, s.al * clamp01((s.rc - REFILL0) / (0.2 * SLOW)) * W.vapA);
+      }
+    }
+    for (const m of transits) {
+      const c = m.age, rot = m.ph + A * m.sp;
+      const tx = W.ix + Math.cos(m.phi) * (Ri + m.dist) + Math.sin(A * 1.3 + m.k) * 10;
+      const ty = iy + Math.sin(m.phi) * (Ri + m.dist) + Math.cos(A * 1.1 + m.k) * 10;
+      let x, y, sc = 1, a = 1;
+      if (c < T1) {
+        const p = eio(c / T1), w = 1 - p;
+        const mx = (m.x0 + tx) / 2, my = (m.y0 + ty) / 2 + m.bend;
+        x = w * w * m.x0 + 2 * w * p * mx + p * p * tx; y = w * w * m.y0 + 2 * w * p * my + p * p * ty;
+      } else if (c < T2) { x = tx; y = ty; }
+      else {
+        const p = eio(seg(c, T2, T3));
+        const ex = W.ix + Math.cos(m.phi) * Ri * 0.85, ey = iy + (Math.sin(m.phi) * 0.42 - 0.107) * Ri;
+        x = tx + (ex - tx) * p; y = ty + (ey - ty) * p; sc = 1 - 0.5 * p; a = 1 - seg(c, T3 - 0.15 * SLOW, TEND - 0.02);
+      }
+      const ka = clamp01(c / (0.3 * SLOW));
+      mol(x, y, sc, rot, COL.main, m.al * a * (1 - ka) * W.vapA);
+      mol(x, y, sc * 1.1, rot, COL.accent, a * ka * W.vapA);
+    }
+  }
+
+  // ---------- scenes ----------
+  const gauge = $('gauge'), gw = $('gw'), gi = $('gi');
+  const blocks = { cloud: [$('w-cloud'), $('tag1'), $('tag2')], pressure: [$('w-pressure')], drift: [$('w-drift')], gone: [$('w-gone'), gauge], recap: [$('w-recap')] };
+  function fullGauge() { gauge.style.opacity = 1; gauge.style.transform = 'none'; gw.style.transform = 'scaleX(0.955)'; gi.style.transform = 'scaleX(0.825)'; gw.style.opacity = 1; }
+  function canonical(rd) { W.rd = rd; W.ix = 1360; W.fall = 0; W.iyOver = null; W.Sover = null; W.rotX = 0; W.iceHaloA = 1; W.vapA = 1; W.drain = false; resetVapor(); }
+  const SCENES = [
+    { id: 'cloud', name: 'A cold cloud', finish: 4,
+      text: 'Inside a cloud where the temperature is below freezing, at −15 °C, two particles sit side by side. On the left is a supercooled droplet: water that is still liquid even though it is colder than 0 °C. On the right is an ice crystal, a small hexagonal plate of frozen water, also at −15 °C. The next scenes show how the ice crystal grows while the droplet shrinks. This is the ice-crystal process, also called the Bergeron process.',
+      enter() { canonical(150); W.haloA = 0; W.transfer = false; },
+      update(t) {
+        const el = blocks.cloud[0];
+        reveal(el.children[0], t, 0.3); reveal(el.children[1], t, 1.1);
+        for (const [tag, t0] of [[$('tag1'), 1.8], [$('tag2'), 2.4]]) { const a = eo(seg(t, t0, t0 + 1)); tag.style.opacity = a; tag.style.transform = a >= 1 ? 'none' : `translateY(${lerp(24, 0, a)}px)`; }
+      } },
+    { id: 'pressure', name: 'Unequal vapor pressure', finish: 9,
+      text: 'Water vapor molecules, shown as small dots, float in the air around both particles. Many more crowd around the droplet than around the ice crystal. That is because saturated air holds more vapor over liquid water than over ice. The two bars at the bottom compare the vapor pressures: 1.91 hPa over water and 1.65 hPa over ice. Because the pressure is higher around the droplet, the two are out of balance.',
+      enter(dir) { if (dir < 0) canonical(150); W.transfer = false; W.haloA = 0; },
+      update(t) {
+        W.haloA = eo(seg(t, 0.8, 3.2));
+        const el = blocks.pressure[0];
+        reveal(el.children[0], t, 0.6); reveal(el.children[1], t, 2.4);
+        const g = eo(seg(t, 5.2, 6.2));
+        gauge.style.opacity = g; gauge.style.transform = g >= 1 ? 'none' : `translateY(${lerp(20, 0, g)}px)`;
+        gw.style.transform = `scaleX(${0.955 * eio(seg(t, 5.8, 7.8))})`;
+        gi.style.transform = `scaleX(${0.825 * eio(seg(t, 6.4, 8.4))})`;
+      } },
+    { id: 'drift', name: 'Vapor moves to the ice', finish: 18,
+      text: 'Because there is more vapor around the droplet than around the crystal, vapor molecules move from the droplet’s surroundings over to the crystal. They are shown in orange while they travel. Near the crystal, they deposit onto its edges, so the crystal grows. Losing those molecules thins the vapor near the droplet, so the droplet evaporates: new molecules leave the droplet to replace them. The droplet shrinks while the crystal grows. The bars stay unequal, because the imbalance remains, so the process keeps going.',
+      enter(dir) { if (dir < 0) canonical(150); W.haloA = 1; W.transfer = true; fullGauge(); },
+      update(t, dt) {
+        if (t > 2) W.rd += (66 - W.rd) * dt / 8;
+        const el = blocks.drift[0];
+        reveal(el.children[0], t, 0.6);
+        reveal($('driftA'), t, 2.2);
+        $('driftA').style.opacity = 1 - ei(seg(t, 9.2, 10.2));
+        reveal($('driftB'), t, 10.0);
+      } },
+    { id: 'gone', name: 'The droplet disappears', finish: 'gone',
+      text: 'The process continues until the droplet is gone. The droplet keeps evaporating until no liquid is left, and its last vapor molecules move over and deposit on the crystal. With no water left, the bar for vapor pressure over water fades. Now large and heavy, the crystal begins to fall.',
+      enter(dir) { if (dir < 0) canonical(82); W.haloA = 1; W.transfer = true; this.r0 = Math.max(W.rd, 1); this.goneAt = null; fullGauge(); },
+      update(t, dt) {
+        if (t > 0.4 && W.rd > 0) {
+          W.rd = Math.max(0, W.rd - dt * (9 + 14 * (1 - W.rd / this.r0)));
+          if (W.rd === 0) { this.goneAt = t; W.drain = true; }
+        }
+        const el = blocks.gone[0];
+        reveal(el.children[0], t, 0.6);
+        if (this.goneAt !== null) {
+          const g = this.goneAt;
+          W.fall = 70 * eio(seg(t, g + 2, g + 6));
+          W.rotX = 4 * eio(seg(t, g + 2, g + 6));
+          reveal($('goneSub'), t, g + 1.8);
+          gw.style.opacity = 1 - 0.7 * eio(seg(t, g - 0.6, g + 1));
+        } else { hideWords($('goneSub')); gw.style.opacity = 1; }
+      },
+      done(t) { return this.goneAt !== null && t > this.goneAt + 6.3; } },
+    { id: 'recap', name: 'In short', finish: 5,
+      text: 'In short: vapor pressure around the water is higher than the pressure around the ice, so crystals grow while supercooled droplets evaporate. This is the ice-crystal process, also called the Bergeron process.',
+      enter(dir) {
+        if (dir < 0) { canonical(0); W.fall = 70; W.rotX = 4; W.haloA = 1; this.from = { x: 1360, y: CY + 70, S: 1.6, rot: 4 }; }
+        else this.from = { x: W.ix, y: iceY(), S: W.Sover ?? dropS(), rot: W.rotX };
+        W.transfer = false;
+      },
+      update(t) {
+        const m = eio(seg(t, 0.2, 2.6));
+        W.ix = lerp(this.from.x, 1480, m); W.iyOver = lerp(this.from.y, 540, m);
+        W.Sover = lerp(this.from.S, 1.05, m); W.rotX = this.from.rot + 26 * m;
+        W.iceHaloA = 1 - eo(seg(t, 0, 1.4)); W.vapA = 1 - eo(seg(t, 0, 1));
+        const el = blocks.recap[0];
+        reveal(el.children[0], t, 1.2, 0.08);
+        $('rule').style.transform = `scaleX(${eo(seg(t, 2.4, 3.2))})`;
+        reveal(el.children[2], t, 3.2, 0.06);
+      } },
+  ];
+
+  // ---------- clock, play and pause ----------
+  let vnow = 0, sceneStart = 0, paused = false;
+  let idx = 0, exitStart = null, pending = 0, pendingDir = 1;
+  function tick(dt) {
+    vnow += dt;
+    const sc = SCENES[idx];
+    sc.update(vnow - sceneStart, dt);
+    stepVapor(dt, vnow / SLOW);
+  }
+  function fastForward(sc) {
+    for (let i = 0; i < 1200; i++) {
+      const t = vnow - sceneStart;
+      if (sc.finish === 'gone' ? sc.done(t) : t >= sc.finish) break;
+      tick(0.05);
+    }
+  }
+  const pauseBtn = $('pause');
+  function setPaused(p) {
+    paused = p;
+    pauseBtn.setAttribute('aria-label', p ? 'Play' : 'Pause');
+    $('pauseText').textContent = p ? 'Play' : 'Pause';
+    $('pauseIcon').innerHTML = p ? '<path d="M8 5l11 7-11 7z"/>' : '<path d="M9 5v14M15 5v14"/>';
+  }
+
+  // ---------- navigation ----------
+  const dots = $('dots');
+  dots.innerHTML = SCENES.map(() => '<span></span>').join('');
+  function enter(i, dir, opts = {}) {
+    idx = i; sceneStart = vnow; exitStart = null;
+    for (const k in blocks) blocks[k].forEach(el => { el.classList.remove('on'); el.style.opacity = ''; });
+    document.querySelectorAll('[data-r]').forEach(hideWords);
+    $('driftA').style.opacity = '';
+    $('rule').style.transform = 'scaleX(0)';
+    const sc = SCENES[i];
+    blocks[sc.id].forEach(el => el.classList.add('on'));
+    gauge.classList.toggle('on', ['pressure', 'drift', 'gone'].includes(sc.id));
+    if (sc.id === 'cloud') { $('tag1').style.opacity = 0; $('tag2').style.opacity = 0; }
+    if (sc.id === 'pressure') gauge.style.opacity = 0;
+    sc.enter(dir);
+    tick(0);
+    if (RM.matches && !opts.play) { fastForward(sc); setPaused(true); } else setPaused(false);
+    [...dots.children].forEach((d, j) => { d.className = j < i ? 'done' : j === i ? 'now' : ''; });
+    const n = `${i + 1} of ${SCENES.length}`;
+    $('label').innerHTML = `<b>${sc.name}</b> <span>(${n})</span>`;
+    $('counter').textContent = n;
+    $('descTitle').textContent = `Scene ${n}: ${sc.name}`;
+    $('descBody').textContent = sc.text;
+    $('back').disabled = i === 0;
+    const last = i === SCENES.length - 1;
+    $('nextText').textContent = last ? 'Start over' : 'Next';
+    $('next').setAttribute('aria-label', last ? 'Start over from the first scene' : 'Next scene');
+  }
+  function goTo(to, dir) {
+    if (exitStart !== null || to === idx || to < 0 || to >= SCENES.length) return;
+    pending = to; pendingDir = dir;
+    if (RM.matches) enter(pending, pendingDir); else exitStart = performance.now() / 1000;
+  }
+  const next = () => idx === SCENES.length - 1 ? goTo(0, -1) : goTo(idx + 1, 1);
+  const back = () => goTo(idx - 1, -1);
+  $('next').addEventListener('click', next);
+  $('back').addEventListener('click', back);
+  $('replay').addEventListener('click', () => { if (exitStart === null) enter(idx, -1, { play: true }); });
+  pauseBtn.addEventListener('click', () => setPaused(!paused));
+
+  // ---------- full screen ----------
+  const fsBtn = $('fs'), root = document.documentElement;
+  const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(root.requestFullscreen || root.webkitRequestFullscreen);
+  fsBtn.hidden = !fsOK;
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  fsBtn.addEventListener('click', () => {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (root.requestFullscreen || root.webkitRequestFullscreen).call(root); if (r && r.catch) r.catch(() => {}); }
+  });
+  function fsChanged() {
+    const on = !!fsEl();
+    fsBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+    $('fsText').textContent = on ? 'Exit full screen' : 'Full screen';
+    $('fsIcon').innerHTML = on ? '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>' : '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  }
+  document.addEventListener('fullscreenchange', fsChanged);
+  document.addEventListener('webkitfullscreenchange', fsChanged);
+
+  // ---------- scene text ----------
+  const textBtn = $('textBtn'), desc = $('desc');
+  function setText(on, save = true, focus = false) {
+    document.body.classList.toggle('text-on', on);
+    textBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    textBtn.setAttribute('aria-label', on ? 'Hide scene text' : 'Show scene text');
+    if (save) store.set('bergeron-text', on ? '1' : '0');
+    if (focus && on && LANDSCAPE.matches) $('closeText').focus();
+    requestAnimationFrame(fit);
+  }
+  setText(store.get('bergeron-text') === '1', false);
+  textBtn.addEventListener('click', () => setText(!document.body.classList.contains('text-on'), true, true));
+  $('closeText').addEventListener('click', () => { setText(false); textBtn.focus(); });
+  $('skip').addEventListener('click', e => {
+    e.preventDefault();
+    if (!PORTRAIT.matches && !document.body.classList.contains('text-on')) setText(true, false);
+    desc.focus();
+  });
+
+  // ---------- keyboard ----------
+  document.addEventListener('keydown', e => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const onControl = e.target.closest && e.target.closest('button, a, input, textarea, select');
+    if (onControl && (e.key === ' ' || e.key === 'Enter')) return;
+    if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); back(); }
+    else if (e.key === 'Home') { e.preventDefault(); goTo(0, -1); }
+    else if (e.key === 'End') { e.preventDefault(); goTo(SCENES.length - 1, 1); }
+    else if (e.key === 't' || e.key === 'T') { if (!PORTRAIT.matches) setText(!document.body.classList.contains('text-on'), true, true); }
+    else if (e.key === 'Escape' && LANDSCAPE.matches && document.body.classList.contains('text-on')) { setText(false); textBtn.focus(); }
+  });
+
+  // ---------- touch: swipe and tap (mouse is ignored) ----------
+  let touch = null;
+  frame.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch') return;
+    touch = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
+  });
+  frame.addEventListener('pointercancel', () => { touch = null; });
+  frame.addEventListener('pointerup', e => {
+    if (!touch || e.pointerType !== 'touch' || e.pointerId !== touch.id) return;
+    const dx = e.clientX - touch.x, dy = e.clientY - touch.y, dt = performance.now() - touch.t;
+    touch = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 800) { dx < 0 ? next() : back(); return; }
+    if (dt < 300 && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+      const r = frame.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+      if (fx >= 0.5) next(); else if (fx <= 0.25) back();
+    }
+  });
+
+  // ---------- frame loop ----------
+  const dropEl = $('drop'), iceEl = $('ice');
+  let last = performance.now() / 1000;
+  function loop() {
+    const now = performance.now() / 1000;
+    const dt = Math.min(0.05, now - last); last = now;
+    if (!paused) tick(dt);
+    if (exitStart !== null) {
+      const k = ei(seg(now - exitStart, 0, 0.45));
+      blocks[SCENES[idx].id].forEach(el => { el.style.opacity = 1 - k; });
+      if (k >= 1) enter(pending, pendingDir);
+    }
+    const A = vnow / SLOW;
+    const br = (o, amp, per) => 1 + amp * Math.sin((A + o) * 6.2832 / per);
+    dropEl.style.opacity = W.rd > 2 ? W.vapA : 0;
+    dropEl.setAttribute('transform', `translate(560 ${CY}) scale(${Math.max(0.001, W.rd / 150 * br(0, 0.012, 3.2))})`);
+    const S = W.Sover ?? dropS();
+    iceEl.setAttribute('transform', `translate(${W.ix} ${iceY()}) rotate(${Math.sin(A * 0.9) * 1.5 + W.rotX}) scale(${S * br(1.1, 0.01, 3.4)})`);
+    ctx.clearRect(0, 0, 1920, 1080);
+    drawVapor(A);
+    requestAnimationFrame(loop);
+  }
+  enter(0, 1);
+  RM.addEventListener && RM.addEventListener('change', () => enter(idx, -1));
+  requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>

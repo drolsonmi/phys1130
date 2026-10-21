@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Raindrop Growth</title>
+<meta name="description" content="Step-through animation of how a raindrop grows from a condensation nucleus by condensation and collision–coalescence.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@700&display=swap">
+<style>
+/* Layout: one-screen presenter. Desktop: picture over a control bar. Phone sideways: picture + thumb column on the right.
+   Phone upright: picture on top, scene text below, big Back/Next at the bottom. */
+:root {
+  --page: #E9EDF3; --bar: #FFFFFF; --panel: #FFFFFF; --fg: #25282B; --muted: #5F6367; --line: #CFD1D3;
+  --primary: #1E376C; --on-primary: #FFFFFF; --accent: #F47920; --focus: #B85410; --btn: #F1F2F3; --btn-hover: #E4E5E7;
+  --ui: "Nunito Sans", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #0D1830; --bar: #132349; --panel: #132349; --fg: #F1F2F3; --muted: #C3CFE4; --line: #2A4A8C;
+  --primary: #F47920; --on-primary: #0D1830; --focus: #FAA634; --btn: #1E376C; --btn-hover: #2A4A8C; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --page: #0D1830; --bar: #132349; --panel: #132349; --fg: #F1F2F3; --muted: #C3CFE4; --line: #2A4A8C;
+  --primary: #F47920; --on-primary: #0D1830; --focus: #FAA634; --btn: #1E376C; --btn-hover: #2A4A8C; color-scheme: dark }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--page); color: var(--fg); font-family: var(--ui); overflow: hidden; -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: max(12px, env(safe-area-inset-top, 0px)); z-index: 50;
+  background: var(--primary); color: var(--on-primary); font: 700 16px var(--ui); padding: 12px 16px; border-radius: 6px; text-decoration: none;
+  transform: translateY(-200%); }
+.skip:focus { transform: none; outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.app { height: 100%; height: 100dvh; display: flex; flex-direction: column; background: var(--page); }
+.viewport { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px;
+  padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-bottom: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.fit { position: relative; flex: 1; min-height: 0; width: 100%; touch-action: pan-y pinch-zoom; }
+.frame { position: absolute; overflow: hidden; border-radius: 6px; box-shadow: 0 12px 28px rgba(13,24,48,.18); background: #FFFFFF; }
+.turn { display: none; margin: 0; }
+
+/* Scene text */
+.desc { background: var(--panel); color: var(--fg); border-radius: 8px; border: 1px solid var(--line); }
+.desc:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+.desc-in { padding: 14px 18px 16px; }
+.desc h2 { margin: 0 0 6px; font-size: 18px; line-height: 1.3; }
+.desc p { margin: 0 0 10px; font-size: 16px; line-height: 1.55; max-width: 72ch; }
+.desc .onscreen { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.desc .onscreen h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.desc .onscreen p { font-style: italic; }
+.desc-top { display: none; }
+.app:not(.text-on) .desc { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.app.text-on .desc { flex: none; max-height: 34%; overflow: auto; }
+
+/* Control bar */
+.bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--bar); border-top: 1px solid var(--line);
+  padding-block: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.steps { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.dots { display: flex; }
+.dot { width: 44px; height: 44px; border: 0; padding: 0; background: transparent; cursor: pointer; display: grid; place-items: center; border-radius: 6px; }
+.dot::before { content: ""; width: 30px; height: 6px; border-radius: 3px; background: var(--line); }
+.dot.done::before { background: color-mix(in srgb, var(--primary) 45%, var(--line)); }
+.dot.on::before { background: var(--primary); }
+.label { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.label b { font-weight: 700; }
+.label span { color: var(--muted); }
+.count { display: none; font: 700 14px var(--ui); color: var(--muted); white-space: nowrap; text-align: center; font-variant-numeric: tabular-nums; }
+.hint { color: var(--muted); font-size: 13px; }
+button.b { font: 700 15px var(--ui); color: var(--fg); background: var(--btn); border: 0; border-radius: 6px; padding: 0 14px;
+  min-width: 44px; min-height: 44px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+button.b:hover { background: var(--btn-hover); }
+button.b:disabled { opacity: .4; cursor: default; }
+button.b svg { width: 20px; height: 20px; flex: none; }
+button.b[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--primary); }
+button.next { background: var(--primary); color: var(--on-primary); padding-inline: 22px; }
+button.next:hover { background: color-mix(in srgb, var(--primary) 85%, var(--fg)); }
+button.next.ready { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 55%, transparent); }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ic-play { display: none; }
+.paused .ic-play { display: block; } .paused .ic-pause { display: none; }
+.short { display: none; }
+
+/* ---------- Phone held sideways ---------- */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app { flex-direction: row; }
+  .viewport { padding-top: max(8px, env(safe-area-inset-top, 0px)); padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: 8px; }
+  .frame { border-radius: 4px; }
+  .bar { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 6px; width: calc(76px + env(safe-area-inset-right, 0px)); border-top: 0; border-left: 1px solid var(--line);
+    padding-top: max(8px, env(safe-area-inset-top, 0px)); padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    padding-left: 8px; padding-right: max(8px, env(safe-area-inset-right, 0px)); overflow-y: auto; }
+  .steps, .hint { display: none; }
+  .count { display: block; order: 0; padding-block: 2px; }
+  #replay { order: 1; } #pause { order: 2; } #full { order: 3; } #textBtn { order: 4; }
+  .spacer { order: 5; flex: 1; }
+  #back { order: 6; } #next { order: 7; }
+  button.b { padding: 0; width: 100%; }
+  .bar .t { display: none; }
+  #back, #next { flex-direction: column; gap: 0; font-size: 13px; }
+  #back { min-height: 52px; }
+  #next { min-height: 72px; padding: 0; }
+  #back .t, #next .t { display: inline; }
+  .long { display: none; } .short { display: inline; }
+  /* Scene text as a panel over the picture */
+  .app.text-on .desc { position: absolute; z-index: 5; max-height: none; inset: max(8px, env(safe-area-inset-top, 0px)) 8px max(8px, env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+    box-shadow: 0 12px 28px rgba(13,24,48,.3); display: flex; flex-direction: column; }
+  .app.text-on .desc-top { display: flex; justify-content: flex-end; padding: 6px 6px 0; flex: none; }
+  #close { width: auto; padding: 0 16px; }
+  .app.text-on .desc-in { overflow: auto; padding-top: 0; }
+}
+
+/* ---------- Phone held upright ---------- */
+@media (orientation: portrait) and (max-width: 640px) {
+  .viewport { padding: 0; padding-top: env(safe-area-inset-top, 0px); gap: 0; }
+  .fit { flex: none; aspect-ratio: 16 / 9; height: auto; }
+  .frame { border-radius: 0; box-shadow: none; }
+  .turn { display: block; font-size: 14px; color: var(--muted); padding: 8px max(16px, env(safe-area-inset-left, 0px)) 0; }
+  .app .desc, .app:not(.text-on) .desc { position: relative !important; width: auto; height: auto; margin: 10px 12px 10px; clip: auto; white-space: normal; overflow: auto; flex: 1; min-height: 0; max-height: none; padding: 0; border: 1px solid var(--line); }
+  .bar { flex-wrap: nowrap; gap: 8px; }
+  .steps, .hint, #full, #textBtn { display: none !important; }
+  .count { display: block; order: 2; flex: 1; }
+  #back { order: 1; } #replay { order: 3; } #pause { order: 4; } #next { order: 5; }
+  .spacer { display: none; }
+  #replay .t, #pause .t { display: none; }
+  #back, #next { min-height: 52px; font-size: 17px; padding-inline: 18px; }
+  .long { display: none; } .short { display: inline; }
+}
+@media (max-width: 640px) { .hint, .label span { display: none; } }
+
+/* ---------- The stage: a fixed 1920×1080 film frame, always the white Snow College look ---------- */
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
+  color: #25282B; font-family: "Nunito Sans", "Helvetica Neue", Arial, sans-serif; --lab: 24px; --cap: 36px; }
+#stage .ground { position: absolute; inset: 0; background: radial-gradient(140% 120% at 8% 0%, #FFFFFF 35%, #E9ECF1 100%); }
+#stage canvas { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
+#stage .layer { position: absolute; inset: 0; }
+#stage .words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 20px; }
+#stage .words > * { margin: 0; }
+#stage .line { font-family: "Zilla Slab", Georgia, serif; font-size: 92px; line-height: 1.02; font-weight: 700; color: #1E376C; letter-spacing: -0.01em; text-wrap: balance; }
+#stage .line .w { display: inline-block; }
+#stage .sub { font-size: 36px; line-height: 1.35; color: #4A4D50; text-wrap: pretty; }
+#stage .rule { width: 120px; height: 6px; border-radius: 3px; background: #F47920; transform-origin: 0 50%; }
+#stage .readout { position: absolute; left: 120px; top: 800px; display: flex; gap: 72px; margin: 0; }
+#stage .stat { display: flex; flex-direction: column; gap: 6px; }
+#stage .stat .k { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #7C7E80; }
+#stage .stat .v { margin: 0; font-family: "DM Mono", ui-monospace, monospace; font-size: 66px; line-height: 1; font-variant-numeric: tabular-nums; color: #1E376C; white-space: nowrap; }
+#stage .stat .v.hot { color: #F47920; }
+#stage .note { position: absolute; margin: 0; font-family: "DM Mono", ui-monospace, monospace; font-size: 24px; color: #5B5E61; white-space: nowrap; text-shadow: 0 0 3px #FFFFFF, 0 0 6px #FFFFFF; }
+/* Bigger labels when the picture is drawn small */
+#stage.big .words { top: 110px !important; width: 720px !important; }
+#stage.big .sub { font-size: var(--cap); line-height: 1.25; padding: 2px 12px 4px; margin-left: -12px !important; border-radius: 10px; background: rgba(255,255,255,.86); }
+#stage.big .note { font-size: var(--lab); line-height: 1.25; white-space: pre-line; color: #45484B; }
+#stage.big .stat .k { font-size: var(--lab); color: #6A6D70; }
+#stage.big .readout { top: 860px; left: 104px; padding: 8px 16px 12px; border-radius: 12px; background: rgba(255,255,255,.86); }
+#stage.big .layer > .note { padding: 2px 12px 4px; margin: -2px -12px; border-radius: 10px; background: rgba(255,255,255,.86); }
+#stage.big .x-nw { white-space: normal !important; }
+#stage.tiny .sub, #stage.tiny .x-nw { display: none; }
+</style>
+</head>
+<body>
+<a class="skip" id="skip" href="#desc">Skip to scene text</a>
+<div class="app" id="app">
+  <main class="viewport" id="viewport">
+    <h1 class="sr-only">How a raindrop grows: condensation and collision–coalescence</h1>
+    <div class="fit" id="fit">
+      <div class="frame" id="frame" aria-hidden="true">
+        <div id="stage">
+          <div class="ground"></div>
+          <canvas id="cv" width="1920" height="1080"></canvas>
+          <div class="layer" id="layer"></div>
+        </div>
+      </div>
+    </div>
+    <p class="turn">Turn your phone sideways for a bigger picture.</p>
+    <section class="desc" id="desc" tabindex="-1" aria-label="Scene description">
+      <div class="desc-top"><button class="b" id="close" type="button" aria-label="Close scene text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Close</span></button></div>
+      <div class="desc-in" id="live" aria-live="polite" aria-atomic="true"></div>
+    </section>
+  </main>
+  <nav class="bar" id="bar" aria-label="Animation controls">
+    <span class="count" id="count"></span>
+    <button class="b" id="back" type="button" aria-label="Previous scene">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span class="t">Back</span></button>
+    <div class="steps">
+      <div class="dots" id="dots"></div>
+      <div class="label" id="label"></div>
+    </div>
+    <span class="hint">Arrow keys or space bar also work</span>
+    <button class="b" id="replay" type="button" aria-label="Replay this scene">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button class="b" id="pause" type="button" aria-label="Pause animation">
+      <svg class="ic-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      <svg class="ic-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg><span class="t" id="pauseT">Pause</span></button>
+    <button class="b" id="full" type="button" aria-label="Full screen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button class="b" id="textBtn" type="button" aria-label="Show scene text" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6h14M5 11h14M5 16h9"/></svg><span class="t">Text</span></button>
+    <span class="spacer"></span>
+    <button class="b next" id="next" type="button" aria-label="Next scene"><span class="t"><span class="long" id="nextLong">Next</span><span class="short" id="nextShort">Next</span></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+  </nav>
+</div>
+
+<script>
+(function () {
+'use strict';
+/* ---------- helpers ---------- */
+const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - clamp01(x), 3);
+const eio = x => { x = clamp01(x); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const eob = (x, s) => { s = s || 1.4; x = clamp01(x); const c3 = s + 1; return 1 + c3 * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2); };
+function rng(seed) { let a = seed >>> 0; return function () { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function vnoise(seed) { const r = rng(seed * 9301 + 49297); const v = []; for (let i = 0; i < 256; i++) v.push(r() * 2 - 1);
+  return x => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return v[i & 255] + (v[(i + 1) & 255] - v[i & 255]) * u; }; }
+const breathe = (t, amt, per) => 1 + amt * Math.sin(2 * Math.PI * t / per);
+function fadeFromRight(el, t, t0) {
+  if (!el._w) { const words = el.textContent.split(' '); el.textContent = ''; el._w = words.map((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w; el.appendChild(s); if (i < words.length - 1) el.appendChild(document.createTextNode(' ')); return s.style; }); }
+  el._w.forEach((st, i) => { const p = eo((t - t0 - i * 0.11) / 0.5); st.opacity = p; st.transform = 'translateX(' + (1 - p) * 26 + 'px)'; });
+}
+/* A drawing context that ignores everything: used to run a scene forward without drawing. */
+const NULLCTX = new Proxy(function () {}, { get: () => NULLCTX, set: () => true, apply: () => NULLCTX });
+
+/* Label sizing: set by the presenter whenever the picture is resized. */
+const BIG = { on: false, tiny: false, lab: 24, cap: 36 };
+
+/* ---------- drawing (shared by scenes) ---------- */
+const P = { ground: '#FFFFFF', main: '#1E376C', second: '#25282B', accent: '#F47920' };
+const MONO = '"DM Mono", ui-monospace, monospace';
+const CX = 1240, CY = 520;
+const DROP = {
+  rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; },
+  drop(ctx, x, y, r, o) {
+    if (ctx === NULLCTX) return;
+    o = o || {}; const a = o.alpha == null ? 1 : o.alpha;
+    if (r <= 0 || a <= 0) return;
+    if (r < 3) { const rx = Math.max(1.8, r * 1.1), ry = rx * 1.4;
+      ctx.fillStyle = this.rgba(P.main, 0.3 * a); ctx.strokeStyle = this.rgba(P.main, 0.7 * a); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 6.2832); ctx.fill(); ctx.stroke(); return; }
+    const flat = o.flat || 0, sx = o.sx || 1, sy = o.sy || 1;
+    ctx.save(); ctx.translate(x, y); ctx.scale(sx, sy);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r, r * (1 + flat * 0.04), 0, Math.PI, 2 * Math.PI);
+    ctx.ellipse(0, 0, r, r * (1 - flat * 0.28), 0, 0, Math.PI);
+    const gr = ctx.createRadialGradient(-0.35 * r, -0.4 * r, r * 0.05, 0, 0, r * 1.08);
+    gr.addColorStop(0, this.rgba(P.main, 0.06 * a)); gr.addColorStop(0.65, this.rgba(P.main, 0.2 * a)); gr.addColorStop(1, this.rgba(P.main, 0.5 * a));
+    ctx.fillStyle = gr; ctx.fill();
+    ctx.lineWidth = Math.max(1.2, r * 0.025); ctx.strokeStyle = this.rgba(P.main, 0.75 * a); ctx.stroke();
+    ctx.fillStyle = this.rgba(P.ground, 0.92 * a);
+    ctx.beginPath(); ctx.ellipse(-0.4 * r, -0.42 * r, 0.2 * r, 0.11 * r, -0.65, 0, 6.2832); ctx.fill();
+    ctx.strokeStyle = this.rgba(P.ground, 0.7 * a); ctx.lineWidth = Math.max(1, r * 0.035);
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.8, 0.25, 1.15); ctx.stroke();
+    ctx.restore();
+  },
+  nucleus(ctx, x, y, s, rot, a) {
+    if (ctx === NULLCTX) return;
+    a = a == null ? 1 : a; if (s <= 0.4 || a <= 0) return;
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0); ctx.globalAlpha = a;
+    const hh = s * 0.62, rr = s * 0.16;
+    const rect = (x0, y0, w, hgt, rad) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x0, y0, w, hgt, rad); else ctx.rect(x0, y0, w, hgt); ctx.fill(); };
+    ctx.fillStyle = P.accent; rect(-hh, -hh, 2 * hh, 2 * hh, rr);
+    ctx.fillStyle = this.rgba(P.ground, 0.35); rect(-hh * 0.7, -hh * 0.7, hh * 0.9, hh * 0.9, rr * 0.6);
+    ctx.restore();
+  },
+  mol(ctx, x, y, rot, a) {
+    if (ctx === NULLCTX) return;
+    ctx.fillStyle = this.rgba(P.main, 0.42 * a);
+    for (const s of [-0.91, 0.91]) { ctx.beginPath(); ctx.arc(x + Math.cos(rot + s) * 9, y + Math.sin(rot + s) * 9, 4.5, 0, 6.2832); ctx.fill(); }
+    ctx.fillStyle = this.rgba(P.main, 0.85 * a); ctx.beginPath(); ctx.arc(x, y, 7.5, 0, 6.2832); ctx.fill();
+  },
+  scaleBar(ctx, xr, y, k, a) {
+    if (ctx === NULLCTX || a <= 0) return;
+    let L = 0.1; for (const c of [0.1, 1, 10, 100, 1000, 10000]) if (c * k <= 380) L = c;
+    const w = L * k, lab = L >= 1000 ? (L / 1000) + ' mm' : L + ' µm';
+    ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = P.second; ctx.lineWidth = BIG.on ? 6 : 4; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(xr - w, y); ctx.lineTo(xr, y); ctx.moveTo(xr - w, y - 12); ctx.lineTo(xr - w, y + 12); ctx.moveTo(xr, y - 12); ctx.lineTo(xr, y + 12); ctx.stroke();
+    ctx.fillStyle = P.second; ctx.font = (BIG.on ? BIG.lab : 26) + 'px ' + MONO; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; DROP.halo(ctx, lab, xr, y - 20); ctx.fillText(lab, xr, y - 20);
+    ctx.restore();
+  },
+  halo(ctx, txt, x, y) { ctx.save(); ctx.globalAlpha *= 0.9; ctx.strokeStyle = '#FFFFFF'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(6, parseFloat(ctx.font) * 0.32); ctx.strokeText(txt, x, y); ctx.restore(); },
+  leader(ctx, x1, y1, x2, y2, p, a) {
+    if (ctx === NULLCTX || p <= 0) return;
+    ctx.strokeStyle = this.rgba(P.second, 0.55 * (a == null ? 1 : a)); ctx.lineWidth = BIG.on ? 3 : 2;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(lerp(x1, x2, p), lerp(y1, y2, p)); ctx.stroke();
+  },
+  fall(D) {
+    const T = [[10, 0.003], [20, 0.012], [50, 0.075], [100, 0.27], [200, 0.72], [500, 2.06], [1000, 4.03], [2000, 6.49], [3000, 8.06]];
+    if (D <= T[0][0]) return T[0][1];
+    for (let i = 1; i < T.length; i++) if (D <= T[i][0]) { const p = Math.log(D / T[i - 1][0]) / Math.log(T[i][0] / T[i - 1][0]); return Math.exp(Math.log(T[i - 1][1]) + p * Math.log(T[i][1] / T[i - 1][1])); }
+    return T[T.length - 1][1];
+  },
+  fmtD(D) { if (D < 10) return D.toFixed(1) + ' µm'; const n = Math.round(D); return (n >= 1000 ? Math.floor(n / 1000) + ',' + String(n % 1000).padStart(3, '0') : String(n)) + ' µm'; },
+  fmtV(v) { return v < 0.1 ? (v * 100).toFixed(1) + ' cm/s' : v.toFixed(2) + ' m/s'; }
+};
+const readout = (stats) => '<div class="readout">' + stats.map(([k, cls, hot]) => '<div class="stat"><p class="k">' + k + '</p><p class="v ' + (hot ? 'hot ' : '') + cls + '"></p></div>').join('') + '</div>';
+const place = (st, x, y) => { st.left = x + 'px'; st.top = y + 'px'; };
+
+/* ---------- scene 1: the nucleus ---------- */
+function sceneNucleus(layer) {
+  const K = 310;
+  layer.innerHTML =
+    '<div class="words" style="left:120px;top:150px;width:680px"><h1 class="line">How a raindrop grows</h1><div class="rule n-rule"></div>' +
+    '<p class="sub n-sub">It starts with a condensation nucleus, a speck of sea salt, dust or smoke floating in humid air.</p></div>' +
+    readout([['Diameter', 'n-d']]) +
+    '<p class="note n-n1"></p><p class="note n-n2"></p>';
+  const q = s => layer.querySelector('.' + s);
+  const line = q('line'), rule = q('n-rule').style, sub = q('n-sub').style, ro = q('readout').style, d = q('n-d'), n1e = q('n-n1'), n2e = q('n-n2'), n1 = n1e.style, n2 = n2e.style;
+  const r = rng(11), mols = [];
+  for (let i = 0; i < 38; i++) mols.push({ x: 830 + r() * 1040, y: 70 + r() * 920, nx: vnoise(i * 7 + 1), ny: vnoise(i * 7 + 3), nr: vnoise(i * 7 + 5), cap: i < 16, tc: 0.95 + i * 0.17 + r() * 0.1, th: r() * 6.2832 });
+  const rf = t => lerp(34, 52, eo(seg(t, 0.9, 3.9)));
+  const L = {};
+  function layout() {
+    if (BIG.on) {
+      n1e.textContent = 'condensation\nnucleus'; place(n1, 1400, 250); L.e1 = [1390, 250 + BIG.lab * 1.25];
+      n2e.textContent = 'water vapor\ncondenses on it'; const x2 = BIG.tiny ? 1280 : 1320; place(n2, x2, 610); L.e2 = [x2 - 14, 610 + BIG.lab * 0.62];
+    } else {
+      n1e.textContent = 'condensation nucleus'; place(n1, 1400, 300); L.e1 = [1392, 336];
+      n2e.textContent = 'water vapor condenses on it'; place(n2, 1390, 640); L.e2 = [1382, 658];
+    }
+  }
+  layout();
+  return { layout, render(ctx, T) {
+    const t = T * 0.4;
+    const r0 = rf(t), fa = eo(seg(t, 0.8, 1.6));
+    DROP.nucleus(ctx, CX, CY, 50, 0.32 + 0.05 * Math.sin(t * 1.3), 1);
+    DROP.drop(ctx, CX, CY, r0, { alpha: fa });
+    if (ctx !== NULLCTX) for (const m of mols) {
+      let x = m.x + m.nx(t * 0.35) * 70, y = m.y + m.ny(t * 0.35) * 70, a = 1;
+      if (m.cap) { const p = eio(seg(t, m.tc - 0.75, m.tc)), R = rf(m.tc) + 6; x = lerp(x, CX + Math.cos(m.th) * R, p); y = lerp(y, CY + Math.sin(m.th) * R, p); a = 1 - seg(t, m.tc, m.tc + 0.3); }
+      if (a > 0) DROP.mol(ctx, x, y, m.nr(t * 0.3) * 3, a);
+    }
+    DROP.leader(ctx, CX + 26, CY - 26, L.e1[0], L.e1[1], eo(seg(t, 0.4, 0.9)));
+    DROP.leader(ctx, CX + 40, CY + 34, L.e2[0], L.e2[1], eo(seg(t, 1.8, 2.3)));
+    DROP.scaleBar(ctx, 1800, 1000, K, eo(seg(t, 0.6, 1.2)));
+    fadeFromRight(line, t, -0.6);
+    rule.transform = 'scaleX(' + eo(seg(t, 0.2, 0.8)) + ')';
+    const s = eo(seg(t, 0.6, 1.2)); sub.opacity = s; sub.transform = 'translateX(' + (1 - s) * 26 + 'px)';
+    const rr = eo(seg(t, 1.0, 1.5)); ro.opacity = rr; ro.transform = 'translateY(' + (1 - rr) * 16 + 'px)';
+    d.textContent = DROP.fmtD(fa < 0.6 ? 0.2 : 2 * r0 / K);
+    n1.opacity = seg(t, 0.75, 1.1); n2.opacity = seg(t, 2.15, 2.5);
+  } };
+}
+
+/* ---------- scene 2: condensation ---------- */
+const CON_S1 = 'Vapor keeps condensing onto it until it is a cloud droplet, about 100 times wider.';
+const CON_S2 = 'Condensation slows as a droplet grows, so it stalls here: far too small to fall as rain.';
+function sceneCondense(layer) {
+  layer.innerHTML =
+    '<div class="words" style="left:120px;top:150px;width:660px"><h2 class="line">Condensation</h2><div class="rule c-rule"></div><p class="sub c-sub">' + CON_S1 + '</p></div>' +
+    readout([['Diameter', 'c-d']]) +
+    '<p class="note c-n">cloud droplet</p>';
+  const q = s => layer.querySelector('.' + s);
+  const line = q('line'), rule = q('c-rule').style, sub = q('c-sub'), d = q('c-d'), n = q('c-n').style;
+  const r = rng(23), nb = []; let tries = 0;
+  while (nb.length < 15 && tries++ < 4000) {
+    const sx = 820 + r() * 1060, sy = 60 + r() * 960;
+    if (Math.hypot(sx - CX, sy - CY) < 150) continue;
+    if (sx > 1250 && sx < 1880 && sy > 330 && sy < 490) continue;   // keep the "cloud droplet" label clear
+    if (nb.some(o => Math.hypot(o.sx - sx, o.sy - sy) < 120)) continue;
+    nb.push({ sx, sy, wx: (sx - CX) / 4, wy: (sy - CY) / 4, f: 0.7 + r() * 0.45, nx: vnoise(tries + 3), ny: vnoise(tries + 9) });
+  }
+  const mols = [];
+  for (let i = 0; i < 20; i++) mols.push({ x: 830 + r() * 1040, y: 70 + r() * 920, nx: vnoise(i * 5 + 40), ny: vnoise(i * 5 + 42), nr: vnoise(i * 5 + 44), tc: 0.3 + i * 0.12 + r() * 0.08, th: r() * 6.2832 });
+  const Dof = t => 0.335 * Math.pow(20 / 0.335, eio(seg(t, 0.2, 3.8)));
+  const Rof = t => lerp(52 + 80 * eo(seg(t, 0.2, 1.6)), 40, eio(seg(t, 1.7, 3.9)));
+  const L = {};
+  function layout() {
+    if (BIG.on) { place(n, 1330, 372); L.e = [1322, 372 + BIG.lab * 0.62]; }
+    else { place(n, 1330, 388); L.e = [1322, 412]; }
+  }
+  layout();
+  return { layout, render(ctx, T) {
+    const t = T * 4.5 / 11;
+    const D = Dof(t), R = Rof(t), k = 2 * R / D, na = clamp01((60 - k) / 45);
+    for (const o of nb) DROP.drop(ctx, CX + o.wx * k + o.nx(t * 0.3) * 6 * na, CY + o.wy * k + o.ny(t * 0.3) * 6 * na, D * o.f * k / 2, { alpha: na });
+    const s = 50 * k / 310;
+    DROP.nucleus(ctx, CX, CY, s, 0.32 + 0.05 * Math.sin((t + 4) * 1.3), clamp01((s - 1) / 5));
+    DROP.drop(ctx, CX, CY, R);
+    if (ctx !== NULLCTX) for (const m of mols) {
+      const p = eio(seg(t, m.tc - 0.7, m.tc)), RR = Rof(m.tc) + 6, a = 1 - seg(t, m.tc, m.tc + 0.3);
+      if (a <= 0) continue;
+      DROP.mol(ctx, lerp(m.x + m.nx((t + 4) * 0.35) * 70, CX + Math.cos(m.th) * RR, p), lerp(m.y + m.ny((t + 4) * 0.35) * 70, CY + Math.sin(m.th) * RR, p), m.nr(t * 0.3) * 3, a);
+    }
+    const la = eo(seg(t, 3.6, 4.0));
+    DROP.leader(ctx, CX + 30, CY - 30, L.e[0], L.e[1], la > 0 ? 1 : 0, la);
+    DROP.scaleBar(ctx, 1800, 1000, k, 1);
+    fadeFromRight(line, t, 0.05);
+    rule.transform = 'scaleX(' + eo(seg(t, 0.3, 0.8)) + ')';
+    const fl = seg(t, 2.1, 2.6);
+    const txt = fl < 0.5 ? CON_S1 : CON_S2; if (sub.textContent !== txt) sub.textContent = txt;
+    sub.style.opacity = Math.min(eo(seg(t, 0.5, 1.0)), Math.abs(fl - 0.5) * 2);
+    d.textContent = DROP.fmtD(D); n.opacity = la;
+  } };
+}
+
+/* ---------- scene 3: collision–coalescence (live simulation, three steps) ---------- */
+const COL_SUBS = [
+  'A droplet a little larger than its neighbors falls faster and starts catching up with them.',
+  'When they collide, they coalesce: the two merge into one larger drop.',
+  'Bigger drops fall faster and sweep up more, so growth speeds up until it is a raindrop.'
+];
+const COL_TV = 'Terminal velocity keeps the droplet from falling too quickly. The larger the droplet, the higher that terminal velocity becomes.';
+const COL_WAKE = 'Some small droplets get caught in the wake and merge from behind';
+const COL_START_D = [20, 40, 250], COL_END_D = [40, 250, 2000], COL_GROW = [10, 11, 14];
+const COL_HEROES = [
+  [{ at: 3, kind: 'hit', xs: 6, d: 16 }, { at: 6, kind: 'bounce', f: -0.6, d: 16 }, { at: 9, kind: 'hit', xs: -24, d: 14 }],
+  [{ at: 2.5, kind: 'wake', f: 1, d: 15 }, { at: 4, kind: 'bounce', f: 0.5, d: 15 }, { at: 5.5, kind: 'hit', xs: 20, d: 16 }, { at: 7.5, kind: 'wake', f: -1, d: 18 }, { at: 9, kind: 'bounce', f: -0.55, d: 16 }, { at: 10.5, kind: 'wake', f: 1.05, d: 18 }],
+  []
+];
+function sceneCollide(layer, startSub) {
+  layer.innerHTML =
+    '<div class="words" style="left:120px;top:150px;width:660px"><h2 class="line">Collision–coalescence</h2><div class="rule x-rule"></div>' +
+    '<p class="sub x-sub"></p>' +
+    '<p class="sub x-tv">' + COL_TV + '</p></div>' +
+    readout([['Diameter', 'x-d'], ['Fall speed', 'x-v', true]]) +
+    '<p class="note x-nw" style="width:560px;white-space:normal;line-height:1.35">' + COL_WAKE + '</p>';
+  const q = s => layer.querySelector('.' + s);
+  const line = q('line'), rule = q('x-rule').style, sub = q('x-sub'), tv = q('x-tv').style, nw = q('x-nw').style, dEl = q('x-d'), vEl = q('x-v');
+  const rnd = rng(31 + startSub * 101);
+  const Rof = D => 40 * Math.pow(D / 20, 0.33833);
+  const Vof = D => Math.min(1450, 220 * Math.pow(DROP.fall(D) / 0.012, 0.3)) * 8 / 31;
+  const st = { sub: startSub, D0: COL_START_D[startSub], D: COL_START_D[startSub], tt: 0, prevSub: -1, prevTv: false, drops: [], hits: [], acc: 0, heroes: [], intro: startSub === 0 };
+  const dens = () => 1.6e-4 * (1 + [0, 0.7, 1.5][st.sub]);
+  function spawn(y, xs, d, force) { st.drops.push({ xs, y, d: d || 6 + rnd() * 12, state: 'free', age: 0, force: force || null, checked: false }); }
+  function heroesFor(s) { st.heroes = COL_HEROES[s].map(o => Object.assign({ done: false }, o)); }
+  (function () {
+    const R = Rof(st.D), k = 2 * R / st.D;
+    const n = Math.round(dens() * 1080 * (1080 + 120));
+    for (let i = 0; i < n; i++) {
+      const xs = -400 + rnd() * 1080, y = -CY - 60 + rnd() * (1080 + 120), d = 6 + rnd() * 12;
+      if (Math.hypot(xs, y) < R + d * k / 2 + 30) continue;
+      if (Math.abs(xs) < 0.8 * (R + d * k / 2) && y < 0) continue;
+      spawn(y, xs, d); st.drops[st.drops.length - 1].age = 9;
+    }
+  })();
+  heroesFor(startSub);
+  if (!st.intro) rule.transform = 'scaleX(1)';
+  function layout() {
+    if (BIG.on) place(nw, 1340, 170); else place(nw, 1300, 190);
+  }
+  layout();
+  const push = (xs, y, reach) => Math.max(0, 1.3 * reach - Math.abs(xs)) * Math.exp(-(y / reach) * (y / reach) * 1.2);
+  return {
+    layout,
+    R() { return Rof(st.D); },
+    advance(s) { st.prevSub = st.sub; st.prevTv = st.sub === 0; st.sub = s; st.D0 = st.D; heroesFor(s); st.subT0 = st.tt; },
+    render(ctx, T, dt) {
+      st.tt += dt;
+      const ls = st.subT0 == null ? T : st.tt - st.subT0;
+      const D = st.D = st.D0 * Math.pow(COL_END_D[st.sub] / st.D0, eio(ls / COL_GROW[st.sub]));
+      const R = Rof(D), k = 2 * R / D, V = Vof(D), flat = clamp01((D - 900) / 1100);
+      for (const hz of st.heroes) {
+        if (hz.done || ls < hz.at - 3) continue;
+        hz.done = true;
+        const r = hz.d * k / 2, reach = R + r;
+        if (hz.kind === 'wake') { spawn(-0.9 * reach + V * 3, hz.f * reach, hz.d, 'wake'); }
+        else { const xs = hz.xs != null ? hz.xs : hz.f * reach; spawn(Math.sqrt(Math.max(0, reach * reach - xs * xs)) + V * 3, xs, hz.d, hz.kind); }
+      }
+      st.acc += V * dt * 1080 * dens();
+      while (st.acc >= 1) { st.acc -= 1; spawn(1080 - CY + 40 + rnd() * V * dt, -400 + rnd() * 1080); }
+      const keep = [];
+      for (const o of st.drops) {
+        o.age += dt;
+        const r = o.d * k / 2, reach = R + r, sg = Math.sign(o.xs) || 1, fade = Math.min(1, o.age / 0.6);
+        if (o.state === 'free') {
+          o.y -= V * dt;
+          if (!o.checked && Math.abs(o.xs) < 0.8 * reach && o.y <= Math.sqrt(reach * reach - o.xs * o.xs)) {
+            o.checked = true;
+            const kind = o.force && o.force !== 'wake' ? o.force : (Math.abs(o.xs) / reach > 0.35 && rnd() < 0.35 ? 'bounce' : 'hit');
+            if (kind === 'hit') { o.state = 'merge'; o.mt = 0; o.hx = o.xs; o.hy = o.y; o.rh = r / R; st.hits.push({ tt: st.tt, rh: r / R, rp: r, hx: o.hx, hy: o.hy }); }
+            else { o.state = 'bounce'; o.bt = 0; o.bxs = o.xs; }
+          } else if (!o.checked && o.y < -0.9 * reach) {
+            o.checked = true;
+            const wr = Math.abs(o.xs) / reach;
+            if (o.force === 'wake' || (!o.force && wr > 0.82 && wr < 1.2 && rnd() < 0.3)) {
+              o.state = 'wake'; o.wt = 0; o.x0 = CX + o.xs + sg * push(o.xs, o.y, reach); o.y0 = CY + o.y;
+            }
+          }
+        }
+        if (o.state === 'free') {
+          if (o.y < -CY - 60) continue;
+          const x = CX + o.xs + (Math.abs(o.xs) >= 0.8 * reach || o.checked ? sg * push(o.xs, o.y, reach) : 0);
+          DROP.drop(ctx, x, CY + o.y, r, { alpha: fade });
+        } else if (o.state === 'bounce') {
+          o.bt += dt; o.y -= V * dt;
+          const out = eo(seg(o.bt, 0, 1.1)), xe = lerp(o.bxs, sg * Math.max(Math.abs(o.bxs), 1.25 * reach), out), y = o.y + 110 * out;
+          if (y < -CY - 60) continue;
+          const sq = 0.25 * Math.exp(-o.bt / 0.45);
+          DROP.drop(ctx, CX + xe + sg * push(xe, y, reach), CY + y, r, { sx: 1 + sq, sy: 1 - sq });
+        } else if (o.state === 'wake') {
+          o.wt += dt;
+          const e = eio(o.wt / 3.5), u = 1 - e;
+          const x1 = CX + sg * 1.05 * reach, y1 = CY - 1.9 * reach, x2 = CX + sg * 0.35 * reach, y2 = CY - 1.7 * reach, x3 = CX + sg * 0.12 * R, y3 = CY - R - r * 0.9;
+          const bx = u * u * u * o.x0 + 3 * u * u * e * x1 + 3 * u * e * e * x2 + e * e * e * x3;
+          const by = u * u * u * o.y0 + 3 * u * u * e * y1 + 3 * u * e * e * y2 + e * e * e * y3;
+          DROP.drop(ctx, bx, by, r);
+          if (o.wt >= 3.5) { o.state = 'merge'; o.mt = 0; o.hx = sg * 0.12 * R; o.hy = -(R + r * 0.9); o.rh = r / R; st.hits.push({ tt: st.tt, rh: r / R, rp: r, hx: o.hx, hy: o.hy, wake: true }); }
+        } else if (o.state === 'merge') {
+          o.mt += dt; const m = o.mt / 0.85;
+          if (m >= 1) continue;
+          const e = eio(m);
+          DROP.drop(ctx, CX + o.hx * (1 - 0.6 * e), CY + o.hy * (1 - 0.6 * e), o.rh * R * (1 - m), { alpha: 1 - 0.6 * m });
+        }
+        keep.push(o);
+      }
+      st.drops = keep;
+      let w = 0;
+      st.hits = st.hits.filter(hh => st.tt - hh.tt < 4.5);
+      for (const hh of st.hits) {
+        const a = st.tt - hh.tt;
+        w += Math.min(0.07, 0.5 * hh.rh) * Math.exp(-a / 1.1) * Math.sin(a * 7.2) * (hh.wake ? -1 : 1);
+        if (ctx !== NULLCTX && a < 1.36 && hh.rp > 2.5) { const f = a / 1.36; ctx.strokeStyle = DROP.rgba(P.accent, 0.85 * (1 - f)); ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(CX + hh.hx, CY + hh.hy, hh.rp * (0.6 + 1.6 * eo(f)) + 4, 0, 6.2832); ctx.stroke(); }
+      }
+      w = Math.max(-0.08, Math.min(0.08, w));
+      DROP.drop(ctx, CX, CY, R, { flat, sx: 1 + w, sy: 1 - w });
+      DROP.scaleBar(ctx, 1800, 1000, k, 1);
+      if (st.intro) { fadeFromRight(line, st.tt * 8 / 31, 0.05); rule.transform = 'scaleX(' + eo(seg(st.tt, 1.2, 3.1)) + ')'; }
+      if (st.prevSub < 0) {
+        if (sub.textContent !== COL_SUBS[st.sub]) sub.textContent = COL_SUBS[st.sub];
+        sub.style.opacity = st.intro ? eo(seg(ls, 1.9, 3.9)) : eo(seg(ls, 0, 0.6));
+      } else {
+        const txt = ls < 0.5 ? COL_SUBS[st.prevSub] : COL_SUBS[st.sub];
+        if (sub.textContent !== txt) sub.textContent = txt;
+        sub.style.opacity = ls < 0.5 ? 1 - ls / 0.5 : eo(seg(ls, 0.5, 1.1));
+      }
+      let tvo = 0, tvx = 0;
+      if (st.sub === 0) { const p = eo(seg(ls, 4, 6.3)); tvo = p; tvx = (1 - p) * 26; }
+      else if (st.prevTv) tvo = Math.max(0, 1 - ls / 0.5);
+      tv.opacity = tvo; tv.transform = 'translateX(' + tvx + 'px)';
+      tv.display = (st.sub === 0 || tvo > 0) ? '' : 'none';
+      nw.opacity = st.sub === 1 ? eo(seg(ls, 3.0, 4.0)) : (st.sub === 2 && st.prevSub === 1 ? Math.max(0, 1 - ls / 0.5) : 0);
+      dEl.textContent = DROP.fmtD(D); vEl.textContent = DROP.fmtV(DROP.fall(D));
+    }
+  };
+}
+
+/* ---------- scene 4: the raindrop ---------- */
+function sceneRaindrop(layer, startR) {
+  const lab = (cls, name, val) => '<div class="stat ' + cls + '" style="position:absolute"><p class="k">' + name + '</p><p class="note" style="position:static">' + val + '</p></div>';
+  layer.innerHTML =
+    '<div class="words" style="left:120px;top:150px;width:720px"><h2 class="line">About a million cloud droplets make one raindrop</h2><div class="rule r-rule"></div>' +
+    '<p class="sub r-sub">In warm clouds, collision–coalescence is how rain forms.</p></div>' +
+    lab('r-l1', 'Nucleus', '0.2 µm') + lab('r-l2', 'Cloud droplet', '20 µm') + lab('r-l3', 'Raindrop', '2,000 µm');
+  const q = s => layer.querySelector('.' + s);
+  const line = q('line'), rule = q('r-rule').style, sub = q('r-sub').style, ls = [q('r-l1').style, q('r-l2').style, q('r-l3').style];
+  let RD;
+  function layout() {
+    if (BIG.on) {
+      // Stack the three sizes top to bottom so the larger labels have room.
+      RD = { vert: true, n: [1010, 250], d: [1010, 500], r: [1010, 790] };
+      const hgt = BIG.lab * 2.7;
+      [RD.n, RD.d, RD.r].forEach((p, i) => { const s = ls[i]; s.width = 'auto'; s.alignItems = 'flex-start'; s.textAlign = 'left'; place(s, 1140, p[1] - hgt / 2); });
+    } else {
+      RD = { vert: false, n: [1040, 600], d: [1270, 600], r: [1600, 600] };
+      [RD.n, RD.d, RD.r].forEach((p, i) => { const s = ls[i]; s.width = '300px'; s.alignItems = 'center'; s.textAlign = 'center'; place(s, p[0] - 150, 735); });
+    }
+  }
+  layout();
+  function arrow(ctx, x1, y1, x2, y2, labTxt, a) {
+    if (ctx === NULLCTX || a <= 0) return;
+    const xe = lerp(x1, x2, a), ye = lerp(y1, y2, a), ang = Math.atan2(y2 - y1, x2 - x1);
+    ctx.save(); ctx.strokeStyle = DROP.rgba(P.second, 0.6); ctx.lineWidth = BIG.on ? 4 : 3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(xe, ye);
+    ctx.moveTo(xe - 14 * Math.cos(ang - 0.6), ye - 14 * Math.sin(ang - 0.6)); ctx.lineTo(xe, ye); ctx.lineTo(xe - 14 * Math.cos(ang + 0.6), ye - 14 * Math.sin(ang + 0.6)); ctx.stroke();
+    ctx.globalAlpha = a; ctx.fillStyle = P.second; ctx.font = (BIG.on ? BIG.lab : 26) + 'px ' + MONO;
+    if (RD.vert) { ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; DROP.halo(ctx, labTxt, x1 - 24, (y1 + y2) / 2); ctx.fillText(labTxt, x1 - 24, (y1 + y2) / 2); }
+    else { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; DROP.halo(ctx, labTxt, (x1 + x2) / 2, y1 - 18); ctx.fillText(labTxt, (x1 + x2) / 2, y1 - 18); }
+    ctx.restore();
+  }
+  return { layout, render(ctx, T) {
+    const t = T * 3.5 / 8, b = breathe(t, 0.012, 3.2), m = eio(seg(t, 0, 1.0));
+    const n = eob(seg(t, 0.9, 1.4), 1.7), d = eob(seg(t, 1.05, 1.55), 1.7);
+    DROP.nucleus(ctx, RD.n[0], RD.n[1], 22 * Math.max(0, n) * b, 0.32 + 0.05 * Math.sin(t * 1.3), Math.min(1, n * 2));
+    DROP.drop(ctx, RD.d[0], RD.d[1], 34 * Math.max(0, d) * b, { alpha: Math.min(1, d * 2) });
+    DROP.drop(ctx, lerp(CX, RD.r[0], m), lerp(CY, RD.r[1], m), lerp(startR, 100, m) * b, { flat: lerp(clamp01((startR - 150) / 40), 1, m) });
+    if (RD.vert) {
+      arrow(ctx, RD.n[0], RD.n[1] + 34, RD.d[0], RD.d[1] - 50, '×100', eo(seg(t, 1.5, 1.9)));
+      arrow(ctx, RD.d[0], RD.d[1] + 50, RD.r[0], RD.r[1] - 118, '×100', eo(seg(t, 1.7, 2.1)));
+    } else {
+      arrow(ctx, RD.n[0] + 34, RD.n[1], RD.d[0] - 50, RD.d[1], '×100', eo(seg(t, 1.5, 1.9)));
+      arrow(ctx, RD.d[0] + 50, RD.d[1], RD.r[0] - 118, RD.r[1], '×100', eo(seg(t, 1.7, 2.1)));
+    }
+    fadeFromRight(line, t, 0.4);
+    rule.transform = 'scaleX(' + eo(seg(t, 1.3, 1.8)) + ')';
+    const s = eo(seg(t, 1.6, 2.1)); sub.opacity = s; sub.transform = 'translateX(' + (1 - s) * 26 + 'px)';
+    [1.2, 1.35, 1.1].forEach((t0, i) => { const a = eo(seg(t, t0, t0 + 0.45)); ls[i].opacity = a; ls[i].transform = 'translateY(' + (1 - a) * 18 + 'px)'; });
+  } };
+}
+
+/* ---------- scene text (for screen readers, the Text panel and the upright phone view) ---------- */
+const STEPS = [
+  { scene: 'nucleus', name: 'The nucleus', ready: 10,
+    text: ['Every raindrop starts with a condensation nucleus: a tiny speck of sea salt, dust or smoke floating in humid air. In the picture it is a small orange square about 0.2 micrometers (µm) across. A scale bar shows how long 1 µm is.',
+      'Water vapor molecules drift around the nucleus. One by one, some of them stick to it and condense into a thin film of liquid water around it. The diameter readout grows from 0.2 µm to about 0.3 µm as the water film forms.'],
+    screen: ['How a raindrop grows', 'It starts with a condensation nucleus, a speck of sea salt, dust or smoke floating in humid air.'] },
+  { scene: 'condense', name: 'Condensation', ready: 11,
+    text: ['More water vapor keeps condensing onto the droplet, so it keeps growing. The view zooms out as it grows: the nucleus disappears inside the water, and other droplets in the cloud come into view around it.',
+      'The diameter readout climbs from about 0.3 µm to 20 µm, so the droplet ends up about 100 times wider. It is now labeled a cloud droplet. Condensation slows down as a droplet gets bigger, so growth stalls at this size. A 20 µm cloud droplet is far too small to fall as rain.'],
+    screen: ['Condensation', CON_S1, CON_S2] },
+  { scene: 'collide', sub: 0, name: 'Collision', ready: 10,
+    text: ['The view now follows one droplet that is a little larger than its neighbors. Because it is larger, it falls faster than they do and starts catching up with them. The view moves down with this droplet, so the smaller droplets seem to stream upward past it.',
+      'Some small droplets run into the larger droplet and merge with it; an orange ring marks each contact. Others hit it and bounce off without merging.',
+      'Terminal velocity keeps the droplet from falling too quickly, and the larger the droplet, the higher its terminal velocity. The readouts show the diameter growing from 20 µm to 40 µm and the fall speed rising from 1.2\u00a0centimeters per second to 4.8\u00a0centimeters per second.'],
+    screen: ['Collision–coalescence', COL_SUBS[0], COL_TV] },
+  { scene: 'collide', sub: 1, name: 'Coalescence', ready: 11,
+    text: ['When droplets collide, they coalesce: the two merge into one larger drop. Most small droplets hit the bottom of the falling drop and merge there, while some bounce off instead.',
+      'Some small droplets slip past the sides of the drop, get caught in its wake behind it, and curl back to merge into its top from behind.',
+      'The drop grows from 40 µm to 250 µm, and its fall speed rises to about 0.93 meters per second.'],
+    screen: ['Collision–coalescence', COL_SUBS[1], COL_WAKE] },
+  { scene: 'collide', sub: 2, name: 'Runaway growth', ready: 14,
+    text: ['Bigger drops fall faster and sweep up more droplets, so growth speeds up. The diameter readout climbs from 250 µm to 2,000 µm (2 millimeters), and the fall speed reaches about 6.5 meters per second.',
+      'The view zooms out as the drop grows, so the cloud droplets around it shrink to tiny specks. By the end, the drop is a raindrop, slightly flattened on the bottom.'],
+    screen: ['Collision–coalescence', COL_SUBS[2]] },
+  { scene: 'raindrop', name: 'A raindrop', ready: 6,
+    text: ['About a million cloud droplets make one raindrop.',
+      'The final picture lines up the three sizes from the animation: the nucleus (0.2 µm), a cloud droplet (20 µm, 100 times wider than the nucleus), and a raindrop (2,000 µm, another 100 times wider). In warm clouds, collision–coalescence is how rain forms.'],
+    screen: ['About a million cloud droplets make one raindrop', 'In warm clouds, collision–coalescence is how rain forms.', 'Nucleus 0.2 µm → ×100 → Cloud droplet 20 µm → ×100 → Raindrop 2,000 µm'] }
+];
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+/* ---------- presenter ---------- */
+const $ = id => document.getElementById(id);
+const app = $('app'), stage = $('stage'), frame = $('frame'), fit = $('fit'), layer = $('layer'), ctx = $('cv').getContext('2d');
+const nextB = $('next'), backB = $('back'), pauseB = $('pause'), replayB = $('replay'), fullB = $('full'), textB = $('textBtn'), closeB = $('close');
+const label = $('label'), dots = $('dots'), count = $('count'), live = $('live'), desc = $('desc');
+const RM = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+const LANDSCAPE = window.matchMedia ? window.matchMedia('(orientation: landscape) and (max-height: 560px)') : { matches: false };
+const PORTRAIT = window.matchMedia ? window.matchMedia('(orientation: portrait) and (max-width: 640px)') : { matches: false };
+/* The scene text can be scrolled with the keyboard whenever it is on screen. */
+function descTab() { desc.setAttribute('tabindex', (app.classList.contains('text-on') || PORTRAIT.matches) ? '0' : '-1'); }
+if (PORTRAIT.addEventListener) PORTRAIT.addEventListener('change', descTab);
+let idx = -1, scene = null, sceneName = '', T = 0, paused = false, last = null;
+
+STEPS.forEach((s, i) => { const b = document.createElement('button'); b.className = 'dot'; b.type = 'button'; b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ' of ' + STEPS.length + ': ' + s.name); b.addEventListener('click', () => goTo(i)); dots.appendChild(b); });
+
+function build(s, startR) {
+  layer.innerHTML = ''; sceneName = s.scene;
+  scene = s.scene === 'nucleus' ? sceneNucleus(layer) : s.scene === 'condense' ? sceneCondense(layer) : s.scene === 'collide' ? sceneCollide(layer, s.sub) : sceneRaindrop(layer, startR || 190);
+}
+function fastForward(sec) { const dt = 1 / 30; for (let t = 0; t < sec; t += dt) { T += dt; scene.render(NULLCTX, T, dt); } }
+function goTo(i, opts) {
+  opts = opts || {};
+  i = clamp(i, 0, STEPS.length - 1);
+  const s = STEPS[i];
+  if (!opts.restart && s.scene === 'collide' && sceneName === 'collide' && i === idx + 1) scene.advance(s.sub);
+  else build(s, !opts.restart && sceneName === 'collide' && s.scene === 'raindrop' && i === idx + 1 ? scene.R() : 190);
+  idx = i; T = 0;
+  if (RM.matches && !opts.play) { fastForward(s.ready); setPaused(true); }
+  else if (opts.play) setPaused(false);
+  frameDraw(0);
+  [...dots.children].forEach((d, j) => { d.classList.toggle('on', j === i); d.classList.toggle('done', j < i); if (j === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  label.innerHTML = '<b>' + esc(s.name) + '</b> <span>· ' + (i + 1) + ' of ' + STEPS.length + '</span>';
+  count.textContent = (i + 1) + ' of ' + STEPS.length;
+  backB.disabled = i === 0;
+  const lastStep = i === STEPS.length - 1;
+  $('nextLong').textContent = lastStep ? 'Start over' : 'Next';
+  $('nextShort').textContent = lastStep ? 'Again' : 'Next';
+  nextB.setAttribute('aria-label', lastStep ? 'Start over from the first scene' : 'Next scene');
+  if (!opts.restart) writeText(i);
+}
+function writeText(i) {
+  const s = STEPS[i];
+  live.innerHTML = '<h2>Scene ' + (i + 1) + ' of ' + STEPS.length + ': ' + esc(s.name) + '</h2>' +
+    s.text.map(p => '<p>' + esc(p) + '</p>').join('') +
+    '<div class="onscreen"><h3>Words on screen</h3>' + s.screen.map(p => '<p>' + esc(p) + '</p>').join('') + '</div>';
+}
+function next() { goTo(idx === STEPS.length - 1 ? 0 : idx + 1); }
+function back() { if (idx > 0) goTo(idx - 1); }
+function replay() { goTo(idx, { restart: true, play: true }); }
+function setPaused(p) {
+  paused = p; pauseB.classList.toggle('paused', p);
+  $('pauseT').textContent = p ? 'Play' : 'Pause';
+  pauseB.setAttribute('aria-label', p ? 'Play animation' : 'Pause animation');
+}
+function frameDraw(dt) {
+  ctx.clearRect(0, 0, 1920, 1080);
+  scene.render(ctx, T, dt);
+  nextB.classList.toggle('ready', T >= STEPS[idx].ready);
+}
+function loop(now) {
+  const dt = last == null ? 0 : Math.min(0.05, (now - last) / 1000); last = now;
+  if (!paused && scene) { T += dt; frameDraw(dt); }
+  requestAnimationFrame(loop);
+}
+
+/* Fit the 1920×1080 stage to the space, and switch to larger labels when it is drawn small. */
+function resize() {
+  const w = fit.clientWidth, hh = fit.clientHeight, sc = Math.min(w / 1920, hh / 1080);
+  if (!(sc > 0)) return;
+  stage.style.transform = 'scale(' + sc + ')';
+  frame.style.width = 1920 * sc + 'px'; frame.style.height = 1080 * sc + 'px';
+  frame.style.left = (w - 1920 * sc) / 2 + 'px'; frame.style.top = (hh - 1080 * sc) / 2 + 'px';
+  const on = sc < 0.55, tiny = sc < 0.29;
+  const lab = on ? Math.round(clamp(14 / sc, 24, 66)) : 24, cap = on ? Math.round(clamp(13.5 / sc, 36, 44)) : 36;
+  const changed = on !== BIG.on || tiny !== BIG.tiny || lab !== BIG.lab || cap !== BIG.cap;
+  Object.assign(BIG, { on, tiny, lab, cap });
+  stage.classList.toggle('big', on); stage.classList.toggle('tiny', tiny);
+  stage.style.setProperty('--lab', lab + 'px'); stage.style.setProperty('--cap', cap + 'px');
+  if (changed && scene) { if (scene.layout) scene.layout(); if (paused) frameDraw(0); }
+}
+if (window.ResizeObserver) new ResizeObserver(resize).observe(fit);
+window.addEventListener('resize', resize);
+
+/* Scene text: on screen when the student asks for it (always shown on an upright phone). */
+let textOn = false;
+try { textOn = localStorage.getItem('raindrop-text') === 'on'; } catch (e) {}
+function setText(on, remember) {
+  textOn = on; app.classList.toggle('text-on', on);
+  textB.setAttribute('aria-pressed', on ? 'true' : 'false');
+  textB.setAttribute('aria-label', on ? 'Hide scene text' : 'Show scene text');
+  if (remember) { try { localStorage.setItem('raindrop-text', on ? 'on' : 'off'); } catch (e) {} }
+  descTab(); resize();
+}
+setText(textOn, false);
+textB.addEventListener('click', () => setText(!textOn, true));
+closeB.addEventListener('click', () => { setText(false, true); textB.focus(); });
+$('skip').addEventListener('click', e => { e.preventDefault(); if (!textOn) setText(true, false); desc.focus(); });
+
+nextB.addEventListener('click', next);
+backB.addEventListener('click', back);
+replayB.addEventListener('click', replay);
+pauseB.addEventListener('click', () => setPaused(!paused));
+if (!document.fullscreenEnabled || !app.requestFullscreen) fullB.hidden = true;
+fullB.addEventListener('click', () => {
+  try { if (document.fullscreenElement) document.exitFullscreen(); else { const p = app.requestFullscreen(); if (p && p.catch) p.catch(() => { fullB.hidden = true; }); } } catch (e) { fullB.hidden = true; }
+});
+document.addEventListener('fullscreenchange', () => fullB.setAttribute('aria-label', document.fullscreenElement ? 'Exit full screen' : 'Full screen'));
+
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const tag = e.target && e.target.tagName;
+  if ((e.key === ' ' || e.key === 'Enter') && (tag === 'BUTTON' || tag === 'A')) return;
+  if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+  else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); back(); }
+  else if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  else if (e.key === 'End') { e.preventDefault(); goTo(STEPS.length - 1); }
+  else if (e.key === 'p' || e.key === 'P') setPaused(!paused);
+  else if (e.key === 'r' || e.key === 'R') replay();
+  else if (e.key === 't' || e.key === 'T') setText(!textOn, true);
+  else if (e.key === 'Escape' && textOn && LANDSCAPE.matches) { setText(false, true); textB.focus(); }
+});
+
+/* Touch: swipe left = next, swipe right = back; tap right side = next, tap far left = back. Mouse is ignored. */
+let tp = null;
+fit.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' || !e.isPrimary) return; tp = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+fit.addEventListener('pointercancel', () => { tp = null; });
+fit.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch' || !tp) return;
+  const dx = e.clientX - tp.x, dy = e.clientY - tp.y, dt = performance.now() - tp.t; tp = null;
+  if (Math.abs(dx) >= 40 && Math.abs(dx) > 1.5 * Math.abs(dy) && dt < 900) { if (dx < 0) next(); else back(); return; }
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) {
+    const r = frame.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+    if (fx >= 0.6 && fx <= 1) next(); else if (fx >= 0 && fx <= 0.2) back();
+  }
+});
+
+resize();
+goTo(0);
+if (RM.addEventListener) RM.addEventListener('change', () => { if (RM.matches) setPaused(true); });
+const startLoop = () => requestAnimationFrame(loop);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { resize(); if (scene && scene.layout) scene.layout(); startLoop(); }, startLoop); else startLoop();
+})();
+</script>
+</body>
+</html>

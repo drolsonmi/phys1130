@@ -154,3 +154,16 @@ I look forward to exploring the science of the atmosphere with you!
     * [10.4 Forms of Ice Precipitation](./10_Precipitation/10_4_Ice.md)
     * [10.5 Graupel and Hail](./10_Precipitation/10_5_Hail.md)
 * Chapter 11: Pressure
+
+## Animations
+* [Cloud Formation](./animations/cloud-development-mobile1.html)
+* [Precipitation: Collision-Coalescence](./animations/collision-coalescence-mobile.html)
+* [Precipitation: Ice-Crystal (Bergeron) Process](./animations/ice-crystal-mobile.html)
+* [Precipitation: Accretion and Aggregation](./animations/accretion-aggregation-mobile.html)
+* [Precipitation: Winter Precipitation](./animations/winter-precipitation-mobile.html)
+* [Precipitation: Graupel (Corn Snow)](./animations/graupel-mobile.html)
+* [Precipitation: Hail](./animations/hail-mobile.html)
+* [Pressure: Isobaric Charts](./animations/isoheight-chart-mobile.html)
+* [Pressure: Thermal Circulations](./animations/thermal-circulation-mobile.html)
+* [Tropical: Upwelling](./animations/upwelling-mobile.html)
+* [Tropical: ENSO](./animations/enso-mobile.html)

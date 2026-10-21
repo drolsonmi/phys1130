@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Hail Forms</title>
+<meta name="description" content="An animated, step-by-step explanation of how hailstones form, for Introduction to Meteorology.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;800&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page:#eef0f4; --surface:#ffffff; --text:#25282b; --muted:#555b69; --line:#cfd4de;
+  --primary:#1e376c; --primaryText:#ffffff; --primaryHover:#2a4a8c; --focus:#1e376c; --accent:#f47920;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page:#101218; --surface:#1a1d25; --text:#eceef3; --muted:#a9afbd; --line:#343946;
+    --primary:#3a5fae; --primaryText:#ffffff; --primaryHover:#4a70c2; --focus:#ffb37a; color-scheme:dark; }
+}
+:root[data-theme="dark"] { --page:#101218; --surface:#1a1d25; --text:#eceef3; --muted:#a9afbd; --line:#343946;
+  --primary:#3a5fae; --primaryText:#ffffff; --primaryHover:#4a70c2; --focus:#ffb37a; color-scheme:dark; }
+*, *::before, *::after { box-sizing:border-box }
+html { scroll-padding-top:env(safe-area-inset-top, 0px); -webkit-text-size-adjust:100% }
+html, body { height:100%; margin:0 }
+body { height:100vh; height:100dvh; background:var(--page); color:var(--text); font-family:'Nunito Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  display:flex; flex-direction:column; overflow:hidden; overflow-x:hidden }
+.vh { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0 0 0 0) !important; clip-path:inset(50%) !important; border:0 !important; white-space:nowrap !important }
+.skip { position:absolute; left:12px; top:calc(env(safe-area-inset-top, 0px) + 8px); z-index:50; background:var(--surface); color:var(--text); font-weight:800; padding:12px 16px; border-radius:10px; border:2px solid var(--focus); transform:translateY(-200%); }
+.skip:focus { transform:none }
+:focus { outline:none }
+:focus-visible { outline:3px solid var(--focus); outline-offset:2px }
+
+#stageArea { flex:1; min-height:0; min-width:0; display:flex; flex-direction:column; position:relative }
+#view { flex:1; min-height:0; min-width:0; display:flex; align-items:center; justify-content:center; padding:16px 16px 12px;
+  padding-left:calc(16px + env(safe-area-inset-left, 0px)); padding-right:calc(16px + env(safe-area-inset-right, 0px)); padding-top:calc(16px + env(safe-area-inset-top, 0px)) }
+#frame { position:relative; flex:none; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,.14); touch-action:pan-y pinch-zoom; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent }
+#scaler { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0 }
+.stage { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:none;
+  --display:'Zilla Slab', Georgia, 'Times New Roman', serif; --sans:'Nunito Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif }
+.stage.on { display:block }
+#turn { display:none }
+
+#desc { position:relative; flex:none; width:calc(100% - 32px); max-width:960px; margin:0 auto 12px; max-height:32vh; overflow:auto; -webkit-overflow-scrolling:touch;
+  background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 20px 16px }
+body:not(.text-on) #desc { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0 0 0 0); clip-path:inset(50%); border:0 !important; max-height:none }
+#descBody h2 { font-family:'Zilla Slab', Georgia, serif; font-weight:700; font-size:22px; line-height:1.2; margin:0 52px 4px 0; color:var(--text) }
+#descBody .count { margin:0 0 8px; font-size:14px; color:var(--muted) }
+#descBody p, #descBody li { font-size:17px; line-height:1.55; max-width:72ch }
+#descBody p { margin:0 0 10px }
+#descBody ol { margin:0 0 10px; padding-left:1.6em }
+#descBody li { margin:0 0 4px }
+#close { position:absolute; top:8px; right:8px }
+
+#bar { flex:none; display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; background:var(--surface); border-top:1px solid var(--line);
+  padding:10px calc(20px + env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) calc(20px + env(safe-area-inset-left, 0px)) }
+#info { flex:1 1 280px; min-width:0; display:flex; flex-direction:column; gap:4px }
+#infoTop { display:flex; align-items:center; gap:14px; min-width:0 }
+#where { min-width:0; font-size:15px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+#where b { color:var(--text); font-weight:800 }
+#dots { display:flex; gap:6px; flex:none }
+#dots i { width:8px; height:8px; border-radius:4px; background:var(--line) }
+#dots i.on { background:var(--accent); width:22px }
+#hint { margin:0; font-size:13px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+#counter { display:none }
+#btns { display:flex; flex-wrap:wrap; gap:8px; align-items:center }
+button { font:inherit; font-size:15px; font-weight:800; min-width:44px; min-height:44px; padding:0 14px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  border-radius:10px; border:1px solid var(--line); background:transparent; color:var(--text); cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation }
+button svg { width:20px; height:20px; flex:none; fill:none; stroke:currentColor; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round }
+button:hover { border-color:var(--muted) }
+button[aria-disabled="true"] { opacity:.45; cursor:default }
+button[aria-pressed="true"] { background:color-mix(in srgb, var(--primary) 16%, transparent); border-color:var(--primary) }
+#next { background:var(--primary); border-color:var(--primary); color:var(--primaryText); padding:0 22px }
+#next:hover:not([aria-disabled="true"]) { background:var(--primaryHover) }
+button[hidden] { display:none !important }
+
+/* ---------- phone held sideways ---------- */
+@media (orientation: landscape) and (max-height: 560px) {
+  body { flex-direction:row }
+  #view { padding:calc(6px + env(safe-area-inset-top, 0px)) 6px calc(6px + env(safe-area-inset-bottom, 0px)) calc(6px + env(safe-area-inset-left, 0px)) }
+  #frame { border-radius:8px }
+  #bar { flex-direction:column; flex-wrap:nowrap; align-items:stretch; gap:6px; width:calc(84px + env(safe-area-inset-right, 0px)); border-top:none; border-left:1px solid var(--line);
+    padding:calc(8px + env(safe-area-inset-top, 0px)) calc(8px + env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) 8px }
+  #info { flex:none; align-items:center }
+  #infoTop, #hint { display:none }
+  #counter { display:block; font-size:14px; font-weight:800; text-align:center; color:var(--text); white-space:nowrap }
+  #btns { flex:1; min-height:0; flex-direction:column; flex-wrap:nowrap; gap:6px; align-items:stretch }
+  #btns .minor { padding:0; width:100%; height:44px }
+  #btns .minor .t { display:none }
+  #replay { order:1 } #pause { order:2 } #full { order:3 } #textBtn { order:4 }
+  #back { order:5; margin-top:auto; height:48px; flex-direction:column; gap:0; padding:0; font-size:13px }
+  #next { order:6; height:66px; flex-direction:column; gap:2px; padding:0; font-size:15px }
+  #next svg { width:26px; height:26px }
+  body.text-on #desc { position:absolute; z-index:5; margin:0; width:auto; max-width:none; max-height:none;
+    top:calc(6px + env(safe-area-inset-top, 0px)); bottom:calc(6px + env(safe-area-inset-bottom, 0px)); left:calc(6px + env(safe-area-inset-left, 0px)); right:6px;
+    box-shadow:0 6px 28px rgba(0,0,0,.28); padding:12px 18px 14px }
+  #descBody p, #descBody li { font-size:16px }
+  #close { position:sticky; top:0; float:right; margin:-4px -8px 0 8px; background:var(--surface) }
+}
+
+/* ---------- phone held upright ---------- */
+@media (orientation: portrait) and (max-width: 640px) {
+  #view { flex:none; display:block; padding:env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px) }
+  #frame { border-radius:0; box-shadow:none }
+  #turn { display:block; margin:8px 16px 0; font-size:14px; line-height:1.35; color:var(--muted); text-align:center }
+  #desc, body:not(.text-on) #desc { position:relative !important; width:auto !important; height:auto !important; clip:auto; clip-path:none; white-space:normal !important;
+    flex:1 1 auto; min-height:0; max-height:none; overflow:auto !important; margin:10px 12px 10px !important; padding:12px 16px 14px !important; border:1px solid var(--line) !important;
+    margin-left:calc(12px + env(safe-area-inset-left, 0px)) !important; margin-right:calc(12px + env(safe-area-inset-right, 0px)) !important }
+  #descBody h2 { margin-right:0; font-size:20px }
+  #descBody p, #descBody li { font-size:16px }
+  #close, #textBtn { display:none !important }
+  #bar { flex-wrap:nowrap; gap:8px; padding:8px calc(12px + env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) calc(12px + env(safe-area-inset-left, 0px)) }
+  #info { display:none }
+  #btns { flex:1; flex-wrap:nowrap; gap:8px }
+  #btns .minor { padding:0; width:48px; height:56px; flex:none }
+  #btns .minor .t { display:none }
+  #back, #next { flex:1 1 0; min-width:0; height:56px; font-size:17px; padding:0 8px }
+  #back { order:-1 }
+}
+
+/* ---------- picture text when drawn small ---------- */
+.big .lbl { font-size:42px !important }
+.big .sub { font-size:42px !important; line-height:1.25 !important }
+.big .cap { font-size:46px !important }
+.big .tag { font-size:38px; letter-spacing:.1em }
+.big .emb-panel { width:500px !important; margin-left:-40px; top:356px !important; height:594px !important }
+.big .emb-cap { bottom:28px !important; left:20px !important; right:20px !important }
+.big .emb-p2 .emb-cap { font-size:40px !important; line-height:1.15 }
+.big .side-panel { left:1180px !important; top:100px !important; width:704px !important; height:950px !important }
+.big .side-list { left:1214px !important; top:404px !important; width:640px !important; gap:14px !important }
+.big .side-list > div { gap:14px !important }
+.big .side-list > div > span:first-child { width:54px !important; height:54px !important; border-radius:27px !important; font-size:30px !important }
+.big .lb-sc { left:172px !important; top:834px !important }
+.big .lb-dn { left:auto !important; right:924px !important; top:356px !important }
+.big .sl-t2 { left:1180px !important; transform:translateX(-50%) }
+</style>
+<style>
+.stage { --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; color:var(--second); font-family:var(--sans, system-ui, sans-serif) }
+.ground { position:absolute; inset:0; background:var(--ground) }
+.words { position:absolute; margin:0; display:flex; flex-direction:column; gap:20px } .words > * { margin:0 }
+.line { font-family:var(--display, var(--sans, system-ui, sans-serif)); font-size:84px; line-height:1.05; font-weight:700; color:var(--main) } .sub { font-size:36px; line-height:1.3 }
+.tag { font-size:26px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--accent) }
+.lbl { position:absolute; font-size:28px; font-weight:800; color:var(--main); white-space:nowrap }
+.sub { color:color-mix(in srgb, var(--second) 78%, var(--ground)) }
+.art { position:absolute; inset:0; width:100%; height:100%; overflow:visible }
+.cloud { fill:color-mix(in srgb, var(--main) 9%, var(--ground)); stroke:color-mix(in srgb, var(--main) 35%, var(--ground)); stroke-width:4; stroke-linejoin:round }
+.cloud-deep { fill:color-mix(in srgb, var(--main) 16%, var(--ground)) }
+.freeze { stroke:var(--main); stroke-width:4; stroke-dasharray:18 14; fill:none }
+.up { fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; stroke-linejoin:round }
+.down { fill:none; stroke:color-mix(in srgb, var(--main) 60%, var(--ground)); stroke-width:10; stroke-linecap:round; stroke-linejoin:round }
+.ice-clear { fill:color-mix(in srgb, var(--main) 22%, var(--ground)) }
+.ice-opaque { fill:color-mix(in srgb, var(--main) 5%, var(--ground)) }
+.ice-edge { fill:none; stroke:var(--main); stroke-width:3 }
+.seed { fill:var(--accent) }
+.drop { fill:color-mix(in srgb, var(--main) 45%, var(--ground)) }
+.ink { fill:var(--main) }
+.panel { position:absolute; border-radius:24px; background:color-mix(in srgb, var(--ground) 94%, var(--main)); border:3px solid color-mix(in srgb, var(--main) 20%, var(--ground)) }
+.cap { font-size:40px; font-weight:800; color:var(--main); line-height:1.2 }
+.big { font-family:var(--display, var(--sans, system-ui, sans-serif)); font-size:150px; font-weight:700; line-height:1; color:var(--main) }
+</style>
+</head>
+<body>
+<a class="skip" href="#desc" id="skip">Skip to scene text</a>
+<main id="stageArea">
+  <h1 class="vh">How Hail Forms: an animation for Introduction to Meteorology</h1>
+  <div id="view">
+    <div id="frame" aria-hidden="true"><div id="scaler"></div></div>
+  </div>
+  <p id="turn">Turn your phone sideways for a bigger picture.</p>
+  <section id="desc" tabindex="-1" aria-label="Scene text">
+    <button id="close" type="button" aria-label="Close scene text" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div id="descBody" aria-live="polite" aria-atomic="true"></div>
+  </section>
+</main>
+<nav id="bar" aria-label="Scene controls">
+  <div id="info">
+    <div id="infoTop"><div id="where"></div><div id="dots" aria-hidden="true"></div></div>
+    <p id="hint">Keys: ← → change scene · Home / End first and last · R replay · P pause · T text · F full screen</p>
+    <div id="counter" aria-hidden="true"></div>
+  </div>
+  <div id="btns">
+    <button id="back" type="button" aria-label="Back to previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span>Back</span></button>
+    <button id="replay" class="minor" type="button" aria-label="Replay scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button id="pause" class="minor" type="button" aria-label="Pause animation"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ic-pause" d="M9 5v14M15 5v14"/><path class="ic-play" d="M8 5l11 7-11 7z" style="display:none"/></svg><span class="t">Pause</span></button>
+    <button id="full" class="minor" type="button" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="t">Full screen</span></button>
+    <button id="textBtn" class="minor" type="button" aria-label="Text description of scene" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 11h14M5 16h9"/></svg><span class="t">Text</span></button>
+    <button id="next" type="button" aria-label="Next scene"><span>Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+</nav>
+<script>
+(function () {
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+  const eo = p => 1 - Math.pow(1 - p, 3);
+  const ei = p => p * p * p;
+  const eio = p => p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+  const eob = (p, s) => { s = s == null ? 1.70158 : s; const q = p - 1; return 1 + (s + 1) * q * q * q + s * q * q; };
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const rng = seed => { let a = seed >>> 0 || 1; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+  const cutPaper = (seed, n, irr) => { const r = rng(seed * 7919 + 13); const pts = []; for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + (r() - 0.5) * (Math.PI / n) * 0.6; const rad = 1 + (r() * 2 - 1) * irr; pts.push([Math.cos(a) * rad, Math.sin(a) * rad]); } return pts; };
+  const polyStr = (pts, cx, cy, sx, sy, rot) => { const c = Math.cos(rot || 0), s = Math.sin(rot || 0); return pts.map(([x, y]) => { x *= sx; y *= sy; return (cx + x * c - y * s).toFixed(1) + ',' + (cy + x * s + y * c).toFixed(1); }).join(' '); };
+  const h = html => { const tp = document.createElement('template'); tp.innerHTML = html; return tp.content; };
+  const TextFx = { fadeFromRight(el, t, start) { const p = eo(seg(t, start, start + 0.6)); el.style.opacity = p; el.style.transform = 'translateX(' + lerp(40, 0, p) + 'px)'; } };
+  const defs = {};
+  window.kit = { seg, eo, ei, eio, eob, lerp, rng, cutPaper, polyStr, h, TextFx, stage: null, scene(id, def) { defs[id] = def; }, scenes() {}, score() {} };
+  window.__defs = defs;
+  window.BIG = false;
+})();
+</script>
+<script>window.HAIL = {
+  svg(n, r, grow) {
+    grow = grow == null ? 1 : grow;
+    var s = '', core = r * 0.22, step = (r - core) / Math.max(1, n);
+    for (var i = n; i >= 1; i--) {
+      var rr = core + step * i;
+      s += '<circle class="' + (i % 2 ? 'ice-opaque' : 'ice-clear') + '" r="' + rr.toFixed(1) + '"/>';
+      s += '<circle class="ice-edge" style="stroke-width:2;opacity:.55" r="' + rr.toFixed(1) + '"/>';
+    }
+    s += '<circle class="seed" r="' + core.toFixed(1) + '"/>';
+    return s;
+  }
+};</script>
+<script>(function(){
+const { seg, eo, eio, lerp, TextFx } = kit;
+const TITLE_CLOUD = 'M960 830 C930 770 990 720 1060 735 C1050 640 1120 570 1200 575 C1210 450 1250 360 1210 285 C1120 270 1010 255 970 228 C1060 180 1420 170 1730 200 C1830 212 1850 255 1760 266 C1570 280 1520 310 1500 370 C1570 430 1590 520 1565 585 C1650 595 1710 665 1690 735 C1755 755 1770 825 1700 845 Z';
+kit.scene('title', {
+  init(kit) {
+    let stones = '';
+    for (let i = 0; i < 9; i++) stones += '<circle class="ice-clear title-stone" r="' + (7 + (i % 3) * 3) + '"/>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080"><g class="title-cloud"><path class="cloud" d="' + TITLE_CLOUD + '"/>' +
+      '<path class="cloud-deep" d="M1080 800 C1070 720 1150 680 1230 690 C1240 600 1300 560 1380 580 C1460 560 1540 620 1530 700 C1610 710 1650 770 1620 830 Z"/></g>' +
+      '<g class="title-fall">' + stones + '</g></svg>' +
+      '<div class="words" style="left:150px;top:360px;width:760px"><p class="tag title-tag">Introduction to Meteorology</p>' +
+      '<h1 class="line title-line" style="font-size:132px">How hail forms</h1>' +
+      '<p class="sub title-sub">A hailstone grows one layer at a time</p></div></div>'));
+    this.cloud = kit.stage.querySelector('.title-cloud');
+    this.cloud.style.transformOrigin = '1350px 840px';
+    this.stones = [...kit.stage.querySelectorAll('.title-stone')];
+    this.line = kit.stage.querySelector('.title-line');
+    this.tag = kit.stage.querySelector('.title-tag').style;
+    this.sub = kit.stage.querySelector('.title-sub').style;
+  },
+  render(t) {
+    TextFx.fadeFromRight(this.line, t, -0.5);
+    this.tag.opacity = eo(seg(t, -0.3, 0.3));
+    this.sub.opacity = eo(seg(t, 0.9, 1.5));
+    this.sub.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 0.9, 1.5))) + 'px)';
+    const rise = eio(seg(t, -0.6, 2.2));
+    const s = lerp(0.9, 1, rise) * (1 + 0.01 * Math.sin(t * 2));
+    this.cloud.style.transform = 'translateY(' + (lerp(70, 0, rise) - t * 3) + 'px) scale(' + s + ')';
+    this.stones.forEach((c, i) => {
+      const ph = ((t * (0.55 + (i % 4) * 0.08) + i * 0.37) % 1);
+      const x = 1110 + i * 62 + Math.sin(i * 2.1) * 20;
+      c.setAttribute('cx', x - ph * 30);
+      c.setAttribute('cy', 850 + ph * 260);
+      c.style.opacity = eo(seg(t, 1.2, 2)) * (1 - seg(ph, 0.8, 1));
+    });
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, eob, lerp, TextFx } = kit;
+const EMB_X = [430, 960, 1490];
+kit.scene('embryo', {
+  init(kit) {
+    const lump = kit.polyStr(kit.cutPaper(5, 14, 0.2), 0, 0, 80, 80, 0);
+    const r = kit.rng(4); let dust = '';
+    for (let i = 0; i < 7; i++) {
+      const a = r() * 6.28, d = 14 + r() * 50;
+      dust += '<polygon class="seed" points="' + kit.polyStr(kit.cutPaper(20 + i, 5, 0.4), Math.cos(a) * d, Math.sin(a) * d, 7 + r() * 12, 7 + r() * 12, r() * 3) + '"/>';
+    }
+    const ring = i => '<g class="emb-r' + i + '"><circle class="ice-clear" r="122" style="opacity:.75"/><circle class="ice-edge" r="122" style="stroke-dasharray:14 10"/></g>';
+    const panel = (i, cap, fs) => '<div class="panel emb-panel emb-p' + i + '" style="left:' + (EMB_X[i] - 210) + 'px;top:380px;width:420px;height:520px">' +
+      '<div class="cap emb-cap" style="position:absolute;left:24px;right:24px;bottom:36px;text-align:center;font-size:' + fs + 'px">' + cap + '</div></div>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      panel(0, 'Graupel', 40) + panel(1, 'Frozen raindrop', 40) + panel(2, 'Particles (including dust and insects)', 32) +
+      '<svg class="art" viewBox="0 0 1920 1080">' +
+      '<g class="emb-g0">' + ring(0) + '<polygon class="seed" points="' + lump + '"/><polygon class="ice-edge" points="' + lump + '"/>' +
+      '<circle class="ice-opaque" cx="-26" cy="-20" r="12"/><circle class="ice-opaque" cx="22" cy="16" r="9"/><circle class="ice-opaque" cx="-6" cy="30" r="7"/></g>' +
+      '<g class="emb-g1">' + ring(1) + '<circle class="seed" r="80"/><circle class="ice-edge" r="80"/><ellipse cx="-28" cy="-32" rx="20" ry="13" style="fill:var(--ground);opacity:.7"/></g>' +
+      '<g class="emb-g2">' + ring(2) + '<g class="emb-dust">' + dust + '</g></g></svg>' +
+      '<div class="words" style="left:150px;top:110px;width:1620px"><h2 class="line emb-line" style="font-size:80px">Every hailstone starts as an embryo</h2>' +
+      '<p class="sub emb-sub">A small particle that water can freeze around</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.p = [0, 1, 2].map(i => q('.emb-p' + i).style);
+    this.g = [0, 1, 2].map(i => q('.emb-g' + i));
+    this.rings = [q('.emb-r0'), q('.emb-r1'), q('.emb-r2')];
+    this.dust = q('.emb-dust');
+    this.line = q('.emb-line'); this.sub = q('.emb-sub').style;
+  },
+  render(t) {
+    TextFx.fadeFromRight(this.line, t, 0.1);
+    this.sub.opacity = eo(seg(t, 1.0, 1.6));
+    for (let i = 0; i < 3; i++) {
+      const a = 1.6 + i * 0.6, p = seg(t, a, a + 0.6);
+      this.p[i].opacity = eo(p);
+      this.p[i].transform = 'translateY(' + lerp(40, 0, eo(p)) + 'px)';
+      const sp = seg(t, a + 0.2, a + 0.9);
+      const s = sp <= 0 ? 0.001 : eob(sp, 1.7) * (1 + 0.015 * Math.sin(t * 2.2 + i));
+      const rot = i === 2 ? 0 : Math.sin(t * 1.3 + i) * 4;
+      this.g[i].setAttribute('transform', 'translate(' + EMB_X[i] + ' 610) rotate(' + rot + ') scale(' + s + ')');
+    }
+    this.dust.setAttribute('transform', 'rotate(' + t * 8 + ')');
+    this.rings.forEach((g, i) => {
+      const rp = seg(t, 4.4 + i * 0.4, 5.3 + i * 0.4);
+      g.setAttribute('transform', 'scale(' + (rp <= 0 ? 0.001 : lerp(0.55, 1, eo(rp))) + ')');
+      g.style.opacity = eo(rp);
+    });
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+const CY = { S0: 1.0, P: 6.5, N: 4, A: 0.5, cx: 520, cy: 540, rx: 140, ry: 250, END: 33.5 };
+const PI = Math.PI;
+const cyG = x => x - CY.A * Math.sin(2 * PI * x) / (2 * PI);
+const cyInv = v => { let a = 0, b = 1; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (cyG(m) < v) a = m; else b = m; } return (a + b) / 2; };
+const cyPos = th => [CY.cx - CY.rx * Math.sin(th), CY.cy - CY.ry * Math.cos(th)];
+kit.scene('cycle', {
+  init(kit) {
+    this.xf = cyInv(0.375); this.xz = cyInv(0.675);
+    const r = kit.rng(9); let dots = '';
+    for (let i = 0; i < 40; i++) dots += '<circle class="drop" cx="' + (200 + r() * 900).toFixed(0) + '" cy="' + (570 + r() * 300).toFixed(0) + '" r="' + (3 + r() * 4).toFixed(1) + '"/>';
+    const CL = 'M140 880 C100 800 150 700 230 700 C200 560 260 430 360 410 C380 300 480 230 600 240 C680 180 860 180 940 250 C1060 250 1140 340 1120 450 C1170 520 1170 640 1110 700 C1170 760 1150 870 1060 885 Z';
+    const item = (cls, n, txt) => '<div class="' + cls + '" style="display:flex;gap:16px;align-items:flex-start"><span style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--accent);color:var(--ground);font-weight:800;font-size:26px;display:flex;align-items:center;justify-content:center">' + n + '</span><span class="sub" style="font-size:31px;line-height:1.25">' + txt + '</span></div>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<div class="panel side-panel" style="left:1220px;top:120px;width:600px;height:900px"></div>' +
+      '<svg class="art" viewBox="0 0 1920 1080"><defs><clipPath id="cy-clip"><path d="' + CL + '"/></clipPath></defs>' +
+      '<rect x="0" y="960" width="1180" height="120" style="fill:color-mix(in srgb, var(--main) 14%, var(--ground))"/>' +
+      '<path class="cloud" d="' + CL + '"/>' +
+      '<rect class="cloud-deep" x="0" y="0" width="1200" height="540" clip-path="url(#cy-clip)"/>' +
+      '<g class="cy-dots" clip-path="url(#cy-clip)">' + dots + '</g>' +
+      '<line class="freeze" x1="150" y1="540" x2="1150" y2="540"/>' +
+      '<path class="up" d="M710 880 L710 320"/><path class="up" d="M678 360 L710 316 L742 360"/>' +
+      '<path class="down" d="M1010 360 L1010 930"/><path class="down" d="M978 892 L1010 936 L1042 892"/>' +
+      '<circle class="drop cy-coat" r="10" style="opacity:.65"/><g class="cy-stone"></g>' +
+      '<circle class="drop cy-incoat" cx="1520" cy="350" r="10" style="opacity:.6"/><g class="cy-in"></g></svg>' +
+      '<div class="lbl lb-fz" style="left:740px;top:268px">Freezing layer</div>' +
+      '<div class="lbl lb-sc" style="left:190px;top:820px">Supercooled water</div>' +
+      '<div class="lbl lb-up" style="left:728px;top:600px;color:var(--accent);font-size:32px">Updraft</div>' +
+      '<div class="lbl lb-dn" style="left:1028px;top:400px;font-size:32px">Downdraft</div>' +
+      '<div class="words" style="left:140px;top:50px;width:1000px"><h2 class="line cy-line" style="font-size:64px">Up and down, layer by layer</h2></div>' +
+      '<div class="words cy-list side-list" style="left:1264px;top:566px;width:516px;gap:16px"><p class="cap">Layer <span class="cy-n" style="color:var(--accent)">1</span></p>' +
+      item('cy-i0', 1, 'Falls into supercooled water and grows') + item('cy-i1', 2, 'Caught by the updraft and lifted to the freezing layer') + item('cy-i2', 3, 'The collected water freezes into a new layer') +
+      item('cy-i3', 4, 'This process continues until the stone is too heavy') + '</div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.stone = q('.cy-stone'); this.inn = q('.cy-in'); this.coat = q('.cy-coat'); this.incoat = q('.cy-incoat');
+    this.nEl = q('.cy-n'); this.list = q('.cy-list').style;
+    this.li = [0, 1, 2, 3].map(i => q('.cy-i' + i).style);
+    this.dots = q('.cy-dots').style; this.line = q('.cy-line'); this.last = -1; this.lastK = -1;
+  },
+  render(t) {
+    TextFx.fadeFromRight(this.line, t, -0.4);
+    const { S0, P, N, END } = CY;
+    const show = (st, a) => { const p = eo(seg(t, a, a + 0.45)); st.opacity = p; st.transform = 'translateX(' + lerp(24, 0, p) + 'px)'; };
+    const s = (t - S0) / P, k = Math.floor(s), u = s - k;
+    const [x, y] = cyPos(0.25 * PI + 2 * PI * (k + cyG(u)));
+    let n = 0, coat = 0;
+    if (k < 0) { this.list.opacity = 0; }
+    else {
+      const kk = Math.min(k, N - 1), ts = S0 + kk * P;
+      if (k >= N) { n = N; coat = 0; }
+      else {
+        n = k;
+        if (u < this.xf) coat = eo(u / this.xf);
+        else if (u < this.xz) coat = 1;
+        else { const pz = (u - this.xz) / (1 - this.xz); if (pz >= 0.5) { n = k + 1; coat = 1 - eo((pz - 0.5) / 0.5); } else coat = 1; }
+      }
+      const out = kk < N - 1 ? 1 - eo(seg(t, ts + P - 0.35, ts + P)) : 1;
+      this.list.opacity = eo(seg(t, ts, ts + 0.3)) * out;
+      if (kk !== this.lastK) { this.nEl.textContent = String(kk + 1); this.lastK = kk; }
+      show(this.li[0], ts + 0.1); show(this.li[1], ts + this.xf * P); show(this.li[2], ts + this.xz * P);
+      if (kk === N - 1) show(this.li[3], S0 + N * P); else this.li[3].opacity = 0;
+    }
+    this.li[3].display = this.lastK === N - 1 ? 'flex' : 'none';
+    if (n !== this.last) { this.stone.innerHTML = window.HAIL.svg(n, 10 + 4.5 * n); this.inn.innerHTML = window.HAIL.svg(n, 50 + 36 * n); this.last = n; }
+    this.stone.setAttribute('transform', 'translate(' + x + ' ' + y + ')');
+    this.coat.setAttribute('cx', x); this.coat.setAttribute('cy', y);
+    this.coat.setAttribute('r', 10 + 4.5 * n + 4.5 * coat);
+    this.coat.style.opacity = coat > 0 ? 0.65 : 0;
+    const IB = window.BIG, IX = IB ? 1530 : 1520, IY = IB ? 250 : 350, IS = IB ? 0.6 : 1;
+    this.incoat.setAttribute('cx', IX); this.incoat.setAttribute('cy', IY);
+    this.incoat.setAttribute('r', (50 + 36 * n + 36 * coat) * IS);
+    this.incoat.style.opacity = coat > 0 ? 0.6 : 0;
+    this.inn.setAttribute('transform', 'translate(' + IX + ' ' + IY + ') rotate(' + t * 5 + ') scale(' + IS + ')');
+    this.dots.transform = 'translateY(' + Math.sin(t * 1.2) * 5 + 'px)';
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, ei, eio, lerp } = kit;
+const HV = { P: 6.5, A: 0.5, cx: 520, cy: 540, rx: 140, ry: 250, PREV: 33.5 };
+const hvG = x => x - HV.A * Math.sin(2 * Math.PI * x) / (2 * Math.PI);
+const hvInv = v => { let a = 0, b = 1; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (hvG(m) < v) a = m; else b = m; } return (a + b) / 2; };
+const hvPos = th => [HV.cx - HV.rx * Math.sin(th), HV.cy - HV.ry * Math.cos(th)];
+const hvBez = (p, a, b, c, d) => { const u = 1 - p; return u * u * u * a + 3 * u * u * p * b + 3 * u * p * p * c + p * p * p * d; };
+kit.scene('heavy', {
+  init(kit) {
+    this.tA = hvInv(0.375) * HV.P; this.tB = this.tA + 1.6; this.tC = this.tB + 1.2;
+    const r = kit.rng(9); let dots = '';
+    for (let i = 0; i < 40; i++) dots += '<circle class="drop" cx="' + (200 + r() * 900).toFixed(0) + '" cy="' + (570 + r() * 300).toFixed(0) + '" r="' + (3 + r() * 4).toFixed(1) + '"/>';
+    const CL = 'M140 880 C100 800 150 700 230 700 C200 560 260 430 360 410 C380 300 480 230 600 240 C680 180 860 180 940 250 C1060 250 1140 340 1120 450 C1170 520 1170 640 1110 700 C1170 760 1150 870 1060 885 Z';
+    const item = (cls, n, txt) => '<div class="' + cls + '" style="display:flex;gap:16px;align-items:flex-start"><span style="flex:none;width:44px;height:44px;border-radius:22px;background:var(--accent);color:var(--ground);font-weight:800;font-size:26px;display:flex;align-items:center;justify-content:center">' + n + '</span><span class="sub" style="font-size:31px;line-height:1.25">' + txt + '</span></div>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<div class="panel side-panel" style="left:1220px;top:120px;width:600px;height:900px"></div>' +
+      '<svg class="art" viewBox="0 0 1920 1080"><defs><clipPath id="hv-clip"><path d="' + CL + '"/></clipPath></defs>' +
+      '<rect x="0" y="960" width="1180" height="120" style="fill:color-mix(in srgb, var(--main) 14%, var(--ground))"/>' +
+      '<path class="cloud" d="' + CL + '"/>' +
+      '<rect class="cloud-deep" x="0" y="0" width="1200" height="540" clip-path="url(#hv-clip)"/>' +
+      '<g class="hv-dots" clip-path="url(#hv-clip)">' + dots + '</g>' +
+      '<line class="freeze" x1="150" y1="540" x2="1150" y2="540"/>' +
+      '<path class="up" d="M710 880 L710 320"/><path class="up" d="M678 360 L710 316 L742 360"/>' +
+      '<path class="down" d="M1010 360 L1010 930"/><path class="down" d="M978 892 L1010 936 L1042 892"/>' +
+      '<g class="hv-stone">' + window.HAIL.svg(4, 28) + '</g>' +
+      '<g class="hv-in" transform="translate(1520 350)">' + window.HAIL.svg(4, 194) + '</g></svg>' +
+      '<div class="lbl lb-fz" style="left:740px;top:268px">Freezing layer</div>' +
+      '<div class="lbl lb-sc" style="left:190px;top:820px">Supercooled water</div>' +
+      '<div class="lbl lb-up" style="left:728px;top:600px;color:var(--accent);font-size:32px">Updraft</div>' +
+      '<div class="lbl lb-dn" style="left:1028px;top:400px;font-size:32px">Downdraft</div>' +
+      '<div class="words" style="left:140px;top:50px;width:1000px"><h2 class="line" style="font-size:64px">Up and down, layer by layer</h2></div>' +
+      '<div class="words hv-fin side-list" style="left:1264px;top:566px;width:516px;gap:16px"><p class="cap">Too heavy to lift</p>' +
+      item('hv-f0', 1, 'Falls through the cloud again') + item('hv-f1', 2, 'Updraft can no longer lift the hailstone') + item('hv-f2', 3, 'Hailstone falls as it is caught by the downdraft') + item('hv-f3', 4, 'It falls to the ground as hail') + '</div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.stone = q('.hv-stone'); this.inn = q('.hv-in'); this.fin = q('.hv-fin').style;
+    this.fi = [0, 1, 2, 3].map(i => q('.hv-f' + i).style); this.dots = q('.hv-dots').style;
+  },
+  render(t) {
+    const PI = Math.PI, { tA, tB, tC } = this;
+    this.inn.setAttribute('transform', window.BIG ? 'translate(1530 250) scale(0.6)' : 'translate(1520 350)');
+    const E = window.HV_ENTRY || { skip: 0, wait: 0, u0: 0 };
+    if (t < E.wait) {
+      const [wx, wy] = hvPos(0.25 * PI + 2 * PI * hvG(E.u0 + t / HV.P));
+      this.stone.setAttribute('transform', 'translate(' + wx + ' ' + wy + ')');
+      this.fin.opacity = eo(seg(t, 0, 0.3)); this.fi.forEach(s => { s.opacity = 0; });
+      return;
+    }
+    t = t - E.wait + E.skip;
+    const show = (st, a) => { const p = eo(seg(t, a, a + 0.45)); st.opacity = p; st.transform = 'translateX(' + lerp(24, 0, p) + 'px)'; };
+    let x, y;
+    if (t < tA) [x, y] = hvPos(0.25 * PI + 2 * PI * hvG(t / HV.P));
+    else if (t < tB) { const p = eio(seg(t, tA, tB)) * 0.6 + seg(t, tA, tB) * 0.4; x = hvBez(p, 520, 660, 770, 880); y = hvBez(p, 790, 790, 680, 660); }
+    else { const p = seg(t, tB, tC); x = lerp(880, 960, eo(p)); y = lerp(660, 960 - 28, ei(p)) - 30 * Math.sin(PI * seg(t, tC, tC + 0.3)); }
+    this.stone.setAttribute('transform', 'translate(' + x + ' ' + y + ')');
+    this.fin.opacity = eo(seg(t, 0, 0.3));
+    show(this.fi[0], 0.1); show(this.fi[1], tA + 0.3); show(this.fi[2], tB); show(this.fi[3], tC);
+    this.dots.transform = 'translateY(' + Math.sin((t + HV.PREV) * 1.2) * 5 + 'px)';
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+const HD = { floor: 800, hx: 560, gx: 1360, R: 60, gr: 50, up: 38 };
+const HD_HAMMER = '<rect x="-300" y="-13" width="300" height="26" rx="13" style="fill:color-mix(in srgb, var(--accent) 35%, var(--ground));stroke:var(--main);stroke-width:4"/>' +
+  '<rect x="-350" y="-62" width="84" height="122" rx="10" style="fill:color-mix(in srgb, var(--main) 55%, var(--ground));stroke:var(--main);stroke-width:4"/>' +
+  '<rect x="-350" y="44" width="84" height="16" rx="6" style="fill:var(--main)"/>';
+kit.scene('hard', {
+  init(kit) {
+    const r = kit.rng(3); this.fr = [];
+    let frags = '';
+    for (let i = 0; i < 11; i++) {
+      const side = i % 2 ? 1 : -1;
+      this.fr.push({ dx: side * (30 + r() * 150), hop: 30 + r() * 60, s: 9 + r() * 12, rot: r() * 360, y0: -20 + r() * 40 });
+      frags += '<polygon class="ice-opaque hd-fr" style="stroke:var(--main)" points="' + kit.polyStr(kit.cutPaper(40 + i, 6, 0.35), 0, 0, 1, 1, 0) + '"/>';
+    }
+    const lump = kit.polyStr(kit.cutPaper(5, 14, 0.2), 0, 0, HD.gr, HD.gr, 0);
+    const fl = x => '<line x1="' + (x - 300) + '" y1="' + HD.floor + '" x2="' + (x + 300) + '" y2="' + HD.floor + '" style="stroke:var(--main);stroke-width:6;stroke-linecap:round"/>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' + fl(HD.hx) + fl(HD.gx) +
+      '<line x1="960" y1="300" x2="960" y2="960" style="stroke:color-mix(in srgb, var(--main) 20%, var(--ground));stroke-width:3"/>' +
+      '<g class="hd-hail">' + window.HAIL.svg(4, HD.R) + '</g>' +
+      '<g class="hd-gr"><polygon class="ice-opaque" style="stroke:var(--main);stroke-width:3" points="' + lump + '"/>' +
+      '<circle class="ice-clear" cx="-16" cy="-12" r="8"/><circle class="ice-clear" cx="14" cy="10" r="6"/><circle class="ice-clear" cx="-4" cy="20" r="5"/></g>' +
+      '<g class="hd-frs">' + frags + '</g>' +
+      '<g class="hd-h1">' + HD_HAMMER + '</g><g class="hd-h2">' + HD_HAMMER + '</g></svg>' +
+      '<div class="words" style="left:0;top:60px;width:1920px;align-items:center;text-align:center"><h2 class="line hd-line" style="font-size:80px">Hail or graupel? Tap it.</h2></div>' +
+      '<div class="words hd-l" style="left:260px;top:840px;width:600px;align-items:center;text-align:center"><p class="cap">Hail</p><p class="sub" style="font-size:32px">Solid, layered ice: hard, it holds firm</p></div>' +
+      '<div class="words hd-r" style="left:1060px;top:840px;width:600px;align-items:center;text-align:center"><p class="cap">Graupel</p><p class="sub" style="font-size:32px">Soft, airy rime: brittle, it crunches</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.hail = q('.hd-hail'); this.gr = q('.hd-gr'); this.frs = [...kit.stage.querySelectorAll('.hd-fr')];
+    this.h1 = q('.hd-h1'); this.h2 = q('.hd-h2');
+    this.l = q('.hd-l').style; this.r = q('.hd-r').style; this.line = q('.hd-line');
+  },
+  render(t) {
+    TextFx.fadeFromRight(this.line, t, -0.4);
+    const F = HD.floor, R = HD.R, U = HD.up, PI = Math.PI;
+    const t1 = 1.3;
+    let a1 = t < t1 ? lerp(U, 0, ei(seg(t, 0.75, t1))) : 16 * Math.sin(PI * seg(t, t1, t1 + 0.45)) * (1 - seg(t, t1, t1 + 0.45) * 0.4) + lerp(0, U, eio(seg(t, 2.0, 2.6)));
+    a1 = Math.max(0, a1) + 6 * eo(seg(t, 0.55, 0.75)) * (1 - seg(t, 0.75, 1.0));
+    this.h1.setAttribute('transform', 'translate(' + (HD.hx + 308) + ' ' + (F - 2 * R - 60) + ') rotate(' + a1 + ')');
+    const hit1 = Math.max(0, 1 - Math.abs(t - t1) / 0.1);
+    const sq = 1 - 0.04 * hit1;
+    this.hail.setAttribute('transform', 'translate(' + HD.hx + ' ' + (F - R * sq) + ') scale(' + (1 + 0.025 * hit1) + ' ' + sq + ')');
+    const tc = 3.0;
+    let a2;
+    if (t < tc) a2 = lerp(U, 0, ei(seg(t, 2.45, tc)));
+    else a2 = -lerp(0, 9, eo(seg(t, tc, tc + 0.12))) + lerp(0, 9 + U, eio(seg(t, 3.6, 4.2)));
+    this.h2.setAttribute('transform', 'translate(' + (HD.gx + 308) + ' ' + (F - 2 * HD.gr - 60) + ') rotate(' + a2 + ')');
+    this.gr.setAttribute('transform', 'translate(' + HD.gx + ' ' + (F - HD.gr) + ')');
+    this.gr.style.opacity = t < tc ? 1 : 0;
+    const tau = seg(t, tc, tc + 0.6);
+    this.frs.forEach((f, i) => {
+      const d = this.fr[i];
+      const x = HD.gx + d.dx * eo(tau);
+      const y = lerp(F - HD.gr + d.y0, F - d.s * 0.6, eo(tau)) - d.hop * Math.sin(PI * tau) * (1 - tau);
+      f.setAttribute('transform', 'translate(' + x + ' ' + y + ') rotate(' + (d.rot + tau * 120) + ') scale(' + d.s + ')');
+      f.style.opacity = t < tc ? 0 : 1;
+      f.style.strokeWidth = (3 / d.s).toFixed(3);
+    });
+    this.l.opacity = eo(seg(t, 2.0, 2.5)); this.l.transform = 'translateY(' + lerp(20, 0, eo(seg(t, 2.0, 2.5))) + 'px)';
+    this.r.opacity = eo(seg(t, 3.6, 4.1)); this.r.transform = 'translateY(' + lerp(20, 0, eo(seg(t, 3.6, 4.1))) + 'px)';
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, ei, eio, lerp, TextFx } = kit;
+const SL = { cx: 1180, cy: 540, R: 260 };
+kit.scene('slice', {
+  init(kit) {
+    const R = SL.R;
+    const leader = (cls, x1, y1, x2, y2) => '<g class="' + cls + '"><line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" pathLength="1" style="stroke:var(--second);stroke-width:4;stroke-dasharray:1 1"/><circle cx="' + x1 + '" cy="' + y1 + '" r="9" style="fill:var(--second)"/></g>';
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080">' +
+      '<g class="sl-l"><path class="ice-clear" d="M0 ' + (-R) + ' A' + R + ' ' + R + ' 0 0 0 0 ' + R + ' Z"/><path class="ice-edge" d="M0 ' + (-R) + ' A' + R + ' ' + R + ' 0 0 0 0 ' + R + ' Z"/></g>' +
+      '<g transform="translate(' + SL.cx + ' ' + SL.cy + ')"><path class="ice-clear sl-d"/><path class="ice-edge sl-de"/><path class="sl-sh" style="fill:color-mix(in srgb, var(--main) 12%, transparent)"/></g>' +
+      '<g class="sl-f">' + window.HAIL.svg(4, R) + '<circle class="ice-edge" r="' + R + '" style="stroke-width:4"/></g>' +
+      '<line class="sl-cut" x1="' + SL.cx + '" y1="200" x2="' + SL.cx + '" y2="880" pathLength="1" style="stroke:var(--accent);stroke-width:8;stroke-linecap:round;stroke-dasharray:1 1"/>' +
+      leader('sl-g0', 1372, 405, 1520, 330) + leader('sl-g1', 1353, 603, 1520, 700) + leader('sl-g2', SL.cx, SL.cy, SL.cx, 880) + '</svg>' +
+      '<div class="lbl sl-t0" style="left:1535px;top:300px">Clear ice</div>' +
+      '<div class="lbl sl-t1" style="left:1535px;top:672px">Cloudy ice</div>' +
+      '<div class="lbl sl-t2" style="left:' + (SL.cx - 70) + 'px;top:892px;color:var(--accent)">Embryo</div>' +
+      '<div class="words" style="left:130px;top:330px;width:620px"><h2 class="line sl-line">Slice it open</h2>' +
+      '<p class="sub sl-sub">Each ring records one trip up and down through the cloud</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.lh = q('.sl-l'); this.d = q('.sl-d'); this.de = q('.sl-de'); this.sh = q('.sl-sh'); this.f = q('.sl-f');
+    this.cut = q('.sl-cut').style;
+    this.g = [0, 1, 2].map(i => q('.sl-g' + i)); this.gl = this.g.map(g => g.querySelector('line').style);
+    this.tx = [0, 1, 2].map(i => q('.sl-t' + i).style);
+    this.line = q('.sl-line'); this.sub = q('.sl-sub').style;
+  },
+  render(t) {
+    const R = SL.R;
+    TextFx.fadeFromRight(this.line, t, -0.4);
+    this.sub.opacity = eo(seg(t, 3.7, 4.3));
+    const pc = eio(seg(t, 0.5, 1.0));
+    this.cut.strokeDashoffset = 1 - pc; this.cut.opacity = 1 - eo(seg(t, 1.1, 1.4));
+    const pd = seg(t, 1.2, 2.1);
+    this.lh.setAttribute('transform', 'translate(' + (SL.cx - 30 * eo(pd)) + ' ' + (SL.cy + 820 * ei(pd)) + ') rotate(' + (-14 * ei(pd)) + ')');
+    this.lh.style.opacity = pd < 1 ? 1 : 0;
+    const ph = eio(seg(t, 2.0, 3.6)) * Math.PI / 2;
+    const rx = Math.max(0.01, R * Math.cos(ph)), fx = Math.max(0.001, Math.sin(ph));
+    const dd = 'M0 ' + (-R) + ' A' + rx.toFixed(2) + ' ' + R + ' 0 0 1 0 ' + R + ' Z';
+    this.d.setAttribute('d', dd); this.de.setAttribute('d', dd);
+    this.sh.setAttribute('d', 'M0 ' + (-R) + ' A' + (rx * 0.45).toFixed(2) + ' ' + R + ' 0 0 1 0 ' + R + ' A' + rx.toFixed(2) + ' ' + R + ' 0 0 0 0 ' + (-R) + ' Z');
+    this.f.setAttribute('transform', 'translate(' + SL.cx + ' ' + SL.cy + ') scale(' + fx + ' 1)');
+    this.f.style.opacity = ph > 0.02 ? 1 : 0;
+    for (let i = 0; i < 3; i++) {
+      const a = 4.2 + i * 0.8, p = eo(seg(t, a, a + 0.4));
+      this.gl[i].strokeDashoffset = 1 - p; this.g[i].style.opacity = p > 0 ? 1 : 0;
+      this.tx[i].opacity = eo(seg(t, a + 0.2, a + 0.55));
+    }
+  },
+});
+})();</script>
+<script>(function(){
+const { seg, eo, eob, lerp, TextFx } = kit;
+kit.scene('end', {
+  init(kit) {
+    kit.stage.append(kit.h('<div class="ground">' +
+      '<svg class="art" viewBox="0 0 1920 1080"><g class="end-st">' + window.HAIL.svg(4, 190) + '</g>' +
+      '<line class="end-ul" x1="760" y1="448" x2="1060" y2="448" pathLength="1" style="stroke:var(--accent);stroke-width:10;stroke-linecap:round;stroke-dasharray:1 1"/></svg>' +
+      '<div class="words" style="left:760px;top:270px;width:1040px"><h2 class="big end-line" style="font-size:160px">Hail</h2>' +
+      '<p class="sub end-s1" style="margin-top:52px;font-size:42px">Hail forms one layer at a time.</p>' +
+      '<p class="sub end-s2" style="font-size:42px">Hail grows until the updraft can no longer hold it up.</p></div></div>'));
+    const q = s => kit.stage.querySelector(s);
+    this.st = q('.end-st'); this.ul = q('.end-ul').style; this.line = q('.end-line');
+    this.s = [q('.end-s1').style, q('.end-s2').style];
+  },
+  render(t) {
+    const p = seg(t, 0, 0.7);
+    const s = (p <= 0 ? 0.001 : eob(p, 1.7)) * (1 + 0.012 * Math.sin(t * 2));
+    this.st.setAttribute('transform', 'translate(440 540) rotate(' + t * 5 + ') scale(' + s + ')');
+    TextFx.fadeFromRight(this.line, t, 0.2);
+    this.ul.strokeDashoffset = 1 - eo(seg(t, 0.7, 1.1));
+    this.s.forEach((st, i) => { const a = 0.9 + i * 0.6, q = eo(seg(t, a, a + 0.5)); st.opacity = q; st.transform = 'translateX(' + lerp(26, 0, q) + 'px)'; });
+  },
+});
+})();</script>
+<script>
+(function () {
+  const ORDER = [["title", "How hail forms", 5], ["embryo", "The embryo", 7], ["cycle", "Up and down", 33.5], ["heavy", "Too heavy to lift", 8], ["hard", "Hail or graupel", 6], ["slice", "Slice it open", 9], ["end", "Hail", 4]];
+  const TEXT = {
+    title: '<p>This is the title scene for Introduction to Meteorology. The title reads “How hail forms,” with the subtitle “A hailstone grows one layer at a time.”</p>' +
+      '<p>A tall thunderstorm cloud with a wide, flat top rises on the right, and small hailstones fall from the bottom of the cloud.</p>',
+    embryo: '<p>Every hailstone starts as an embryo: a small particle that water can freeze around.</p>' +
+      '<p>Three panels show possible embryos: graupel, a frozen raindrop, and particles (including dust and insects). A ring of ice then forms around each one, showing where ice builds up around the embryo.</p>',
+    cycle: '<p>This is a cut-away view of a storm cloud. A dashed line splits it in two: the freezing layer is in the upper part of the cloud, and supercooled water is in the lower part. An orange updraft arrow points up through the middle of the cloud, and a downdraft arrow points down on its right side.</p>' +
+      '<p>The hailstone travels in a loop between the two parts of the cloud. A close-up on the right shows it growing, and a box lists each step as it happens. Each layer forms in three steps:</p>' +
+      '<ol><li>It falls into the supercooled water and grows, picking up a coat of water.</li><li>It is caught by the updraft and lifted back to the freezing layer.</li><li>The collected water freezes into a new layer of ice.</li></ol>' +
+      '<p>The loop repeats four times, and the close-up gains a new ring of ice each time. After layer 4, the box adds: “This process continues until the stone is too heavy.” The hailstone keeps circling until you go to the next scene.</p>',
+    heavy: '<p>The hailstone is now too heavy to lift. The box lists what happens:</p>' +
+      '<ol><li>It falls through the cloud again.</li><li>The updraft can no longer lift the hailstone, so it rises only a little as it drifts toward the downdraft.</li><li>The hailstone falls as it is caught by the downdraft.</li><li>It falls out of the cloud to the ground as hail.</li></ol>',
+    hard: '<p>Hail or graupel? Tap it. A small hammer taps each one as it sits on a flat surface.</p>' +
+      '<p>On the left is hail: solid, layered ice. It is hard and holds firm, so the hammer bounces off and the hailstone stays whole.</p>' +
+      '<p>On the right is graupel: soft, airy rime. It is brittle, so it crunches into small pieces. Tapping it is one way to tell hail and graupel apart.</p>',
+    slice: '<p>The hailstone is cut straight down the middle. One half drops away, and the other half turns to face you so you can see inside.</p>' +
+      '<p>Inside are rings of ice around an orange embryo at the center. The rings alternate between clear ice and cloudy ice. Each ring records one trip up and down through the cloud.</p>',
+    end: '<p>Hail forms one layer at a time. Hail grows until the updraft can no longer hold it up.</p>' +
+      '<p>A hailstone with four rings of ice around its embryo is shown beside these words.</p>'
+  };
+  const $ = id => document.getElementById(id);
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const defs = window.__defs, scaler = $('scaler'), frame = $('frame'), view = $('view'), body = document.body;
+  const scenes = ORDER.map(([id, name, dur]) => {
+    const el = document.createElement('div'); el.className = 'stage'; scaler.appendChild(el);
+    window.kit.stage = el; const def = defs[id]; def.init.call(def, window.kit);
+    return { id, name, dur, el, def };
+  });
+  const N = scenes.length;
+  scenes.forEach(() => $('dots').appendChild(document.createElement('i')));
+  const mqLand = matchMedia('(orientation: landscape) and (max-height: 560px)');
+  const mqPort = matchMedia('(orientation: portrait) and (max-width: 640px)');
+  const mqRM = matchMedia('(prefers-reduced-motion: reduce)');
+
+  // ----- clock -----
+  let cur = 0, playing = true, startAt = performance.now(), heldT = 0, dirty = true;
+  const sceneT = () => playing ? (performance.now() - startAt) / 1000 : heldT;
+  function setPlaying(on) {
+    if (on && !playing) { startAt = performance.now() - heldT * 1000; playing = true; }
+    else if (!on && playing) { heldT = sceneT(); playing = false; }
+    const b = $('pause');
+    b.setAttribute('aria-label', playing ? 'Pause animation' : 'Play animation');
+    b.querySelector('.t').textContent = playing ? 'Pause' : 'Play';
+    b.querySelector('.ic-pause').style.display = playing ? '' : 'none';
+    b.querySelector('.ic-play').style.display = playing ? 'none' : '';
+    dirty = true;
+  }
+
+  // ----- scene changes -----
+  const P = 6.5, A = 0.5, g = x => x - A * Math.sin(2 * Math.PI * x) / (2 * Math.PI);
+  const inv = v => { let a = 0, b = 1; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (g(m) < v) a = m; else b = m; } return (a + b) / 2; };
+  const XF = inv(0.375);
+  function go(i, fromUser) {
+    i = clamp(i, 0, N - 1);
+    const none = { skip: 0, wait: 0, u0: 0 };
+    if (scenes[cur].id === 'cycle' && scenes[i].id === 'heavy' && !mqRM.matches) {
+      const tc = sceneT(), s = (tc - 1) / P, u = s - Math.floor(s);
+      window.HV_ENTRY = tc < 1 ? none : (u < XF ? { skip: u * P, wait: 0, u0: 0 } : { skip: 0, wait: (1 - u) * P, u0: u });
+    } else window.HV_ENTRY = none;
+    const changed = i !== cur || !fromUser;
+    scenes[cur].el.classList.remove('on'); cur = i; scenes[cur].el.classList.add('on');
+    if (mqRM.matches) { playing = false; heldT = scenes[cur].dur; setPlaying(false); }
+    else { playing = false; heldT = 0; setPlaying(true); }
+    const sc = scenes[cur];
+    $('where').innerHTML = '<b>' + sc.name + '</b>&nbsp;&nbsp;' + (cur + 1) + ' of ' + N;
+    $('counter').textContent = (cur + 1) + ' of ' + N;
+    [...$('dots').children].forEach((d, k) => d.classList.toggle('on', k === cur));
+    $('back').setAttribute('aria-disabled', cur === 0 ? 'true' : 'false');
+    $('next').setAttribute('aria-disabled', cur === N - 1 ? 'true' : 'false');
+    if (changed) {
+      $('descBody').innerHTML = '<h2>' + sc.name + '</h2><p class="count">Scene ' + (cur + 1) + ' of ' + N + '</p>' + TEXT[sc.id];
+      $('desc').scrollTop = 0;
+    }
+    dirty = true;
+  }
+  function replay() {
+    window.HV_ENTRY = { skip: 0, wait: 0, u0: 0 };
+    playing = false; heldT = 0; setPlaying(true);
+  }
+
+  // ----- text panel -----
+  let textOn = false;
+  try { textOn = localStorage.getItem('hailText') === '1'; } catch (e) {}
+  function setText(on, save) {
+    textOn = on; body.classList.toggle('text-on', on);
+    $('textBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
+    $('close').hidden = !on;
+    if (save) { try { localStorage.setItem('hailText', on ? '1' : '0'); } catch (e) {} }
+    requestAnimationFrame(fit);
+  }
+
+  // ----- layout -----
+  function fit() {
+    let w, hh;
+    if (mqPort.matches) { w = view.clientWidth - parseFloat(getComputedStyle(view).paddingLeft) - parseFloat(getComputedStyle(view).paddingRight); hh = w * 9 / 16; }
+    else {
+      const cs = getComputedStyle(view);
+      const aw = view.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const ah = view.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const s0 = Math.max(0.05, Math.min(aw / 1920, ah / 1080)); w = 1920 * s0; hh = 1080 * s0;
+    }
+    w = Math.max(1, Math.floor(w)); hh = Math.max(1, Math.floor(hh));
+    const s = w / 1920;
+    frame.style.width = w + 'px'; frame.style.height = hh + 'px';
+    scaler.style.transform = 'scale(' + s + ')';
+    const big = s < 0.55;
+    window.BIG = big; scaler.classList.toggle('big', big);
+    dirty = true;
+  }
+  new ResizeObserver(fit).observe(view);
+  addEventListener('resize', fit);
+  [mqLand, mqPort].forEach(m => m.addEventListener && m.addEventListener('change', () => requestAnimationFrame(fit)));
+
+  // ----- render loop -----
+  let lastT = -1;
+  function tick() {
+    const t = sceneT();
+    if (dirty || playing || t !== lastT) {
+      const sc = scenes[cur];
+      try { sc.def.render.call(sc.def, t); } catch (e) { console.error(e); }
+      lastT = t; dirty = false;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ----- full screen -----
+  const de = document.documentElement;
+  const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(de.requestFullscreen || de.webkitRequestFullscreen);
+  const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+  if (!fsOK) $('full').hidden = true;
+  function toggleFull() {
+    if (!fsOK) return;
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (de.requestFullscreen || de.webkitRequestFullscreen).call(de); if (r && r.catch) r.catch(() => {}); }
+  }
+  const fsLabel = () => { const on = !!fsEl(); $('full').setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen'); $('full').querySelector('.t').textContent = on ? 'Exit full screen' : 'Full screen'; };
+  document.addEventListener('fullscreenchange', fsLabel); document.addEventListener('webkitfullscreenchange', fsLabel);
+
+  // ----- buttons -----
+  const next = () => { if (cur < N - 1) go(cur + 1, true); };
+  const back = () => { if (cur > 0) go(cur - 1, true); };
+  $('next').addEventListener('click', next);
+  $('back').addEventListener('click', back);
+  $('replay').addEventListener('click', replay);
+  $('pause').addEventListener('click', () => setPlaying(!playing));
+  $('full').addEventListener('click', toggleFull);
+  $('textBtn').addEventListener('click', () => { const on = !textOn; setText(on, true); if (on && mqLand.matches) $('close').focus(); });
+  $('close').addEventListener('click', () => { setText(false, true); $('textBtn').focus(); });
+  $('skip').addEventListener('click', e => { e.preventDefault(); if (!textOn && !mqPort.matches) setText(true, false); $('desc').focus(); });
+
+  // ----- keyboard -----
+  addEventListener('keydown', e => {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const tgt = e.target;
+    const onControl = tgt && tgt.closest && tgt.closest('button, a, input, textarea, select, [contenteditable="true"]');
+    const inDesc = tgt && tgt.closest && tgt.closest('#desc');
+    const k = e.key;
+    let done = true;
+    if (k === ' ' || k === 'Spacebar') { if (onControl || inDesc) return; next(); }
+    else if (k === 'ArrowRight' || k === 'PageDown') next();
+    else if (k === 'ArrowLeft' || k === 'PageUp') back();
+    else if (k === 'Home') go(0, true);
+    else if (k === 'End') go(N - 1, true);
+    else if (k === 'r' || k === 'R') replay();
+    else if (k === 'p' || k === 'P') setPlaying(!playing);
+    else if (k === 't' || k === 'T') { if (!mqPort.matches) setText(!textOn, true); }
+    else if (k === 'f' || k === 'F') toggleFull();
+    else if (k === 'Escape' && textOn && mqLand.matches) { setText(false, true); $('textBtn').focus(); }
+    else done = false;
+    if (done) e.preventDefault();
+  });
+
+  // ----- touch gestures (touch only; mouse clicks are ignored) -----
+  let tp = null;
+  frame.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch' || !e.isPrimary) return; tp = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() }; });
+  frame.addEventListener('pointercancel', () => { tp = null; });
+  frame.addEventListener('pointerup', e => {
+    if (!tp || e.pointerId !== tp.id) return;
+    const dx = e.clientX - tp.x, dy = e.clientY - tp.y, dt = performance.now() - tp.t, sx = tp.x; tp = null;
+    if (Math.abs(dx) >= 45 && Math.abs(dx) > Math.abs(dy) * 1.4 && dt < 900) { if (dx < 0) next(); else back(); return; }
+    if (dt < 350 && Math.hypot(dx, dy) < 12) {
+      const r = frame.getBoundingClientRect(), fx = (sx - r.left) / r.width;
+      if (fx >= 0.5) next(); else if (fx <= 0.25) back();
+    }
+  });
+
+  setText(textOn, false);
+  fit(); go(0, false); requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

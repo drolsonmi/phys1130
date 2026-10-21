@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lifting a Parcel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: header + two linked panels sharing one altitude scale (sky column | temperature profile), scene text, readout and controls beneath.
+   Phones: landscape = picture + right-hand control column; portrait = picture, readout, scrolling text, bottom buttons. */
+:root{
+  --bg:#eef3f7; --panel:#ffffff; --ink:#14212e; --muted:#5a6b7b; --line:#c9d5df;
+  --sky-top:#9cc3e6; --sky-bot:#e3eff8; --ground:#7a8f5a; --ground-dk:#5d7044;
+  --env:#14212e; --temp:#d2402b; --dew:#1f8a4c; --cool:#2f6fb5; --warm:#e0892a;
+  --cloud:#ffffff; --cloud-edge:#b7c6d3; --accent:#2f6fb5; --on-accent:#ffffff;
+  --display:"Archivo",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1620; --panel:#16212d; --ink:#e4ecf3; --muted:#93a4b5; --line:#2c3b4a;
+  --sky-top:#1b3550; --sky-bot:#2c4d6b; --ground:#3f5230; --ground-dk:#2f3e24;
+  --env:#e4ecf3; --temp:#ff6b52; --dew:#4cc77f; --cool:#6aa8ec; --warm:#f2a34b;
+  --cloud:#e9eef3; --cloud-edge:#8fa2b4; --accent:#6aa8ec; --on-accent:#0e1620; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1620; --panel:#16212d; --ink:#e4ecf3; --muted:#93a4b5; --line:#2c3b4a;
+  --sky-top:#1b3550; --sky-bot:#2c4d6b; --ground:#3f5230; --ground-dk:#2f3e24;
+  --env:#e4ecf3; --temp:#ff6b52; --dew:#4cc77f; --cool:#6aa8ec; --warm:#f2a34b;
+  --cloud:#e9eef3; --cloud-edge:#8fa2b4; --accent:#6aa8ec; --on-accent:#0e1620; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);overflow-x:hidden}
+[hidden]{display:none!important}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+.skip{position:absolute;left:12px;top:12px;z-index:60;background:var(--accent);color:var(--on-accent);font-weight:600;padding:10px 16px;border-radius:8px;text-decoration:none;transform:translateY(-300%)}
+.skip:focus{transform:none;outline:2px solid var(--ink);outline-offset:2px}
+
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:20px 32px;display:grid;gap:16px}
+header h1{font:800 clamp(24px,4vw,34px)/1.1 var(--display);margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);max-width:70ch}
+.rates{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rate{font:500 12.5px var(--mono);padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.rate b{font-weight:600}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px;touch-action:pan-y pinch-zoom}
+@media (max-width:760px){.stage{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.panel h2{font:700 12px var(--display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.stage svg{display:block;width:100%;height:auto;-webkit-user-select:none;user-select:none}
+svg text{font-family:var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:3px;border-radius:2px;display:inline-block}
+
+/* Scene text */
+#textPanel{display:grid;gap:6px}
+#textPanel:focus{outline:2px solid var(--accent);outline-offset:2px}
+.tp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+#textPanel #tpTitle{font:700 17px/1.3 var(--display);margin:0;text-wrap:balance;text-transform:none;letter-spacing:0;color:var(--ink)}
+#tpBody{margin:0;max-width:72ch}
+#tpClose{display:none}
+
+.lower{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.lower{grid-template-columns:1fr}}
+.readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.readout{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cell{display:grid;gap:2px;min-width:0}
+.cell .k{font:600 11px var(--display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.cell .v{font:600 20px var(--mono);font-variant-numeric:tabular-nums}
+.cell .f{font:400 13px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.status{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:grid;gap:6px}
+.scene-title{margin:0;font:600 13px var(--display);letter-spacing:.04em;color:var(--muted)}
+.chip{justify-self:start;font:600 12px var(--display);letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:999px;color:#fff}
+.status p{margin:0;max-width:65ch}
+
+/* Controls */
+.ctrl{display:grid;gap:12px;align-content:start}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+button{font:600 14px var(--body);min-width:44px;min-height:44px;padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;-webkit-tap-highlight-color:transparent}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+button[aria-disabled="true"]{opacity:.45;cursor:default}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.dotsrow{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.dots{display:flex;flex-wrap:wrap}
+.dot{padding:0;border:0;background:transparent;width:44px;height:44px}
+.dot::before{content:"";width:12px;height:12px;border-radius:50%;border:2px solid var(--muted);background:transparent}
+.dot[aria-current="step"]::before{background:var(--accent);border-color:var(--accent);width:14px;height:14px}
+.counter{display:none;font:600 13px var(--mono);color:var(--muted);text-align:center;white-space:nowrap}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.hint kbd{font:500 12px var(--mono);border:1px solid var(--line);border-radius:4px;padding:0 4px;background:var(--bg)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.readstrip,.turn{display:none}
+
+/* ---------- Phone held sideways ---------- */
+@media (orientation:landscape) and (max-height:560px){
+  html,body{height:100%;overflow:hidden}
+  .wrap{max-width:none;margin:0;height:100vh;height:100dvh;gap:8px;
+    padding:max(6px,env(safe-area-inset-top)) 0 max(6px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+    grid-template-columns:minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr)}
+  header,.statusPanel,.hint,.dots,.note,.stage h2,.legend,.readstrip,.turn{display:none!important}
+  .lower{display:contents}
+  .stage{grid-column:1;grid-row:1;min-height:0;grid-template-columns:minmax(210px,34%) minmax(0,1fr);gap:6px}
+  .stage .panel{padding:0;overflow:hidden;display:flex;flex-direction:column;border-radius:8px}
+  .stage svg{flex:1 1 auto;min-height:0;height:100%}
+  .ctrl{grid-column:2;grid-row:1;width:calc(76px + max(8px,env(safe-area-inset-right)));padding:0 max(8px,env(safe-area-inset-right)) 0 0;
+    background:none;border:0;border-radius:0;display:flex;flex-direction:column;gap:6px;min-height:0}
+  .btnrow,.dotsrow{display:contents}
+  .counter{display:block;order:0;padding:2px 0}
+  #replay{order:1}#pause{order:2}#fs{order:3}#textBtn{order:4}
+  #back{order:5;margin-top:auto}#next{order:6;min-height:72px}
+  .ctrl button{width:100%;padding:6px}
+  .ctrl .minor .lbl{display:none}
+  #back,#next{flex-direction:column;gap:2px;font-size:14px}
+  html.text-on #textPanel:not(.sr-only-forced){position:fixed;z-index:30;overflow:auto;
+    top:max(6px,env(safe-area-inset-top));bottom:max(6px,env(safe-area-inset-bottom));
+    left:max(8px,env(safe-area-inset-left));right:calc(76px + max(8px,env(safe-area-inset-right)) + 8px);
+    box-shadow:0 8px 30px rgba(0,0,0,.35);padding:12px 14px;align-content:start}
+  html.text-on #tpClose{display:inline-flex}
+  #tpBody{font-size:15px}
+}
+
+/* ---------- Phone held upright ---------- */
+@media (orientation:portrait) and (max-width:640px){
+  html,body{height:100%;overflow:hidden}
+  .wrap{max-width:none;margin:0;height:100vh;height:100dvh;display:flex;flex-direction:column;gap:6px;
+    padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 0 max(8px,env(safe-area-inset-left))}
+  header,.statusPanel,.hint,.dots,.note,.stage h2,.legend,#textBtn,#tpClose,.counter{display:none!important}
+  .lower{display:contents}
+  .stage{flex:none;order:1;height:clamp(240px,46dvh,440px);grid-template-columns:minmax(0,28%) minmax(0,1fr);gap:6px}
+  .stage .panel{padding:0;overflow:hidden;display:flex;flex-direction:column;border-radius:8px}
+  .stage svg{flex:1 1 auto;min-height:0;height:100%}
+  .turn{display:block;order:2;margin:0;text-align:center;font-size:13px;color:var(--muted)}
+  .readstrip{display:grid;order:3;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;font-variant-numeric:tabular-nums}
+  .readstrip div{display:grid;min-width:0}
+  .readstrip .k{font:600 11.5px var(--display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .readstrip .v{font:600 14px var(--mono)}
+  .readstrip .f{font:400 13px var(--mono);color:var(--muted)}
+  #textPanel{order:4;flex:1 1 auto;min-height:90px;overflow-y:auto;padding:10px 12px;align-content:start}
+  #textPanel.sr-only{position:static!important;width:auto!important;height:auto!important;margin:0!important;padding:10px 12px!important;overflow-y:auto!important;clip-path:none!important;white-space:normal!important;border:1px solid var(--line)!important}
+  #textPanel #tpTitle{font-size:16px}
+  .ctrl{order:5;flex:none;display:flex;flex-direction:row;gap:6px;background:var(--bg);border:0;border-radius:0;
+    padding:6px 0 max(8px,env(safe-area-inset-bottom))}
+  .btnrow,.dotsrow{display:contents}
+  #back{order:1;flex:1}#replay{order:2}#pause{order:3}#fs{order:4}#next{order:5;flex:1.5}
+  .ctrl button{min-height:52px}
+  .ctrl .minor{padding:6px 10px}
+  .ctrl .minor .lbl{display:none}
+  #back,#next{font-size:16px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#textPanel" id="skip">Skip to scene text</a>
+<div class="wrap" id="wrap">
+  <header>
+    <h1>Lifting a parcel through a conditionally unstable atmosphere</h1>
+    <p>A surface parcel at 30 °C with a 18 °C dew point is forced upward. The environment cools at 8 °C/km, which sits between the dry and moist adiabatic rates. The parcel resists lifting until it saturates and then becomes warmer than its surroundings.</p>
+    <div class="rates">
+      <span class="rate">Dry adiabatic <b>10 °C/km</b></span>
+      <span class="rate">Environment <b>8 °C/km</b></span>
+      <span class="rate">Moist adiabatic <b>≈6 °C/km</b></span>
+      <span class="rate">Dew point (unsaturated) <b>2 °C/km</b></span>
+    </div>
+  </header>
+
+  <div class="stage" id="stage" aria-hidden="true">
+    <section class="panel">
+      <h2>The parcel</h2>
+      <svg id="scene" viewBox="0 0 360 560" focusable="false"></svg>
+    </section>
+    <section class="panel">
+      <h2>Temperature profile</h2>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--env)"></i>Environment</span>
+        <span><i class="sw" style="background:var(--temp)"></i>Parcel temperature</span>
+        <span><i class="sw" style="background:var(--dew)"></i>Parcel dew point</span>
+        <span><i class="sw" style="background:var(--cool);opacity:.45;height:10px"></i>Parcel colder</span>
+        <span><i class="sw" style="background:var(--warm);opacity:.45;height:10px"></i>Parcel warmer</span>
+      </div>
+      <svg id="chart" viewBox="0 0 420 560" focusable="false"></svg>
+    </section>
+  </div>
+
+  <p class="turn" aria-hidden="true">Turn your phone sideways for a bigger picture.</p>
+
+  <div class="readstrip" aria-hidden="true">
+    <div><span class="k">Altitude</span><span class="v" id="sZ"></span><span class="f" id="sZft"></span></div>
+    <div><span class="k" style="color:var(--temp)">Parcel</span><span class="v" id="sT"></span><span class="f" id="sTf"></span></div>
+    <div><span class="k" style="color:var(--dew)">Dew pt</span><span class="v" id="sD"></span><span class="f" id="sDf"></span></div>
+    <div><span class="k">Env</span><span class="v" id="sE"></span><span class="f" id="sEf"></span></div>
+  </div>
+
+  <section class="panel sr-only" id="textPanel" tabindex="-1" aria-labelledby="tpTitle">
+    <div class="tp-head">
+      <div aria-live="polite" aria-atomic="true" id="tpLive">
+        <h2 id="tpTitle"></h2>
+        <p id="tpBody"></p>
+      </div>
+      <button type="button" id="tpClose" aria-label="Close scene text">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <div class="lower">
+    <section class="panel statusPanel" aria-hidden="true">
+      <div class="readout">
+        <div class="cell"><span class="k">Altitude</span><span class="v" id="rZ">0.00 km</span><span class="f" id="rZft">0 ft</span></div>
+        <div class="cell"><span class="k" style="color:var(--temp)">Parcel temp</span><span class="v" id="rT"></span><span class="f" id="rTf"></span></div>
+        <div class="cell"><span class="k" style="color:var(--dew)">Parcel dew point</span><span class="v" id="rD"></span><span class="f" id="rDf"></span></div>
+        <div class="cell"><span class="k">Environment</span><span class="v" id="rE"></span><span class="f" id="rEf"></span></div>
+      </div>
+      <div class="status">
+        <p class="scene-title" id="sceneTitle"></p>
+        <span class="chip" id="chip"></span>
+        <p id="msg"></p>
+      </div>
+    </section>
+    <nav class="panel ctrl" aria-label="Scene controls">
+      <div class="btnrow">
+        <button type="button" id="back" aria-label="Back, previous scene">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="lbl">Back</span>
+        </button>
+        <button type="button" id="next" class="primary" aria-label="Next scene">
+          <span class="lbl">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button type="button" id="replay" class="minor" aria-label="Replay scene">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg><span class="lbl">Replay</span>
+        </button>
+        <button type="button" id="pause" class="minor" aria-label="Pause">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="i-pause"><path d="M8.5 5v14M15.5 5v14" style="stroke-width:3"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="i-play" hidden><path d="M7 5l12 7-12 7z" style="fill:currentColor"/></svg>
+          <span class="lbl">Pause</span>
+        </button>
+        <button type="button" id="fs" class="minor" aria-label="Full screen">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="i-fs"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="i-fsx" hidden><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
+          <span class="lbl">Full screen</span>
+        </button>
+        <button type="button" id="textBtn" class="minor" aria-label="Scene text" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 11h14M5 16h9"/></svg><span class="lbl">Text</span>
+        </button>
+      </div>
+      <div class="dotsrow">
+        <div class="dots" id="dots" role="group" aria-label="Go to scene"></div>
+        <span class="counter" id="counter"></span>
+      </div>
+      <p class="hint">Keys: <kbd>←</kbd> <kbd>→</kbd> scenes · <kbd>Home</kbd> <kbd>End</kbd> first/last · <kbd>Space</kbd> pause · <kbd>R</kbd> replay · <kbd>T</kbd> text · <kbd>F</kbd> full screen</p>
+      <p class="note">A constant 6 °C/km moist rate is used for clarity; in the real atmosphere the moist rate increases with height as the air gets colder.</p>
+    </nav>
+  </div>
+</div>
+
+<script>
+(()=>{
+"use strict";
+/* ---------- Science (unchanged) ---------- */
+const T0=30, TD0=18, GENV=8, GD=10, GM=6, GDEW=2, ZTOP=8;
+const LCL=(T0-TD0)/(GD-GDEW);               // 1.5 km
+const TLCL=T0-GD*LCL;                        // 15 °C
+const LFC=LCL+(T0-GENV*LCL-TLCL)/(GENV-GM);  // 3.0 km
+const env=z=>T0-GENV*z;
+const parcelT=z=>z<=LCL?T0-GD*z:TLCL-GM*(z-LCL);
+const parcelD=z=>z<=LCL?TD0-GDEW*z:parcelT(z);
+const toF=c=>c*9/5+32;
+const fmt=v=>(Math.abs(v)<0.05?0:v).toFixed(1).replace('-','−');
+const NS="http://www.w3.org/2000/svg";
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const CW=0.6; // monospace character width, in em
+
+/* ---------- Scenes ---------- */
+const SCENES=[
+ {t:'The starting air',z0:0,z1:0,dur:1800,envDraw:true,
+  d:'A parcel of air sits at the ground. Its temperature is 30 °C (86 °F) and its dew point is 18 °C (64.4 °F). The surrounding air, called the environment, cools 8 °C for every kilometer of height. On the chart, the dark line shows the environment. That 8 °C/km rate is between the dry adiabatic rate (10 °C/km) and the moist adiabatic rate (about 6 °C/km), so the atmosphere is conditionally unstable.'},
+ {t:'Forced lifting, unsaturated',z0:0,z1:1.0,dur:3600,
+  d:'The parcel is forced upward. It is not saturated, so it cools at the dry adiabatic rate, 10 °C per kilometer, which is faster than the environment cools. Its dew point falls more slowly, about 2 °C per kilometer, so the gap between temperature and dew point shrinks. At 1.0 km the parcel is 20 °C (68 °F) with a dew point of 16 °C (60.8 °F). The environment there is 22 °C (71.6 °F). The parcel is colder and denser than the air around it, so it would sink back if the lifting stopped.'},
+ {t:'Reaching the dew point',z0:1.0,z1:LCL,dur:2400,
+  d:'The parcel keeps being lifted. At 1.5 km its temperature and dew point meet at 15 °C (59 °F). The parcel is saturated and a cloud forms. This height is the Cloud Condensation Level. The environment at 1.5 km is 18 °C (64.4 °F), so the parcel is still 3 °C colder than its surroundings.'},
+ {t:'A cloud forms',z0:LCL,z1:2.25,dur:2800,
+  d:'Lifting continues above the Cloud Condensation Level, and the cloud grows with the parcel. Condensation releases latent heat, so the parcel now cools at the moist adiabatic rate, about 6 °C per kilometer. That is slower than the environment’s 8 °C per kilometer, so the gap is closing. Inside the cloud the dew point equals the temperature. At 2.25 km the parcel is 10.5 °C (50.9 °F) and the environment is 12 °C (53.6 °F). The parcel is still colder, so lifting must continue.'},
+ {t:'The Level of Free Convection',z0:2.25,z1:LFC,dur:2800,
+  d:'At 3.0 km the parcel and the environment are both 6 °C (42.8 °F). This is the Level of Free Convection. From the ground up to here, the parcel was colder than its surroundings and had to be forced upward. The blue area on the chart shows where the parcel was colder.'},
+ {t:'Rising on its own',z0:LFC,z1:5.5,dur:4600,
+  d:'Above the Level of Free Convection the parcel is warmer than the surrounding air. It is less dense, so it rises on its own with no forcing, and the cloud builds upward. At 5.5 km the parcel is −9 °C (15.8 °F) and the environment is −14 °C (6.8 °F), so the parcel is 5 °C warmer. The orange area on the chart shows where the parcel is warmer.'},
+ {t:'The cloud builds upward',z0:5.5,z1:ZTOP,dur:4600,
+  d:'The parcel keeps rising freely. It cools about 6 °C per kilometer while the environment cools 8 °C per kilometer, so the parcel becomes about 2 °C warmer than its surroundings for each kilometer it climbs. At 8 km the parcel is −24 °C (−11.2 °F) and the environment is −34 °C (−29.2 °F), 10 °C colder than the parcel.'},
+ {t:'The whole climb',z0:0,z1:ZTOP,dur:7000,
+  d:'This replays the whole climb. The environment cools at 8 °C per kilometer, between the dry rate of 10 °C/km and the moist rate of about 6 °C/km. That is conditional instability: the air is stable for an unsaturated parcel but unstable once the parcel is saturated. The lifted parcel stays colder than its surroundings past the Cloud Condensation Level at 1.5 km, until it reaches the Level of Free Convection at 3.0 km. Above that it is warmer and rises on its own. The animation uses a constant moist rate of 6 °C/km for clarity; in the real atmosphere the moist rate increases with height as the air gets colder.'}
+];
+const N=SCENES.length;
+
+/* ---------- Drawing ---------- */
+const S=$('scene'), C=$('chart');
+let sc={}, ch={}, Yf=null;
+
+// Font sets. Desktop matches the original; compact gives ~13px labels on a phone.
+const FD={axis:11,env:9.5,lvl:10.5,force:10,parcel:9,tag:11,tagSm:9.5,tick:10.5,tickF:9,km:10.5,envLbl:10.5,key:10};
+const FC={axis:13,env:13,lvl:13,force:13,parcel:13,tag:13,tagSm:13,tick:13,tickF:13,km:13,envLbl:13,key:13};
+
+function geom(H,compact){
+  const yBot=compact?H-36:520, yTop=compact?30:30;
+  return {yBot,yTop,Y:z=>yBot-z*(yBot-yTop)/ZTOP,pk:(yBot-yTop)/ZTOP};
+}
+
+function levelGroup(svg,o){ // o: {x1,x2,y,lines,font,below,boxX}
+  const g=el('g',{opacity:0,style:'transition:opacity .6s'},svg);
+  el('line',{x1:o.x1,y1:o.y,x2:o.x2,y2:o.y,stroke:'var(--ink)','stroke-dasharray':'5 4','stroke-width':1.2},g);
+  if(o.lines&&o.lines.length){
+    const lh=o.font+3, w=Math.max(...o.lines.map(s=>s.length))*o.font*CW+12, h=o.lines.length*lh+5;
+    const ty=o.below?o.y+4:o.y-4-h;
+    el('rect',{x:o.boxX,y:ty,width:w,height:h,rx:3,fill:'var(--panel)','fill-opacity':.9},g);
+    o.lines.forEach((s,i)=>{const t=el('text',{x:o.boxX+6,y:ty+3+o.font*0.85+i*lh,'font-size':o.font,'font-weight':600,fill:'var(--ink)'},g);t.textContent=s;});
+  }
+  return g;
+}
+// Greedy word wrap so a label fits the room it has.
+function wrapWords(text,font,avail){
+  const m=text.match(/^(.*) (· [\d.]+ km)$/);
+  const words=m?[...m[1].split(' '),m[2]]:text.split(' ');const lines=[];let cur='';
+  for(const w of words){const tryS=cur?cur+' '+w:w;if(tryS.length*font*CW+12<=avail||!cur)cur=tryS;else{lines.push(cur);cur=w;}}
+  if(cur)lines.push(cur);
+  return lines.map(l=>l.startsWith('· ')?l.slice(2):l);
+}
+
+function buildScene(W,H,compact){
+  S.textContent='';S.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const F=compact?FC:FD, G=geom(H,compact), Y=G.Y;
+  const o={W,H,compact,Y,yBot:G.yBot,F};
+  const defs=el('defs',{},S);
+  const sg=el('linearGradient',{id:'sky',x1:0,y1:0,x2:0,y2:1},defs);
+  el('stop',{offset:0,'stop-color':'var(--sky-top)'},sg);el('stop',{offset:1,'stop-color':'var(--sky-bot)'},sg);
+  const cp=el('clipPath',{id:'aboveBase'},defs);el('rect',{x:0,y:0,width:W,height:Y(LCL)+1},cp);
+  el('rect',{x:0,y:0,width:W,height:G.yBot,fill:'url(#sky)'},S);
+  el('rect',{x:0,y:G.yBot,width:W,height:H-G.yBot,fill:'var(--ground)'},S);
+  const u=W/3;
+  el('path',{d:`M0 ${G.yBot} Q${u/2} ${G.yBot-12} ${u} ${G.yBot} T${2*u} ${G.yBot} T${W} ${G.yBot-2} V${G.yBot+4} H0Z`,fill:'var(--ground-dk)'},S);
+  if(!compact){
+    el('line',{x1:44,y1:Y(0),x2:44,y2:Y(8),stroke:'var(--ink)','stroke-opacity':.5,'stroke-width':1},S);
+    for(let k=0;k<=8;k++){
+      el('line',{x1:40,y1:Y(k),x2:48,y2:Y(k),stroke:'var(--ink)','stroke-opacity':.5},S);
+      const t=el('text',{x:36,y:Y(k)+4,'text-anchor':'end','font-size':F.axis,fill:'var(--ink)'},S);t.textContent=k+' km';
+      if(k>0){const e=el('text',{x:52,y:Y(k)-3,'font-size':F.env,fill:'var(--ink)','fill-opacity':.7},S);e.textContent='env '+String(env(k)).replace('-','−')+'°';}
+    }
+  }
+  o.showTag=!compact||W>=200;
+  o.px=compact?(o.showTag?Math.round(W*0.33):Math.round(W*0.5)):180;
+  o.r=compact?clamp(W*0.075,9,16):20;
+  const k=compact?Math.min(1,W/360*(o.showTag?1.0:1.3)):1;
+  o.cloud=el('g',{'clip-path':'url(#aboveBase)'},S);
+  // Level lines. Desktop keeps its labels; on a phone the sky column is too narrow,
+  // so the dashed lines run on into the chart, which carries the labels at the same height.
+  const lvl=(z,name)=>{
+    const lines=compact?null:wrapWords(name+' · '+z.toFixed(1)+' km',F.lvl,130);
+    const bw=lines?Math.max(...lines.map(l=>l.length))*F.lvl*CW+12:0;
+    return levelGroup(S,{x1:compact?0:46,x2:compact?W:356,y:Y(z),below:true,boxX:354-bw,font:F.lvl,lines});
+  };
+  o.lcl=lvl(LCL,'Cloud Condensation Level');o.lfc=lvl(LFC,'Level of Free Convection');
+  // forcing arrow
+  o.force=el('g',{},S);
+  if(!compact){
+    el('path',{d:'M138 18 v-36 m-7 9 l7 -9 l7 9',fill:'none',stroke:'var(--ink)','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round'},o.force);
+    const ft=el('text',{x:138,y:32,'text-anchor':'middle','font-size':F.force,fill:'var(--ink)','font-weight':600},o.force);ft.textContent='forced';
+  }else{
+    const ax=o.px-o.r-8;
+    el('path',{d:`M${ax} 15 v-30 m-6 8 l6 -8 l6 8`,fill:'none',stroke:'var(--ink)','stroke-width':2,'stroke-linecap':'round','stroke-linejoin':'round'},o.force);
+    const ft=el('text',{x:0,y:0,'text-anchor':'middle','font-size':F.force,fill:'var(--ink)','font-weight':600,transform:`translate(${ax-11},0) rotate(-90)`},o.force);ft.textContent='forced';
+  }
+  // parcel
+  o.parcel=el('g',{},S);
+  o.pc=el('circle',{cx:0,cy:0,r:o.r,'stroke-width':2,'stroke-dasharray':'4 3'},o.parcel);
+  if(!compact){const pl=el('text',{x:0,y:4,'text-anchor':'middle','font-size':F.parcel,'font-weight':600,fill:'var(--ink)'},o.parcel);pl.textContent='parcel';}
+  // tag
+  o.tag=el('g',{},S);
+  if(!compact){
+    o.tagH=52;
+    el('rect',{x:0,y:-26,width:122,height:52,rx:5,fill:'var(--panel)',stroke:'var(--line)'},o.tag);
+    o.tT=el('text',{x:8,y:-9,'font-size':F.tag,'font-weight':600,fill:'var(--temp)'},o.tag);
+    o.tD=el('text',{x:8,y:7,'font-size':F.tag,'font-weight':600,fill:'var(--dew)'},o.tag);
+    o.tE=el('text',{x:8,y:21,'font-size':F.tagSm,fill:'var(--muted)'},o.tag);
+    o.tagX=180+32;
+  }else if(o.showTag){
+    // Five short lines so the tag fits beside the parcel at 13px.
+    const lh=15, rows=5, tw=11*F.tag*CW+12; o.tagH=rows*lh+8;
+    el('rect',{x:0,y:-o.tagH/2,width:tw,height:o.tagH,rx:5,fill:'var(--panel)',stroke:'var(--line)'},o.tag);
+    const ty=i=>-o.tagH/2+4+F.tag*0.85+i*lh;
+    const ind=6+3*F.tag*CW;
+    o.c=[['var(--temp)',600,6],['var(--temp)',400,ind],['var(--dew)',600,6],['var(--dew)',400,ind],['var(--muted)',400,6]].map((c,i)=>el('text',{x:c[2],y:ty(i),'font-size':F.tag,'font-weight':c[1],fill:c[0]},o.tag));
+    o.tagX=Math.min(o.px+o.r+6,W-tw-3);
+  }else{o.tag.setAttribute('display','none');}
+  // cloud puffs (deterministic)
+  let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  o.puffs=[];
+  for(let z=LCL;z<=ZTOP+0.3;z+=0.12){
+    const w=(26+(z-LCL)*7)*k;
+    for(let i=0;i<3;i++){const p={z,x:o.px+(rnd()-.5)*w*1.3,r:w*(0.55+rnd()*0.4)};
+      p.el=el('circle',{cx:p.x,cy:Y(p.z),r:p.r,fill:'var(--cloud)',stroke:'var(--cloud-edge)','stroke-width':.8,opacity:0},o.cloud);o.puffs.push(p);}
+  }
+  // keep the parcel and tag above the level lines
+  S.appendChild(o.parcel);S.appendChild(o.force);S.appendChild(o.tag);
+  sc=o;
+}
+
+function buildChart(W,H,compact){
+  C.textContent='';C.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const F=compact?FC:FD, G=geom(H,compact), Y=G.Y;
+  const XMIN=compact?-36:-40, XMAX=compact?32:35;
+  const x0=compact?26:50, x1=compact?W-6:410;
+  const X=t=>x0+(t-XMIN)/(XMAX-XMIN)*(x1-x0);
+  const pxC=(x1-x0)/(XMAX-XMIN);
+  const o={W,H,compact,X,Y,F,x0,x1};
+  // grid + x ticks
+  const step=compact&&pxC*10<5*F.tick*CW+8?20:10;
+  for(let t=Math.ceil(XMIN/10)*10;t<=XMAX;t+=10){
+    el('line',{x1:X(t),y1:Y(0),x2:X(t),y2:Y(8),stroke:'var(--line)','stroke-width':1},C);
+  }
+  const tStart=compact?Math.ceil(XMIN/step)*step:-40;
+  for(let t=tStart;t<=(compact?XMAX:30);t+=step){
+    const lab=String(t).replace('-','−')+'°C', labF=String(Math.round(toF(t))).replace('-','−')+'°F';
+    const hw=Math.max(lab.length*F.tick,labF.length*F.tickF)*CW/2;
+    const x=compact?clamp(X(t),hw+1,W-hw-1):X(t);
+    const yC=compact?G.yBot+15:536, yF=compact?G.yBot+30:549;
+    const tx=el('text',{x,y:yC,'text-anchor':'middle','font-size':F.tick,fill:'var(--muted)'},C);tx.textContent=lab;
+    const fx=el('text',{x,y:yF,'text-anchor':'middle','font-size':F.tickF,fill:'var(--muted)'},C);fx.textContent=labF;
+  }
+  for(let k=0;k<=8;k++){
+    el('line',{x1:x0,y1:Y(k),x2:x1,y2:Y(k),stroke:'var(--line)','stroke-width':k===0?1.4:.6},C);
+    const t=el('text',{x:x0-6,y:Y(k)+4,'text-anchor':'end','font-size':F.km,fill:'var(--muted)'},C);t.textContent=compact?String(k):k+' km';
+  }
+  if(compact){const u=el('text',{x:x0-6,y:G.yTop-12,'text-anchor':'end','font-size':F.km,fill:'var(--muted)'},C);u.textContent='km';}
+  const pts=(f,a,b,n=60)=>{let s='';for(let i=0;i<=n;i++){const z=a+(b-a)*i/n;s+=X(f(z)).toFixed(1)+','+Y(z).toFixed(1)+' ';}return s;};
+  o.pts=pts;
+  el('polyline',{points:pts(z=>T0-GD*z,0,3.5),fill:'none',stroke:'var(--temp)','stroke-opacity':.3,'stroke-dasharray':'3 4','stroke-width':1.2},C);
+  el('polyline',{points:pts(parcelT,LCL,ZTOP),fill:'none',stroke:'var(--temp)','stroke-opacity':.22,'stroke-dasharray':'3 4','stroke-width':1.2},C);
+  o.shadeCool=el('polygon',{fill:'var(--cool)','fill-opacity':.28},C);
+  o.shadeWarm=el('polygon',{fill:'var(--warm)','fill-opacity':.32},C);
+  o.envLine=el('polyline',{points:pts(env,ZTOP,0),fill:'none',stroke:'var(--env)','stroke-width':2.2},C);
+  o.envLen=Math.hypot(X(env(0))-X(env(ZTOP)),Y(0)-Y(ZTOP));
+  o.envLine.setAttribute('stroke-dasharray',o.envLen);
+  // Environment label runs along its line, on the cold side where nothing else is drawn.
+  {
+    const zc=(compact&&W<320)?6.0:6.8, ax=X(env(zc+0.5)), ay=Y(zc+0.5), bx=X(env(zc-0.5)), by=Y(zc-0.5);
+    const ang=Math.atan2(by-ay,bx-ax)*180/Math.PI;
+    o.envLbl=el('text',{x:0,y:F.envLbl+6,'text-anchor':'middle','font-size':F.envLbl,'font-weight':600,fill:'var(--env)',
+      transform:`translate(${X(env(zc))},${Y(zc)}) rotate(${ang})`},C);
+    o.envLbl.textContent='environment 8°C/km';
+  }
+  o.dLine=el('polyline',{fill:'none',stroke:'var(--dew)','stroke-width':2.4,'stroke-linecap':'round'},C);
+  o.tLine=el('polyline',{fill:'none',stroke:'var(--temp)','stroke-width':2.6,'stroke-linecap':'round'},C);
+  // Level labels: desktop as before (above the line); phones below the line, wrapped to the room left of the curves.
+  const mk=(z,name)=>{
+    const full=name+' · '+z.toFixed(1)+' km';
+    if(!compact) return levelGroup(C,{x1:x0,x2:x1,y:Y(z),below:false,boxX:x0+2,font:F.lvl,lines:[full]});
+    const avail=X(parcelD(z))-(x0+2)-10;
+    return levelGroup(C,{x1:x0,x2:x1,y:Y(z),below:true,boxX:x0+2,font:F.lvl,lines:wrapWords(full,F.lvl,avail)});
+  };
+  o.lcl=mk(LCL,'Cloud Condensation Level');o.lfc=mk(LFC,'Level of Free Convection');
+  o.dEnv=el('circle',{r:4,fill:'var(--env)'},C);
+  o.dDew=el('circle',{r:5,fill:'var(--dew)',stroke:'var(--panel)','stroke-width':1.5},C);
+  o.dT=el('circle',{r:5.5,fill:'var(--temp)',stroke:'var(--panel)','stroke-width':1.5},C);
+  // Rate key in the empty upper-right corner (replaces labels that crossed the curves).
+  o.key=[];
+  const rows=[['var(--temp)','dry 10°C/km',z=>z>0.02||curScene()>0],['var(--temp)','moist ≈6°C/km',z=>z>LCL+0.02],['var(--dew)','dew pt 2°C/km',z=>z>0.02||curScene()>0]];
+  const kw=14*F.key*CW+30, lh=F.key+6, kh=rows.length*lh+8;
+  if(kw<=W*0.5){
+    const kx=x1-kw-2, ky=G.yTop+4;
+    const kg=el('g',{style:'transition:opacity .4s'},C);o.keyG=kg;
+    el('rect',{x:kx,y:ky,width:kw,height:kh,rx:4,fill:'var(--panel)','fill-opacity':.92,stroke:'var(--line)'},kg);
+    rows.forEach((r,i)=>{
+      const g=el('g',{opacity:0,style:'transition:opacity .4s'},kg);
+      const yy=ky+6+i*lh+lh/2;
+      el('line',{x1:kx+7,y1:yy-F.key*0.3,x2:kx+21,y2:yy-F.key*0.3,stroke:r[0],'stroke-width':2.4,'stroke-linecap':'round'},g);
+      const t=el('text',{x:kx+26,y:yy+F.key*0.05,'font-size':F.key,fill:r[0]},g);t.textContent=r[1];
+      o.key.push({g,show:r[2]});
+    });
+  }
+  ch=o;
+}
+
+/* ---------- Render ---------- */
+const chip=$('chip'),msg=$('msg');
+function phase(z){
+  if(z<LCL-1e-6)return{c:'var(--cool)',k:'Forced lift · unsaturated',m:`The parcel is pushed upward and cools at the dry adiabatic rate (10 °C/km), faster than the environment (8 °C/km). Its dew point falls slowly (about 2 °C/km), so the gap between temperature and dew point shrinks. The parcel is colder and denser than the air around it, so it would sink back if the lifting stopped.`};
+  if(z<LFC-1e-6)return{c:'var(--cool)',k:'Forced lift · saturated',m:`The parcel reached its dew point at the Cloud Condensation Level and a cloud forms. Condensation releases latent heat, so the parcel now cools at the moist adiabatic rate (about 6 °C/km), slower than the environment. It is still colder than its surroundings, so lifting must continue, but the gap is closing.`};
+  return{c:'var(--warm)',k:'Free convection · buoyant',m:`Above the Level of Free Convection the parcel is warmer than the surrounding air. It is now less dense and rises on its own, building the cloud upward. This is conditional instability: the air is stable for an unsaturated parcel but unstable once the parcel is saturated.`};
+}
+let lastPhase='';
+function render(z,envP){
+  const T=parcelT(z),D=parcelD(z),E=env(z);
+  // scene
+  const o=sc, y=o.Y(z), yp=Math.min(y,o.yBot-o.r);
+  const warm=T>E+1e-6, sat=z>=LCL-1e-6;
+  o.pc.setAttribute('fill',warm?'var(--warm)':'var(--cool)');
+  o.pc.setAttribute('fill-opacity',sat?.55:.35);
+  o.pc.setAttribute('stroke',warm?'var(--warm)':'var(--cool)');
+  o.parcel.setAttribute('transform',`translate(${o.px},${yp})`);
+  if(o.showTag){
+    // Desktop: tag rides just above the parcel so it never covers the level labels below each line.
+    const ty=o.compact?clamp(yp,o.tagH/2+4,o.yBot-o.tagH/2):clamp(yp-30,o.tagH/2+4,o.yBot-o.tagH/2);
+    o.tag.setAttribute('transform',`translate(${o.tagX},${ty})`);
+    if(!o.compact){
+      o.tT.textContent=`T  ${fmt(T)}°C ${fmt(toF(T))}°F`;
+      o.tD.textContent=`Td ${fmt(D)}°C ${fmt(toF(D))}°F`;
+      o.tE.textContent=`env ${fmt(E)}°C · ${T>=E?'+':''}${fmt(T-E)}°`;
+    }else{
+      const L=[`T  ${fmt(T)}°C`,`${fmt(toF(T))}°F`,`Td ${fmt(D)}°C`,`${fmt(toF(D))}°F`,`env ${fmt(E)}°C`];
+      L.forEach((s,i)=>{o.c[i].textContent=s;});
+    }
+  }
+  o.force.setAttribute('opacity',z<LFC-1e-6?1:0);
+  o.force.setAttribute('transform',`translate(0,${yp})`);
+  for(const p of o.puffs)p.el.setAttribute('opacity',p.z<=z?1:0);
+  o.lcl.setAttribute('opacity',z>=LCL-1e-6?1:0);o.lfc.setAttribute('opacity',z>=LFC-1e-6?1:0);
+  // chart
+  const c=ch;
+  c.envLine.setAttribute('stroke-dashoffset',c.envLen*(1-envP));
+  c.envLbl.setAttribute('opacity',envP>=0.999?1:0);
+  c.tLine.setAttribute('points',c.pts(parcelT,0,Math.max(z,0.001),120));
+  c.dLine.setAttribute('points',c.pts(parcelD,0,Math.max(z,0.001),120));
+  const zc=Math.min(z,LFC);
+  c.shadeCool.setAttribute('points',z>0?c.pts(parcelT,0,zc)+c.pts(env,zc,0):'');
+  c.shadeWarm.setAttribute('points',z>LFC?c.pts(parcelT,LFC,z)+c.pts(env,z,LFC):'');
+  const yc=c.Y(z);
+  c.dT.setAttribute('cx',c.X(T));c.dT.setAttribute('cy',yc);
+  c.dDew.setAttribute('cx',c.X(D));c.dDew.setAttribute('cy',yc);
+  c.dEnv.setAttribute('cx',c.X(E));c.dEnv.setAttribute('cy',yc);
+  c.lcl.setAttribute('opacity',z>=LCL-1e-6?1:0);c.lfc.setAttribute('opacity',z>=LFC-1e-6?1:0);
+  let anyKey=false;for(const k of c.key){const v=k.show(z);anyKey=anyKey||v;k.g.setAttribute('opacity',v?1:0);}
+  if(c.keyG)c.keyG.setAttribute('opacity',anyKey?1:0);
+  // readouts
+  const zt=z.toFixed(2)+' km', ft=Math.round(z*3280.84).toLocaleString('en-US')+' ft';
+  $('rZ').textContent=zt;$('rZft').textContent=ft;$('sZ').textContent=zt;$('sZft').textContent=ft;
+  for(const [a,b,v] of [['rT','sT',T],['rD','sD',D],['rE','sE',E]]){
+    $(a).textContent=fmt(v)+' °C';$(a+'f').textContent=fmt(toF(v))+' °F';
+    $(b).textContent=fmt(v)+'°C';$(b+'f').textContent=fmt(toF(v))+'°F';
+  }
+  const ph=phase(z);
+  if(ph.k!==lastPhase){chip.textContent=ph.k;chip.style.background=ph.c;msg.textContent=ph.m;lastPhase=ph.k;}
+}
+
+/* ---------- Layout modes ---------- */
+const LAND=matchMedia('(orientation: landscape) and (max-height: 560px)');
+const PORT=matchMedia('(orientation: portrait) and (max-width: 640px)');
+const isCompact=()=>LAND.matches||PORT.matches;
+let layoutKey='';
+function layout(force){
+  let compact=isCompact(), ws=360,hs=560,wc=420,hc=560;
+  if(compact){
+    const a=S.getBoundingClientRect(), b=C.getBoundingClientRect();
+    ws=Math.round(a.width);wc=Math.round(b.width);hs=hc=Math.round(Math.min(a.height,b.height));
+    if(ws<40||hs<120){compact=false;ws=360;hs=560;wc=420;hc=560;}
+  }else{
+    // Desktop layout: switch to large text if the picture is drawn below ~55% of its laptop size.
+    const a=S.getBoundingClientRect();
+    if(a.width>0&&a.width/360<0.55*1.34){/* never reached with the desktop breakpoints; kept as a guard */}
+  }
+  const key=[compact,ws,hs,wc,hc].join();
+  if(key===layoutKey&&!force)return;
+  layoutKey=key;
+  buildScene(ws,hs,compact);buildChart(wc,hc,compact);
+  draw();
+}
+
+/* ---------- Scene engine ---------- */
+const reduce=matchMedia('(prefers-reduced-motion: reduce)');
+let idx=0, prog=0, playing=false, raf=0, last=null;
+const curScene=()=>idx;
+const ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+function sceneZ(s,p){return s.z0+(s.z1-s.z0)*ease(p);}
+function draw(){const s=SCENES[idx];render(sceneZ(s,prog),s.envDraw?ease(prog):1);}
+function tick(ts){
+  if(!playing)return;
+  if(last===null)last=ts;
+  prog=Math.min(1,prog+Math.min(ts-last,64)/SCENES[idx].dur);last=ts;
+  draw();
+  if(prog>=1){setPlaying(false);return;}
+  raf=requestAnimationFrame(tick);
+}
+const pauseB=$('pause');
+function setPlaying(p){
+  playing=p;last=null;cancelAnimationFrame(raf);
+  if(p)raf=requestAnimationFrame(tick);
+  pauseB.querySelector('.i-pause').hidden=!p;pauseB.querySelector('.i-play').hidden=p;
+  pauseB.querySelector('.lbl').textContent=p?'Pause':'Play';
+  pauseB.setAttribute('aria-label',p?'Pause':'Play');
+}
+function updateUI(){
+  const s=SCENES[idx];
+  $('tpTitle').textContent=`Scene ${idx+1} of ${N}: ${s.t}`;
+  $('tpBody').textContent=s.d.replace(/ (°[CF])/g,'\u00A0$1').replace(/(\d) km/g,'$1\u00A0km');
+  $('sceneTitle').textContent=`Scene ${idx+1} of ${N} · ${s.t}`;
+  $('counter').textContent=`${idx+1} of ${N}`;
+  dots.forEach((d,i)=>{if(i===idx)d.setAttribute('aria-current','step');else d.removeAttribute('aria-current');});
+  $('back').setAttribute('aria-disabled',idx===0?'true':'false');
+  $('next').setAttribute('aria-disabled',idx===N-1?'true':'false');
+  $('next').setAttribute('aria-label',idx===N-1?'Next scene (this is the last scene)':'Next scene');
+  $('back').setAttribute('aria-label',idx===0?'Back, previous scene (this is the first scene)':'Back, previous scene');
+}
+function go(i){
+  i=clamp(i,0,N-1);
+  if(i===idx&&prog>0)return;
+  idx=i;prog=reduce.matches?1:0;
+  updateUI();draw();setPlaying(!reduce.matches);
+}
+const next=()=>{if(idx<N-1)go(idx+1);};
+const back=()=>{if(idx>0)go(idx-1);};
+function replay(){prog=0;draw();setPlaying(true);}
+function togglePause(){if(playing)setPlaying(false);else if(prog>=1)replay();else setPlaying(true);}
+
+/* ---------- Dots ---------- */
+const dotsWrap=$('dots');
+const dots=SCENES.map((s,i)=>{const b=document.createElement('button');b.type='button';b.className='dot';
+  b.setAttribute('aria-label',`Scene ${i+1}: ${s.t}`);b.addEventListener('click',()=>go(i));dotsWrap.appendChild(b);return b;});
+
+/* ---------- Text panel ---------- */
+const html=document.documentElement, textBtn=$('textBtn'), panel=$('textPanel');
+let textOn=false;
+try{textOn=localStorage.getItem('parcelLift.text')==='1';}catch(e){}
+function setText(on,save,focus){
+  textOn=on;html.classList.toggle('text-on',on);
+  panel.classList.toggle('sr-only',!on);
+  textBtn.setAttribute('aria-pressed',on?'true':'false');
+  if(save){try{localStorage.setItem('parcelLift.text',on?'1':'0');}catch(e){}}
+  if(focus&&on){LAND.matches?$('tpClose').focus():panel.focus();}
+}
+textBtn.addEventListener('click',()=>setText(!textOn,true,LAND.matches));
+$('tpClose').addEventListener('click',()=>{setText(false,true);textBtn.focus();});
+$('skip').addEventListener('click',e=>{e.preventDefault();if(!PORT.matches&&!textOn)setText(true,false);panel.focus();});
+
+/* ---------- Buttons ---------- */
+$('next').addEventListener('click',next);
+$('back').addEventListener('click',back);
+$('replay').addEventListener('click',replay);
+pauseB.addEventListener('click',togglePause);
+
+/* ---------- Full screen ---------- */
+const fsB=$('fs'), root=document.documentElement;
+const canFS=!!((document.fullscreenEnabled&&root.requestFullscreen)||(document.webkitFullscreenEnabled&&root.webkitRequestFullscreen));
+const fsEl=()=>document.fullscreenElement||document.webkitFullscreenElement;
+if(!canFS)fsB.hidden=true;
+function toggleFS(){
+  if(!canFS)return;
+  try{
+    if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);}
+    else{const r=(root.requestFullscreen||root.webkitRequestFullscreen).call(root);if(r&&r.catch)r.catch(()=>{});}
+  }catch(e){}
+}
+function fsChange(){const on=!!fsEl();fsB.querySelector('.i-fs').hidden=on;fsB.querySelector('.i-fsx').hidden=!on;
+  fsB.setAttribute('aria-label',on?'Exit full screen':'Full screen');fsB.querySelector('.lbl').textContent=on?'Exit full screen':'Full screen';}
+fsB.addEventListener('click',toggleFS);
+document.addEventListener('fullscreenchange',fsChange);document.addEventListener('webkitfullscreenchange',fsChange);
+
+/* ---------- Keyboard ---------- */
+document.addEventListener('keydown',e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey)return;
+  const onControl=e.target.closest&&e.target.closest('button,a,input,select,textarea');
+  switch(e.key){
+    case 'ArrowRight':case 'PageDown':next();e.preventDefault();break;
+    case 'ArrowLeft':case 'PageUp':back();e.preventDefault();break;
+    case 'Home':go(0);e.preventDefault();break;
+    case 'End':go(N-1);e.preventDefault();break;
+    case ' ':case 'Spacebar':if(onControl)return;togglePause();e.preventDefault();break;
+    case 'r':case 'R':replay();break;
+    case 't':case 'T':if(!PORT.matches)setText(!textOn,true,false);break;
+    case 'f':case 'F':toggleFS();break;
+    case 'Escape':if(textOn&&LAND.matches){setText(false,true);textBtn.focus();}break;
+  }
+});
+
+/* ---------- Touch gestures (touch only; mouse clicks are ignored) ---------- */
+const stage=$('stage');let tp=null;
+stage.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch'||!e.isPrimary)return;tp={x:e.clientX,y:e.clientY,t:performance.now()};});
+stage.addEventListener('pointercancel',()=>{tp=null;});
+stage.addEventListener('pointerup',e=>{
+  if(e.pointerType!=='touch'||!tp)return;
+  const dx=e.clientX-tp.x, dy=e.clientY-tp.y, dt=performance.now()-tp.t;tp=null;
+  if(Math.abs(dx)>50&&Math.abs(dx)>1.5*Math.abs(dy)&&dt<900){dx<0?next():back();return;}
+  if(Math.abs(dx)<12&&Math.abs(dy)<12&&dt<350){
+    const r=stage.getBoundingClientRect(), fx=(e.clientX-r.left)/r.width;
+    if(fx>0.6)next();else if(fx<0.2)back();
+  }
+});
+
+/* ---------- Start ---------- */
+let pending=0;
+const relayout=()=>{cancelAnimationFrame(pending);pending=requestAnimationFrame(()=>layout(false));};
+if('ResizeObserver' in window)new ResizeObserver(relayout).observe(stage);
+addEventListener('resize',relayout);
+LAND.addEventListener&&LAND.addEventListener('change',relayout);
+PORT.addEventListener&&PORT.addEventListener('change',relayout);
+setText(textOn,false);
+layout(true);
+go(0);
+window.__parcel={go,get idx(){return idx;},setProg(p){prog=p;setPlaying(false);draw();},N};
+})();
+</script>
+</body>
+</html>
