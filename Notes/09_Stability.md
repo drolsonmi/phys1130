@@ -79,15 +79,6 @@ Relate pressure, volume, and temperature
 > __Demo__: Can crush (show that as temperature drops, the pressure also drops)
 >   - This demo can also be done with the pressure section
 
-Stable vs. Unstable 
-
-![Stable Environment 1](https://www.noaa.gov/sites/default/files/2022-05/stability1.png)![Stable Environment 2](https://www.noaa.gov/sites/default/files/2022-05/stability2.png)![Stable Environment 3](https://www.noaa.gov/sites/default/files/2022-05/stability3.png)![Stable Environment 4](https://www.noaa.gov/sites/default/files/2022-05/stability4.png)
-
-A condition is stable if it's current condition is preferrable to any potential change.
-
-![Unstable Environment 1](https://www.noaa.gov/sites/default/files/2022-05/instability1.png)![Unstable Environment 2](https://www.noaa.gov/sites/default/files/2022-05/instability2.png)![Unstable Environment 3](https://www.noaa.gov/sites/default/files/2022-05/instability3.png)![Untable Environment 4](https://www.noaa.gov/sites/default/files/2022-05/instability4.png)
-
-A condition is unstable if a change is preferrable to it's current condition.
 
 If we raise a thermal into the air, what would determine whether it rises or sinks?
 * Density
@@ -95,21 +86,44 @@ If we raise a thermal into the air, what would determine whether it rises or sin
     * Cool air is less dense
 * Temperature differences also determine whether it will rise or sink
 
+### Dew Point Lapse Rate
+
+### Cloud Condensation Level
+As an unsaturated (dry) parcel rises, the temperature drops at $10^\circ C/km$ and the dew point at $2^\circ C/km$. At some point, they will meet at the same temperature. When it does, the air will be saturated, and a cloud starts to form. This is known as the Cloud Condensation Level (CCL).
+
+How far up do you have to go to reach the CCL?
+
+$$H_{meters} = 125(T-T_d) ~~~ \to ~~~ H_{km} = 0.125(T-T_d) \qquad\qquad H_{feet} = 228(T-T_d)$$
+
+
 ### Stable Atmosphere
+![Stable Environment 1](https://www.noaa.gov/sites/default/files/2022-05/stability1.png)![Stable Environment 2](https://www.noaa.gov/sites/default/files/2022-05/stability2.png)![Stable Environment 3](https://www.noaa.gov/sites/default/files/2022-05/stability3.png)![Stable Environment 4](https://www.noaa.gov/sites/default/files/2022-05/stability4.png)
+
 Imagine,
 * Air temperature at surface is $30^\circ C$
 * Atmospheric lapse rate is $4^\circ C / km$
-* > Draw this scenario, then lift the thermal dry and moist
+
+> __Demo__: [Stable Atmospheric Lapse Rate](https://drolsonmi.github.io/phys1130/animations/cloud-development-mobile2.html)
+>  * Choose "Stable Winter Day" scenario
+>  * Also show "Desert heat, very dry"
+
+A condition is stable if it's current condition is preferrable to any potential change.
 
 Either way (dry or adiabatic), the thermal will sink to the ground
 
 Atmosphere is stable if Atmospheric Lapse Rate $< 6^\circ C / km$
 
 ### Unstable Atmosphere
+![Unstable Environment 1](https://www.noaa.gov/sites/default/files/2022-05/instability1.png)![Unstable Environment 2](https://www.noaa.gov/sites/default/files/2022-05/instability2.png)![Unstable Environment 3](https://www.noaa.gov/sites/default/files/2022-05/instability3.png)![Untable Environment 4](https://www.noaa.gov/sites/default/files/2022-05/instability4.png)
+
 Imagine,
 * Air temperature at surface is $30^\circ C$
 * Atmospheric lapse rate is $11^\circ C / km$
-* > Draw this scenario, then lift the thermal dry and moist
+
+> __Demo__: [Unstable Atmospheric Lapse Rate](https://drolsonmi.github.io/phys1130/animations/cloud-development-mobile2.html)
+>  * Choose "Absolutely Unstable" scenario
+
+A condition is unstable if a change is preferrable to it's current condition.
 
 Either way (dry or adiabatic), the thermal will rise
 
@@ -127,9 +141,6 @@ Will the thermal rise or fall?
 
 [Animation of Conditionally Unstable Atmosphere](https://drolsonmi.github.io/phys1130/9_AtmosphericStability/parcel-lift-animation.html)
 
-How far up do you have to go to reach the CCL?
-
-$$H_{meters} = 125(T-T_d) ~~~ \to ~~~ H_{km} = 0.125(T-T_d) \qquad\qquad H_{feet} = 228(T-T_d)$$
 
 ## Thermal forcing
 4 major ways to force thermal to rise
