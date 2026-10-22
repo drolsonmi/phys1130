@@ -156,6 +156,7 @@ I look forward to exploring the science of the atmosphere with you!
 * Chapter 11: Pressure
 
 ## Animations
+* [Dew, Frost, and Frozen Dew](./animations/dew-mobile.html)
 * [Cloud Formation](./animations/cloud-development-mobile1.html)
 * [Cloud Formation with variable temperatures](./animations/cloud-development-mobile2.html)
 * [Precipitation: Collision-Coalescence](./animations/collision-coalescence-mobile.html)

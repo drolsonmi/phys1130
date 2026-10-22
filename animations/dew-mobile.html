@@ -1,0 +1,534 @@
+<title>Overnight Cooling Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: lab bench. Wide: controls left, thermometer beside the night scene with narration below the scene.
+   Phone: scenario buttons, then thermometer + scene side by side, narration, settings; play controls pinned to the bottom. */
+:root{
+  --bg:#eef2f5; --panel:#ffffff; --fg:#13202b; --muted:#56656f; --line:#d3dce3;
+  --accent:#1a6782; --accent-ink:#ffffff;
+  --mercury:#c4332c; --dew:#0d7373; --freeze:#3654c4; --min:#65568a;
+  --chip:#e3eaef; --hilite:#fff3c4; --hilite-ink:#4d3800;
+  /* scene colours: a night picture, same in both themes */
+  --sky1:#0b1730; --sky2:#1f3557; --ground:#1d2a1c; --ground-frost:#c9d9e6;
+  --blade:#3f7d3a; --blade-dead:#1c1f18; --water:#7fd3f0; --ice:#f4fbff; --ice-edge:#9cc3e3;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161d; --panel:#16212b; --fg:#e4ecf2; --muted:#a3b3c0; --line:#2a3946;
+  --accent:#5bbbdc; --accent-ink:#06141c;
+  --mercury:#ff7a70; --dew:#45cfc9; --freeze:#9db2ff; --min:#c3b2ee;
+  --chip:#1f2d39; --hilite:#4a3d0f; --hilite-ink:#ffe7a1; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f161d; --panel:#16212b; --fg:#e4ecf2; --muted:#a3b3c0; --line:#2a3946;
+  --accent:#5bbbdc; --accent-ink:#06141c;
+  --mercury:#ff7a70; --dew:#45cfc9; --freeze:#9db2ff; --min:#c3b2ee;
+  --chip:#1f2d39; --hilite:#4a3d0f; --hilite-ink:#ffe7a1; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body,.wrap,.grid{overflow-anchor:none}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,4vw,36px);line-height:1.1;margin:0;text-wrap:balance;letter-spacing:.01em}
+header p{margin:6px 0 0;color:var(--muted);max-width:70ch}
+
+/* main grid */
+.grid{display:grid;grid-template-columns:300px minmax(0,1fr);grid-template-areas:"side stage" "side rules";gap:16px;align-items:start}
+.side{grid-area:side;display:flex;flex-direction:column;gap:16px}
+.stage{grid-area:stage;min-width:0}
+.rules-panel{grid-area:rules;min-width:0}
+@media (max-width:860px){
+  .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:none}
+  .side{display:contents}
+  .stage,.rules-panel,.picker,.settings,.actions{grid-area:auto}
+  .picker{order:1}.stage{order:2}.actions{order:3}.settings{order:4}.rules-panel{order:5}
+}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.label{font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin:0 0 8px}
+
+/* scenario buttons */
+.chips{display:flex;flex-direction:column;gap:6px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--chip);color:var(--fg);font:inherit;font-size:14px;text-align:left;
+  min-height:44px;padding:8px 10px;border-radius:7px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.chip small{font-family:var(--f-mono);color:var(--muted);font-size:12px;white-space:nowrap}
+.chip[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent);background:var(--panel);font-weight:600}
+.chip:hover{border-color:var(--accent)}
+
+/* settings */
+.settings{display:flex;flex-direction:column;gap:14px}
+details.custom summary{cursor:pointer;font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;min-height:32px;display:flex;align-items:center}
+details.custom[open] summary{margin-bottom:6px}
+details.custom summary{list-style:none}
+details.custom summary::-webkit-details-marker{display:none}
+details.custom summary::before{content:"\25B8";margin-right:8px;font-size:14px}
+details.custom[open] summary::before{content:"\25BE"}
+.slider{display:flex;flex-direction:column;gap:2px}
+.slider + .slider{margin-top:10px}
+.slider .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.slider output{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.slider input{width:100%;height:36px;margin:0}
+#td{accent-color:var(--dew)} #tmin{accent-color:var(--min)}
+.opts{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;min-height:44px}
+.check input[type=checkbox]{width:20px;height:20px;margin:0}
+select{font:inherit;font-size:14px;min-height:40px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+
+/* action buttons */
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;font:inherit;font-weight:600;font-size:15px;border-radius:8px;min-height:44px;padding:9px 18px;cursor:pointer;border:1px solid var(--line);background:var(--chip);color:var(--fg)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);flex:1 1 auto}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,.rules:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* bench: thermometer + scene + narration */
+.bench{display:grid;grid-template-columns:minmax(230px,312px) minmax(0,1fr);grid-template-areas:"thermo scene" "thermo cap";grid-template-rows:auto 1fr;gap:14px}
+.thermo-box{grid-area:thermo;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.thermo-box svg{width:100%;height:auto;max-width:312px;display:block}
+.readout{font-family:var(--f-mono);font-size:22px;white-space:nowrap;font-weight:600;font-variant-numeric:tabular-nums;color:var(--mercury);line-height:1}
+.readout-sub{font-size:12px;color:var(--muted);font-family:var(--f-display);text-transform:uppercase;letter-spacing:.08em}
+.scene-box{grid-area:scene;min-width:0}
+.scene-box svg{width:100%;height:auto;border-radius:8px;display:block}
+.caption{grid-area:cap;border-left:4px solid var(--line);padding:4px 0 4px 12px;min-height:118px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.caption[data-kind="dew"]{border-color:var(--dew)}
+.caption[data-kind="frozen"],.caption[data-kind="frost"]{border-color:var(--freeze)}
+.caption[data-kind="black"]{border-color:var(--fg)}
+.caption h2{font-family:var(--f-display);font-size:22px;margin:0;line-height:1.2;font-weight:600}
+.caption p{margin:0;max-width:65ch}
+.badge{align-self:flex-start;font-family:var(--f-display);font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;
+  padding:2px 8px;border-radius:999px;background:var(--chip);color:var(--muted)}
+.badge.paused{background:var(--hilite);color:var(--hilite-ink)}
+
+/* rules table */
+.rules{overflow-x:auto}
+.rules table{border-collapse:separate;border-spacing:0;width:100%;font-size:14px}
+.rules th,.rules td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.rules thead th{font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.rules tbody th{font-weight:600;width:34%}
+.rules th .sub{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.rules td b{display:block;font-family:var(--f-display);font-size:16px}
+.rules td span{color:var(--muted);font-size:13px}
+.rules td.on{background:var(--hilite);color:var(--hilite-ink);box-shadow:inset 0 0 0 2px var(--hilite-ink)}
+.rules td.on span{color:inherit}
+.rules .tonight{display:inline-block;font-family:var(--f-display);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;border:1px solid currentColor;border-radius:999px;padding:0 6px;margin-bottom:4px}
+.note{font-size:13px;color:var(--muted);margin:8px 0 0}
+
+/* phone layout */
+@media (max-width:700px){
+  body{padding-block:14px calc(92px + env(safe-area-inset-bottom,0px))}
+  header p{font-size:14px}
+  .picker{padding:12px}
+  .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .chip{text-align:center;align-items:center;padding:6px 4px;font-size:13px;line-height:1.2}
+  .chip small{display:none}
+  .stage.panel{padding:12px}
+  .bench{grid-template-columns:minmax(0,55fr) minmax(0,45fr);grid-template-areas:"thermo scene" "cap cap";grid-template-rows:auto auto;gap:10px;align-items:start}
+  .readout{font-size:17px}
+  .caption{min-height:0}
+  .caption h2{font-size:20px}
+  .caption p{font-size:14px}
+  .actions{position:fixed;left:0;right:0;bottom:0;z-index:20;margin:0;flex-wrap:nowrap;
+    background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.12);
+    padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .rules table{font-size:13px}
+  .rules th,.rules td{padding:8px 6px}
+}
+
+/* scene state */
+.drop{fill:var(--water);opacity:0;transform:scale(.2);transform-box:fill-box;transform-origin:center;transition:opacity .7s ease,transform .7s ease,fill .9s ease,stroke .9s ease;stroke:transparent;stroke-width:1}
+.scene.dew .drop{opacity:.92;transform:scale(1)}
+.scene.frozen .drop{fill:var(--ice);stroke:var(--ice-edge)}
+.crystal{opacity:0;transition:opacity 1s ease;stroke:var(--ice);stroke-width:1.1;stroke-linecap:round}
+.scene.frost .crystal{opacity:1}
+.blade{fill:var(--blade);transition:fill 1.6s ease}
+.scene.black .blade{fill:var(--blade-dead)}
+.groundrect{fill:var(--ground);transition:fill 1.4s ease}
+.scene.frost .groundrect{fill:var(--ground-frost)}
+.scene-tag{font-family:var(--f-display);font-size:16px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;fill:#ffffff;opacity:0;transition:opacity .6s}
+.scene.tagged .scene-tag{opacity:1}
+.mk-label{font-family:var(--f-body);font-weight:600}
+.tick-label{font-family:var(--f-mono);fill:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Overnight Cooling Lab</h1>
+    <p>Pick a night and watch the air cool toward the daily minimum. The thermometer pauses when it reaches the dew point or the freezing point so you can see what forms on the grass.</p>
+  </header>
+
+  <main class="grid">
+    <div class="side">
+      <section class="panel picker" aria-labelledby="pickLbl">
+        <h2 class="label" id="pickLbl">Scenario</h2>
+        <div class="chips" id="chips" role="group" aria-labelledby="pickLbl"></div>
+      </section>
+
+      <section class="panel settings" aria-label="Settings">
+        <details class="custom" id="customBox" open>
+          <summary>Set your own night</summary>
+          <div class="slider">
+            <div class="row"><label for="td">Dew point</label><output id="tdOut" for="td"></output></div>
+            <input type="range" id="td" step="1">
+          </div>
+          <div class="slider">
+            <div class="row"><label for="tmin">Minimum temperature</label><output id="tminOut" for="tmin"></output></div>
+            <input type="range" id="tmin" step="1">
+          </div>
+        </details>
+        <div class="opts">
+          <label class="check" for="speed">Speed
+            <select id="speed"><option value="0.5">Slow</option><option value="1" selected>Normal</option><option value="2">Fast</option></select>
+          </label>
+          <label class="check" for="auto"><input type="checkbox" id="auto"> Auto-continue after each stop</label>
+        </div>
+      </section>
+
+      <div class="actions" role="group" aria-label="Animation controls">
+        <button type="button" class="btn primary" id="play">Start cooling</button>
+        <button type="button" class="btn" id="reset">Reset</button>
+      </div>
+    </div>
+
+    <section class="panel stage" aria-label="Animation">
+      <div class="bench" id="bench">
+        <div class="thermo-box">
+          <svg id="thermo" role="img" aria-label="Thermometer"></svg>
+          <div class="readout" id="readout">--</div>
+          <div class="readout-sub" aria-hidden="true">Air temperature</div>
+        </div>
+        <div class="scene-box">
+          <svg id="scene" class="scene" role="img" aria-label="Grass at night"></svg>
+        </div>
+        <div class="caption" id="caption" data-kind="idle">
+          <span class="badge" id="badge">Ready</span>
+          <h2 id="capTitle">Evening</h2>
+          <p id="capText"></p>
+        </div>
+      </div>
+      <div id="sr" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    </section>
+
+    <section class="panel rules-panel" aria-labelledby="rulesLbl">
+      <h2 class="label" id="rulesLbl">What forms by morning</h2>
+      <div class="rules" tabindex="0" role="region" aria-labelledby="rulesLbl">
+        <table>
+          <caption class="sr-only">What forms by morning, based on the minimum temperature compared with the dew point and with freezing</caption>
+          <thead><tr><th scope="col"><span class="sr-only">Compared with the dew point</span></th><th scope="col">Minimum stays above freezing</th><th scope="col">Minimum at or below freezing</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Minimum reaches the dew point<span class="sub">min ≤ dew point</span></th>
+              <td id="r-dew"><b>Dew</b><span>Vapor condenses into liquid drops.</span></td>
+              <td id="r-ice"><b>Frozen dew or frost</b><span>Dew point above freezing: drops form, then freeze (frozen dew). Dew point at or below freezing: vapor deposits as ice crystals (frost).</span></td></tr>
+            <tr><th scope="row">Minimum stays above the dew point<span class="sub">min &gt; dew point</span></th>
+              <td id="r-none"><b>Nothing</b><span>Air never saturates and nothing freezes.</span></td>
+              <td id="r-black"><b>Black frost</b><span>No visible ice, but plants freeze and turn black.</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Model assumptions: the dew point stays constant through the night, and "dew point" below freezing is treated as the frost point.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  document.documentElement.lang='en';
+  const NS='http://www.w3.org/2000/svg';
+  /* All temperatures are stored in °C and shown as "°C (°F)". */
+  const SCALE={freeze:0,lo:-20,hi:25,slMin:-18,slMax:18,rate:3,tick:1,lab:5};
+  const PRESETS=[
+    {id:'dew',name:'Dew',td:10,tmin:6},
+    {id:'frozen',name:'Frozen dew',td:3,tmin:-3},
+    {id:'frost',name:'Frost',td:-3,tmin:-7},
+    {id:'none',name:'Nothing forms',td:2,tmin:7},
+    {id:'black',name:'Black frost',td:-8,tmin:-3}
+  ];
+  const NARROW=window.matchMedia('(max-width:700px)');
+  const REDUCED=window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  let td=3, tmin=-3, preset='frozen';
+  let S={phase:'idle',T:0,start:0,stops:[],idx:0,timer:null,last:0,scene:'',tag:'',sceneDesc:''};
+
+  const $=id=>document.getElementById(id);
+  const U=()=>SCALE;
+  const fmt=t=>`${Math.round(t)}°C (${Math.round(t*1.8+32)}°F)`;
+  const say=msg=>{const r=$('sr');r.textContent='';setTimeout(()=>{r.textContent=msg;},60);};
+
+  /* ---------- scenario buttons ---------- */
+  function buildChips(){
+    const box=$('chips');box.innerHTML='';
+    PRESETS.forEach(p=>{
+      const b=document.createElement('button');b.type='button';b.className='chip';b.id='chip-'+p.id;
+      b.setAttribute('aria-pressed',String(preset===p.id));
+      b.innerHTML=`<span>${p.name}</span><small>Td ${fmt(p.td)} · Min ${fmt(p.tmin)}</small>`;
+      b.setAttribute('aria-label',`${p.name}: dew point ${fmt(p.td)}, minimum ${fmt(p.tmin)}`);
+      b.onclick=()=>{
+        preset=p.id;td=p.td;tmin=p.tmin;syncSliders();buildChips();resetRun();
+        $('chip-'+p.id).focus();
+        say(`${p.name} scenario selected. Dew point ${fmt(td)}, minimum ${fmt(tmin)}.`);
+      };
+      box.appendChild(b);
+    });
+    const c=document.createElement('button');c.type='button';c.className='chip';c.id='chip-custom';
+    c.setAttribute('aria-pressed',String(preset==='custom'));
+    c.innerHTML='<span>Custom</span><small>use the sliders</small>';
+    c.setAttribute('aria-label','Custom: set the dew point and minimum with the sliders');
+    c.onclick=()=>{
+      preset='custom';buildChips();
+      const d=$('customBox');d.open=true;
+      $('td').focus({preventScroll:true});
+      d.scrollIntoView({block:'center',behavior:REDUCED.matches?'auto':'smooth'});
+    };
+    box.appendChild(c);
+  }
+  function syncSliders(){
+    const u=U();
+    ['td','tmin'].forEach(id=>{const e=$(id);e.min=u.slMin;e.max=u.slMax;});
+    $('td').value=td;$('tmin').value=tmin;
+    $('tdOut').textContent=fmt(td);$('tminOut').textContent=fmt(tmin);
+    $('td').setAttribute('aria-valuetext',fmt(td));$('tmin').setAttribute('aria-valuetext',fmt(tmin));
+  }
+  $('td').addEventListener('input',e=>{td=+e.target.value;preset='custom';syncSliders();buildChips();resetRun();});
+  $('tmin').addEventListener('input',e=>{tmin=+e.target.value;preset='custom';syncSliders();buildChips();resetRun();});
+
+  /* ---------- physics: list of stops ---------- */
+  function outcome(){
+    const fz=U().freeze, reach=tmin<=td, below=tmin<=fz;
+    if(reach&&!below)return 'dew';
+    if(reach&&below)return td>fz?'frozen':'frost';
+    if(!reach&&below)return 'black';
+    return 'none';
+  }
+  function buildStops(){
+    const fz=U().freeze, reach=tmin<=td, st=[];
+    if(reach&&td>fz)st.push({T:td,type:'dew'});
+    if(tmin<=fz&&!(reach&&td===fz))st.push({T:fz,type:(reach&&td>fz)?'frozen':'wait'});
+    if(reach&&td<=fz)st.push({T:td,type:'frost'});
+    st.sort((a,b)=>b.T-a.T);
+    st.push({T:tmin,type:'end'});
+    return st;
+  }
+  function startTemp(){
+    const u=U();const top=Math.max(td,tmin,u.freeze);
+    return Math.min(u.hi-2,Math.ceil(top+7));
+  }
+
+  /* ---------- thermometer ---------- */
+  const GEOM={
+    wide:{vbW:312,vbH:520,x:66,w:26,top:40,bot:430,bulbY:462,bulbR:26,two:false,labFont:12,tickFont:11,fGap:44,labX:54,minGap:16},
+    narrow:{vbW:232,vbH:400,x:44,w:22,top:34,bot:330,bulbY:358,bulbR:22,two:true,labFont:16,tickFont:13,fGap:40,labX:50,minGap:38}
+  };
+  let TH=GEOM.wide, mercuryEl, markersG, lastRead=null;
+  function yOf(t){const u=U();return TH.bot-(t-u.lo)/(u.hi-u.lo)*(TH.bot-TH.top);}
+  function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+  function drawThermo(){
+    TH=NARROW.matches?GEOM.narrow:GEOM.wide;
+    const svg=$('thermo');svg.innerHTML='';svg.setAttribute('viewBox',`0 0 ${TH.vbW} ${TH.vbH}`);const u=U();
+    const cx=TH.x+TH.w/2;
+    el('rect',{x:TH.x-6,y:TH.top-16,width:TH.w+12,height:TH.bulbY-TH.top+10,rx:(TH.w+12)/2,fill:'var(--panel)',stroke:'var(--line)','stroke-width':2},svg);
+    el('circle',{cx,cy:TH.bulbY,r:TH.bulbR+6,fill:'var(--panel)',stroke:'var(--line)','stroke-width':2},svg);
+    el('rect',{x:cx-(TH.w-8)/2,y:TH.top-10,width:TH.w-8,height:TH.bulbY-TH.top,rx:(TH.w-8)/2,fill:'var(--chip)'},svg);
+    for(let t=u.lo;t<=u.hi+1e-9;t+=u.tick){
+      const y=yOf(t),major=Math.abs(t%u.lab)<1e-6;
+      el('line',{x1:TH.x-(major?18:11),x2:TH.x-6,y1:y,y2:y,stroke:'var(--muted)','stroke-width':major?1.4:1},svg);
+      if(major){const tx=el('text',{x:TH.x-21,y:y+4,'text-anchor':'end',class:'tick-label','font-size':TH.tickFont},svg);tx.textContent=Math.round(t);}
+    }
+    const cL=el('text',{x:TH.x-21,y:TH.top-20,'text-anchor':'end',class:'tick-label','font-size':TH.tickFont},svg);cL.textContent='°C';
+    const rx=TH.x+TH.w+6, fLo=Math.ceil(u.lo*1.8+32), fHi=Math.floor(u.hi*1.8+32);
+    for(let f=fLo;f<=fHi;f++){
+      if(f%2!==0)continue;
+      const y=yOf((f-32)/1.8),major=f%10===0;
+      el('line',{x1:rx,x2:rx+(major?12:6),y1:y,y2:y,stroke:'var(--muted)','stroke-width':major?1.4:1},svg);
+      if(major){const tx=el('text',{x:rx+15,y:y+4,class:'tick-label','font-size':TH.tickFont},svg);tx.textContent=f;}
+    }
+    const fL=el('text',{x:rx+15,y:TH.top-20,class:'tick-label','font-size':TH.tickFont},svg);fL.textContent='°F';
+    const mw=TH.w-14;
+    mercuryEl=el('rect',{x:cx-mw/2,width:mw,rx:mw/2,fill:'var(--mercury)'},svg);
+    el('circle',{cx,cy:TH.bulbY,r:TH.bulbR-4,fill:'var(--mercury)'},svg);
+    markersG=el('g',{},svg);
+    drawMarkers();
+  }
+  function drawMarkers(){
+    markersG.innerHTML='';const u=U();
+    const ms=[
+      {t:u.freeze,name:'Freezing',c:'var(--freeze)',dash:'5 4'},
+      {t:td,name:'Dew point',c:'var(--dew)',dash:''},
+      {t:tmin,name:'Minimum',c:'var(--min)',dash:'2 3'}
+    ].map(m=>({...m,y:yOf(m.t)})).sort((a,b)=>a.y-b.y);
+    ms.forEach((m,i)=>{m.ly=Math.max(m.y,TH.two?14:8);if(i>0&&m.ly<ms[i-1].ly+TH.minGap)m.ly=ms[i-1].ly+TH.minGap;});
+    const x1=TH.x-4,x2=TH.x+TH.w+TH.fGap,lx=TH.x+TH.w+TH.labX;
+    ms.forEach(m=>{
+      el('line',{x1,x2,y1:m.y,y2:m.y,stroke:m.c,'stroke-width':2.5,'stroke-dasharray':m.dash},markersG);
+      el('path',{d:`M${x2} ${m.y} L${lx-3} ${m.ly}`,stroke:m.c,'stroke-width':1.2,fill:'none'},markersG);
+      const tx=el('text',{x:lx,y:TH.two?m.ly-3:m.ly+4,class:'mk-label',fill:m.c,'font-size':TH.labFont},markersG);
+      if(TH.two){
+        el('tspan',{x:lx},tx).textContent=m.name;
+        el('tspan',{x:lx,dy:17},tx).textContent=fmt(m.t);
+      }else tx.textContent=`${m.name} ${fmt(m.t)}`;
+    });
+  }
+  function setMercury(t){
+    const y=yOf(t);mercuryEl.setAttribute('y',y);mercuryEl.setAttribute('height',Math.max(0,TH.bulbY-y));
+    const r=Math.round(t);
+    if(r!==lastRead){
+      lastRead=r;$('readout').textContent=fmt(t);
+      $('thermo').setAttribute('aria-label',`Thermometer reading ${fmt(t)}. Marked: dew point ${fmt(td)}, freezing ${fmt(U().freeze)}, minimum ${fmt(tmin)}.`);
+    }
+  }
+
+  /* ---------- scene ---------- */
+  function drawScene(){
+    const W=NARROW.matches?220:400, H=NARROW.matches?320:300;
+    const svg=$('scene');svg.innerHTML='';svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    const defs=el('defs',{},svg);
+    const g=el('linearGradient',{id:'sky',x1:0,y1:0,x2:0,y2:1},defs);
+    el('stop',{offset:'0','stop-color':'var(--sky1)'},g);el('stop',{offset:'1','stop-color':'var(--sky2)'},g);
+    el('rect',{x:0,y:0,width:W,height:H,fill:'url(#sky)'},svg);
+    let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+    for(let i=0;i<Math.round(40*W/400);i++)el('circle',{cx:rnd()*W,cy:rnd()*H*.55,r:rnd()*1.1+.3,fill:'#ffffff',opacity:(rnd()*.6+.3).toFixed(2)},svg);
+    el('circle',{cx:W-60,cy:52,r:18,fill:'#f2f0e3'},svg);el('circle',{cx:W-52,cy:46,r:16,fill:'var(--sky1)'},svg);
+    el('rect',{x:0,y:H-38,width:W,height:38,class:'groundrect'},svg);
+    const tag=el('text',{x:14,y:30,class:'scene-tag',id:'sceneTag'},svg);tag.textContent=S.tag||'';
+    const bl=el('g',{},svg),dr=el('g',{},svg),cr=el('g',{},svg);
+    const N=Math.round(W/18)+1;
+    for(let i=0;i<N;i++){
+      const bx=8+i*((W-16)/(N-1))+(rnd()-.5)*8, h=H*(.23+rnd()*.37), dx=(rnd()-.5)*70, w=3+rnd()*3;
+      const by=H-32, cx=bx+dx*.25, cy=by-h*.55, tx=bx+dx, ty=by-h;
+      el('path',{class:'blade',d:`M${bx-w} ${by} Q${cx-w*.6} ${cy} ${tx} ${ty} Q${cx+w*.6} ${cy} ${bx+w} ${by} Z`},bl);
+      [0.38,0.62,0.86].forEach((t,k)=>{
+        const px=(1-t)*(1-t)*bx+2*(1-t)*t*cx+t*t*tx, py=(1-t)*(1-t)*by+2*(1-t)*t*cy+t*t*ty;
+        const side=(k%2?1:-1)*(w*.6);
+        const d=el('circle',{class:'drop',cx:(px+side).toFixed(1),cy:py.toFixed(1),r:(2.4+rnd()*1.8).toFixed(1)},dr);
+        d.style.transitionDelay=(rnd()*0.9).toFixed(2)+'s';
+        const c=el('g',{class:'crystal',transform:`translate(${(px-side).toFixed(1)} ${py.toFixed(1)})`},cr);
+        c.style.transitionDelay=(rnd()*1.2).toFixed(2)+'s';
+        for(let a=0;a<3;a++){const ang=a*Math.PI/3,r=3.6;el('line',{x1:(-r*Math.cos(ang)).toFixed(2),y1:(-r*Math.sin(ang)).toFixed(2),x2:(r*Math.cos(ang)).toFixed(2),y2:(r*Math.sin(ang)).toFixed(2)},c);}
+      });
+    }
+  }
+  function sceneState(cls,tagText,desc){
+    S.scene=cls;S.tag=tagText;S.sceneDesc=desc;
+    const s=$('scene');s.setAttribute('class','scene '+cls+(tagText?' tagged':''));
+    $('sceneTag').textContent=tagText||'';
+    s.setAttribute('aria-label','Grass at night: '+desc);
+  }
+
+  /* ---------- narration ---------- */
+  function caption(kind,badge,title,text,paused,announce){
+    $('caption').dataset.kind=kind;$('badge').textContent=badge;$('badge').className='badge'+(paused?' paused':'');
+    $('capTitle').textContent=title;$('capText').textContent=text;
+    if(announce)say(`${title}. ${text}`);
+  }
+  function highlightRule(on){
+    ['r-dew','r-ice','r-none','r-black'].forEach(id=>{const c=$(id);c.classList.remove('on');const t=c.querySelector('.tonight');if(t)t.remove();});
+    if(!on)return;
+    const c=$({dew:'r-dew',frozen:'r-ice',frost:'r-ice',none:'r-none',black:'r-black'}[outcome()]);
+    c.classList.add('on');
+    const t=document.createElement('span');t.className='tonight';t.textContent="Tonight's result";c.prepend(t);
+  }
+
+  /* ---------- run control ---------- */
+  const play=$('play');
+  function setPrimary(label){play.textContent=label;}
+  function resetRun(){
+    clearTimeout(S.timer);
+    S={phase:'idle',T:0,start:startTemp(),stops:buildStops(),idx:0,timer:null,last:0,scene:'',tag:'',sceneDesc:''};
+    S.T=S.start;lastRead=null;
+    drawThermo();setMercury(S.T);sceneState('','','dry, nothing has formed.');
+    const fz=U().freeze;
+    caption('idle','Ready','Evening',`It is ${fmt(S.start)} at sunset. The dew point is ${fmt(td)}, freezing is ${fmt(fz)}, and tonight's low will be ${fmt(tmin)}. Press Start cooling.`,false,false);
+    setPrimary('Start cooling');
+    highlightRule(false);
+  }
+  function cooling(announce){
+    caption('idle','Cooling','The air is cooling','Heat radiates away from the ground and the air near it cools. Watch for the temperature to reach the dew point or the freezing point.',false,announce);
+  }
+  function scrollToBench(){
+    if(!NARROW.matches)return;
+    const top=document.querySelector('.stage').getBoundingClientRect().top+window.scrollY-8;
+    window.scrollTo({top,behavior:REDUCED.matches?'auto':'smooth'});
+  }
+  function run(){
+    S.phase='running';S.last=0;setPrimary('Pause');
+    if(REDUCED.matches){S.timer=setTimeout(()=>{if(S.phase!=='running')return;S.T=S.stops[S.idx].T;setMercury(S.T);arrive(S.stops[S.idx]);},1200/(+$('speed').value));}
+    else requestAnimationFrame(tick);
+  }
+  play.onclick=()=>{
+    if(S.phase==='done')resetRun();
+    if(S.phase==='idle'){cooling(true);scrollToBench();run();return;}
+    if(S.phase==='hold'){cooling(false);say('Cooling resumed.');run();return;}
+    if(S.phase==='running'){clearTimeout(S.timer);S.phase='hold';setPrimary('Resume');$('badge').textContent='Paused';$('badge').className='badge paused';say('Paused at '+fmt(S.T)+'.');return;}
+    if(S.phase==='paused')resume();
+  };
+  function tick(ts){
+    if(S.phase!=='running')return;
+    if(!S.last)S.last=ts;
+    const dt=Math.min(.05,(ts-S.last)/1000);S.last=ts;
+    const target=S.stops[S.idx].T;
+    S.T-=U().rate*(+$('speed').value)*dt;
+    if(S.T<=target){S.T=target;setMercury(S.T);arrive(S.stops[S.idx]);return;}
+    setMercury(S.T);
+    requestAnimationFrame(tick);
+  }
+  function arrive(s){
+    const fz=U().freeze;
+    if(s.type==='end'){finish();return;}
+    S.phase='paused';setPrimary('Continue cooling');
+    if(s.type==='dew'){
+      sceneState('dew','Dew','covered in liquid dew drops.');
+      caption('dew','Dew point reached','Dew forms',`The air cooled to its dew point, ${fmt(td)}. The air touching the grass is saturated, so water vapor condenses into liquid drops. The temperature is above freezing, so the drops stay liquid.`,true,true);
+    }else if(s.type==='frozen'){
+      sceneState('dew frozen','Frozen dew','covered in frozen dew, small beads of clear ice.');
+      caption('frozen','Freezing point reached','Frozen dew forms',`The air kept cooling past the dew point and has now reached ${fmt(fz)}. The dew drops that already formed freeze solid into clear ice beads.`,true,true);
+    }else if(s.type==='wait'){
+      caption('wait','Freezing point reached','Nothing has happened yet',`The temperature reached freezing (${fmt(fz)}), but it is still above the dew point (${fmt(td)}). The air is not saturated, so no water vapor has condensed or deposited.`,true,true);
+    }else if(s.type==='frost'){
+      sceneState('frost','Frost','covered in white frost crystals.');
+      caption('frost','Dew point reached','Frost forms',`The air reached its dew point, ${fmt(td)}, which is below freezing. Water vapor skips the liquid stage and deposits directly as ice crystals on the grass.`,true,true);
+    }
+    play.focus({preventScroll:true});
+    if($('auto').checked)S.timer=setTimeout(resume,4000);
+  }
+  function resume(){
+    if(S.phase!=='paused')return;
+    clearTimeout(S.timer);
+    S.idx++;cooling(false);run();
+  }
+  function finish(){
+    S.phase='done';S.idx=S.stops.length;setPrimary('Replay');
+    const o=outcome(),fz=U().freeze;
+    const msg={
+      dew:['dew','Morning result: dew',`The low of ${fmt(tmin)} was at or below the dew point and above freezing. The grass is wet with dew.`,'dew','Dew','covered in liquid dew drops.'],
+      frozen:['frozen','Morning result: frozen dew',`Dew formed at ${fmt(td)}, then froze at ${fmt(fz)}. The air kept cooling to the low of ${fmt(tmin)}, so the grass is coated in frozen dew.`,'dew frozen','Frozen dew','covered in frozen dew, small beads of clear ice.'],
+      frost:['frost','Morning result: frost',`The dew point (${fmt(td)}) was below freezing and the low of ${fmt(tmin)} reached it. Ice crystals deposited directly from vapor: frost.`,'frost','Frost','covered in white frost crystals.'],
+      none:['none','Morning result: nothing forms',`The low of ${fmt(tmin)} stayed above the dew point (${fmt(td)}) and above freezing. The air never saturated, so the grass stays dry.`,'','','dry, nothing has formed.'],
+      black:['black','Morning result: black frost',`The low of ${fmt(tmin)} dropped below freezing but never reached the dew point (${fmt(td)}). The air was too dry for frost to deposit, so there is no white ice. The plants themselves froze, and the damaged tissue turns black.`,'black','Black frost','the plants have frozen and turned black, with no visible ice.']
+    }[o];
+    sceneState(msg[3],msg[4],msg[5]);
+    caption(msg[0],'Done',msg[1],msg[2],false,true);
+    highlightRule(true);
+    play.focus({preventScroll:true});
+  }
+  $('reset').onclick=()=>{resetRun();say('Reset. Ready to start cooling.');};
+  $('auto').addEventListener('change',e=>{
+    if(S.phase!=='paused')return;
+    clearTimeout(S.timer);
+    if(e.target.checked)S.timer=setTimeout(resume,1500);
+  });
+
+  /* redraw graphics when switching between phone and wide layouts */
+  function onLayout(){
+    lastRead=null;drawThermo();setMercury(S.T);
+    drawScene();sceneState(S.scene,S.tag,S.sceneDesc);
+  }
+  NARROW.addEventListener('change',onLayout);
+  if(NARROW.matches)$('customBox').open=false;
+
+  drawScene();buildChips();syncSliders();resetRun();
+})();
+</script>
