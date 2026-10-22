@@ -1,0 +1,1 @@
+- Formation of the atmosphere (H/He atm, outgassing, plant development, current atmosphere)
