@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Overnight Cooling Lab</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,8 +47,8 @@ header p{margin:6px 0 0;color:var(--muted);max-width:70ch}
 @media (max-width:860px){
   .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:none}
   .side{display:contents}
-  .stage,.rules-panel,.picker,.settings,.actions{grid-area:auto}
-  .picker{order:1}.stage{order:2}.actions{order:3}.settings{order:4}.rules-panel{order:5}
+  .stage,.rules-panel,.picker,.custom-panel,.settings,.actions{grid-area:auto}
+  .picker{order:1}.custom-panel{order:2}.stage{order:3}.actions{order:4}.settings{order:5}.rules-panel{order:6}
 }
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
 .label{font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin:0 0 8px}
@@ -70,6 +71,7 @@ details.custom summary::before{content:"\25B8";margin-right:8px;font-size:14px}
 details.custom[open] summary::before{content:"\25BE"}
 .slider{display:flex;flex-direction:column;gap:2px}
 .slider + .slider{margin-top:10px}
+.custom-panel{display:flex;flex-direction:column;gap:2px}
 .slider .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .slider output{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
 .slider input{width:100%;height:36px;margin:0}
@@ -169,9 +171,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
         <div class="chips" id="chips" role="group" aria-labelledby="pickLbl"></div>
       </section>
 
-      <section class="panel settings" aria-label="Settings">
-        <details class="custom" id="customBox" open>
-          <summary>Set your own night</summary>
+      <section class="panel custom-panel" id="customBox" aria-labelledby="customLbl" hidden>
+        <h2 class="label" id="customLbl">Set your own night</h2>
           <div class="slider">
             <div class="row"><label for="td">Dew point</label><output id="tdOut" for="td"></output></div>
             <input type="range" id="td" step="1">
@@ -180,12 +181,14 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
             <div class="row"><label for="tmin">Minimum temperature</label><output id="tminOut" for="tmin"></output></div>
             <input type="range" id="tmin" step="1">
           </div>
-        </details>
+      </section>
+
+      <section class="panel settings" aria-label="Settings">
         <div class="opts">
           <label class="check" for="speed">Speed
             <select id="speed"><option value="0.5">Slow</option><option value="1" selected>Normal</option><option value="2">Fast</option></select>
           </label>
-          <label class="check" for="auto"><input type="checkbox" id="auto"> Auto-continue after each stop</label>
+          <label class="check" for="auto"><input type="checkbox" id="auto" checked> Auto-continue after each stop</label>
         </div>
       </section>
 
@@ -262,6 +265,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
   /* ---------- scenario buttons ---------- */
   function buildChips(){
     const box=$('chips');box.innerHTML='';
+    $('customBox').hidden=preset!=='custom';
     PRESETS.forEach(p=>{
       const b=document.createElement('button');b.type='button';b.className='chip';b.id='chip-'+p.id;
       b.setAttribute('aria-pressed',String(preset===p.id));
@@ -280,9 +284,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
     c.setAttribute('aria-label','Custom: set the dew point and minimum with the sliders');
     c.onclick=()=>{
       preset='custom';buildChips();
-      const d=$('customBox');d.open=true;
       $('td').focus({preventScroll:true});
-      d.scrollIntoView({block:'center',behavior:REDUCED.matches?'auto':'smooth'});
+      $('customBox').scrollIntoView({block:'nearest',behavior:REDUCED.matches?'auto':'smooth'});
+      say('Custom night. Use the dew point and minimum temperature sliders below the scenario buttons.');
     };
     box.appendChild(c);
   }
@@ -527,8 +531,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
     drawScene();sceneState(S.scene,S.tag,S.sceneDesc);
   }
   NARROW.addEventListener('change',onLayout);
-  if(NARROW.matches)$('customBox').open=false;
 
   drawScene();buildChips();syncSliders();resetRun();
 })();
 </script>
+
+</body></html>

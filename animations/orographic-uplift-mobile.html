@@ -1,0 +1,581 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Orographic Lift Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: the mountain picture is the page. Readouts and narration sit right under it, controls below that. */
+:root{
+  --bg:#eef2f5; --panel:#ffffff; --fg:#13202b; --muted:#56656f; --line:#d3dce3;
+  --accent:#1a6782; --accent-ink:#ffffff;
+  --temp:#c4332c; --dew:#0d7373; --cloud:#5b4fa8; --warm:#c46a1c;
+  --chip:#e3eaef;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161d; --panel:#16212b; --fg:#e4ecf2; --muted:#a3b3c0; --line:#2a3946;
+  --accent:#5bbbdc; --accent-ink:#06141c;
+  --temp:#ff7a70; --dew:#45cfc9; --cloud:#b3a7f5; --warm:#f0a35e;
+  --chip:#1f2d39; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f161d; --panel:#16212b; --fg:#e4ecf2; --muted:#a3b3c0; --line:#2a3946;
+  --accent:#5bbbdc; --accent-ink:#06141c;
+  --temp:#ff7a70; --dew:#45cfc9; --cloud:#b3a7f5; --warm:#f0a35e;
+  --chip:#1f2d39; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,4vw,34px);line-height:1.1;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:80ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+
+.picture svg{width:100%;height:auto;display:block;border-radius:8px}
+.picture text{font-family:var(--f-body)}
+.hdr{font-family:var(--f-display);font-weight:600;font-size:26px;letter-spacing:.08em;fill:#13202b}
+.sub{font-size:16px;fill:#22313c}
+.tag{opacity:0;transform:translateY(6px);transition:opacity .45s ease,transform .45s ease}
+.tag.on{opacity:1;transform:none}
+.tag .l1{font-weight:700;font-size:17px;fill:#13202b}
+.tag .l2{font-family:var(--f-mono);font-size:16px;font-weight:600}
+.cb{opacity:0;transition:opacity .5s}
+.cb.on{opacity:1}
+
+.status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.ro{border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:0}
+.ro .k{font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.ro .v{font-family:var(--f-mono);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3;white-space:nowrap}
+.ro .s{font-size:13px;color:var(--muted);font-family:var(--f-mono)}
+#vT{color:var(--temp)} #vTd{color:var(--dew)}
+#vAir{font-family:var(--f-body);font-size:20px}
+#vAir[data-s="sat"]{color:var(--cloud)} #vAir[data-s="down"]{color:var(--warm)}
+@media (max-width:640px){.status{grid-template-columns:repeat(2,minmax(0,1fr))}.ro .v{font-size:20px}}
+#scene.explore{cursor:grab;touch-action:pan-y}
+#scene.explore.dragging{cursor:grabbing}
+#scene:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hint{margin:6px 0 0;font-size:14px;color:var(--accent);font-weight:600}
+.kml{font-family:var(--f-body);font-weight:700;font-size:17px;fill:#ffffff;stroke:#1d2b1a;stroke-opacity:.55;stroke-width:3px;paint-order:stroke;stroke-linejoin:round}
+.vlab{font-size:17px;stroke:#ffffff;stroke-width:4.5px;paint-order:stroke;stroke-linejoin:round}
+.vtl{font-family:var(--f-body);font-weight:700;fill:#13202b}
+.vt{font-family:var(--f-mono);font-weight:600}
+.vT{fill:#b42c25} .vD{fill:#0b6767}
+.cbt1{font-size:16px;font-weight:700} .cbt2{font-size:15px;font-family:var(--f-mono)}
+.log{margin-top:12px}
+.log table{border-collapse:collapse;width:100%;font-size:15px}
+.log th,.log td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+.log thead th{font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.log tbody th{font-weight:600}
+.log td{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.log td.tc{color:var(--temp)} .log td.dc{color:var(--dew)} .log td.q{color:var(--muted)}
+.log tr.now th,.log tr.now td{background:var(--chip)}
+.label{font-family:var(--f-display);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin:0 0 6px}
+/* wide screens: the picture shows every value, so the table is kept for screen readers only */
+@media (min-width:701px){.log{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}}
+/* phones: bigger picture text and markers, controls pinned to the bottom */
+@media (max-width:700px){
+  body{padding-block:14px calc(84px + env(safe-area-inset-bottom,0px))}
+  header p{font-size:14px}
+  .panel{padding:10px}
+  .picture svg{border-radius:6px}
+  .hdr{font-size:46px} .sub{font-size:30px}
+  .hsub{transform:translateY(24px)} .wind{transform:translateY(42px)}
+  .vlab{font-size:30px;stroke-width:7px}
+  .kml{font-size:32px;stroke-width:5px}
+  .kmline{stroke-width:4px}
+  .cbt1{font-size:32px} .cbt2{font-size:28px}
+  .say{font-size:16px;min-height:0}
+  .btns{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--panel);border-top:1px solid var(--line);
+    box-shadow:0 -4px 14px rgba(0,0,0,.12);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .btns .btn{flex:1 1 0}
+}
+.setup summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;min-height:44px;font-weight:600}
+.setup summary::-webkit-details-marker{display:none}
+.setup summary::before{content:"";width:9px;height:9px;border-right:2.5px solid var(--fg);border-bottom:2.5px solid var(--fg);transform:rotate(-45deg);margin:0 4px 0 2px;transition:transform .2s}
+.setup[open] summary::before{transform:rotate(45deg)}
+.setup summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.sum-t{font-family:var(--f-display);font-size:17px}
+.sum-v{font-family:var(--f-mono);font-size:14px;color:var(--muted);font-weight:400}
+.setup[open] .sum-v{display:none}
+.setup .controls{margin-top:8px}
+.say{margin:12px 0 0;font-size:17px;max-width:80ch;min-height:3.2em}
+
+.controls{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:flex-end}
+.slider{display:flex;flex-direction:column;gap:2px;flex:1 1 220px;min-width:0}
+.slider .row{display:flex;justify-content:space-between;gap:8px}
+.slider label{font-weight:600}
+.slider output{font-family:var(--f-mono);font-weight:600}
+.slider input{width:100%;height:44px;margin:0}
+#t0{accent-color:var(--temp)} #td0{accent-color:var(--dew)} #zl{accent-color:var(--accent)}
+.opts{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;min-height:44px}
+.check input{width:20px;height:20px;margin:0}
+select{font:inherit;font-size:14px;min-height:40px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg)}
+.btns{display:flex;gap:8px}
+.btn{appearance:none;font:inherit;font-weight:600;font-size:15px;border-radius:8px;min-height:44px;padding:9px 22px;cursor:pointer;border:1px solid var(--line);background:var(--chip);color:var(--fg)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);min-width:130px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rates{font-size:13px;color:var(--muted);margin:10px 0 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Orographic Lift Lab</h1>
+    <p>Humid air from the sea is pushed up the west side of a 3 km mountain and down the east side. Watch its temperature and dew point at every kilometer.</p>
+  </header>
+
+  <details class="panel setup" id="setup" open>
+    <summary><span class="sum-t">Starting conditions</span><span class="sum-v" id="sumVals"></span></summary>
+    <div class="controls">
+      <div class="slider">
+        <div class="row"><label for="t0">Temperature over the sea</label><output id="t0Out" for="t0"></output></div>
+        <input type="range" id="t0" min="0" max="35" step="1" value="20">
+      </div>
+      <div class="slider">
+        <div class="row"><label for="td0">Dew point over the sea</label><output id="td0Out" for="td0"></output></div>
+        <input type="range" id="td0" min="-10" max="35" step="1" value="12">
+      </div>
+      <div class="slider">
+        <div class="row"><label for="zl">Lee base altitude</label><output id="zlOut" for="zl"></output></div>
+        <input type="range" id="zl" min="-1" max="1" step="0.1" value="0">
+      </div>
+    </div>
+  </details>
+
+  <section class="panel picture" aria-label="Animation">
+    <svg id="scene" role="img" aria-label="A 3 km mountain with a sea on the west side" aria-describedby="sceneDesc"></svg>
+    <p id="sceneDesc" class="sr-only">Cross-section picture. A sea is on the west (left). A 3 km mountain rises from the shore, with a green, forested windward slope on the west and a dry, brown leeward slope on the east (right). An air parcel moves from the sea up and over the mountain. A cloud forms on the windward slope above the cloud base. Dotted lines mark 1 km and 2 km. The temperature and dew point appear beside each kilometer point and the cloud base as the air reaches them, and are also listed in the Readings table below.</p>
+    <div class="status">
+      <div class="ro"><div class="k">Altitude</div><div class="v" id="vZ">0.00 km</div></div>
+      <div class="ro"><div class="k">Temperature</div><div class="v" id="vT">--</div></div>
+      <div class="ro"><div class="k">Dew point</div><div class="v" id="vTd">--</div></div>
+      <div class="ro"><div class="k">Air</div><div class="v" id="vAir">Unsaturated</div><div class="s" id="sAir"></div></div>
+    </div>
+    <p class="say" id="say" aria-live="polite"></p>
+    <p class="hint" id="hint" hidden>Drag the air parcel, or tap anywhere on the picture, to check the temperature and dew point at any point. With the picture selected, the arrow keys move it too.</p>
+    <div class="log" id="logWrap">
+      <h2 class="label" id="logLbl">Readings</h2>
+      <table aria-labelledby="logLbl">
+        <caption class="sr-only">Temperature and dew point at each point the air reaches. Values show a question mark until the air gets there.</caption>
+        <thead><tr><th scope="col">Point</th><th scope="col">Altitude</th><th scope="col">Temp</th><th scope="col">Dew point</th></tr></thead>
+        <tbody id="log"></tbody>
+      </table>
+    </div>
+    <div id="sr" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+  </section>
+
+  <section class="panel" aria-label="Playback">
+    <div class="controls">
+      <div class="opts">
+        <label class="check" for="speed">Speed
+          <select id="speed"><option value="0.5">Slow</option><option value="1" selected>Normal</option><option value="2">Fast</option></select>
+        </label>
+        <label class="check" for="stopkm"><input type="checkbox" id="stopkm"> Pause at each km</label>
+      </div>
+      <div class="btns" role="group" aria-label="Animation controls">
+        <button type="button" class="btn primary" id="play">Play</button>
+        <button type="button" class="btn" id="reset">Reset</button>
+      </div>
+    </div>
+    <p class="rates">Rates used: unsaturated air changes 10 °C/km and its dew point 2 °C/km. Saturated air (in the cloud) changes 6 °C/km, and the dew point equals the temperature.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  document.documentElement.lang='en';
+  const NS='http://www.w3.org/2000/svg', $=id=>document.getElementById(id);
+  const REDUCED=window.matchMedia('(prefers-reduced-motion: reduce)');
+  const NARROW=window.matchMedia('(max-width:700px)');
+  const DRY=10, DEW=2, MOIST=6, HT=3;
+  // picture geometry (viewBox units)
+  const W=1100, HS=700, BASE=470, K=100, MC=550, HW=420, R=14;
+  const XS=62, XE=1040, DUR=26;
+  const yOf=z=>BASE-z*K;
+  let ZL=0;   // lee base altitude, km (-1 to +1)
+  const bell=x=>0.5+0.5*Math.cos(Math.PI*(x-MC)/HW);
+  const surf=x=>{
+    if(x<=MC)return x<=MC-HW?0:HT*bell(x);
+    return x>=MC+HW?ZL:ZL+(HT-ZL)*bell(x);
+  };
+  const xWind=z=>MC-HW*Math.acos(2*z/HT-1)/Math.PI;
+  const xLee=z=>MC+HW*Math.acos(Math.min(1,Math.max(-1,2*(z-ZL)/(HT-ZL)-1)))/Math.PI;
+  const kmTxt=z=>{const r=Math.round(z*100)/100;return (Object.is(r,-0)?0:r).toString();};
+  const py=x=>yOf(surf(x))-R-3;
+
+  let T0=20, Td0=12, M, S;
+  const f1=t=>{const r=Math.round(t*10)/10;return (Object.is(r,-0)?0:r).toString()+'°C';};
+  function el(tag,a,p){const e=document.createElementNS(NS,tag);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
+
+  /* ---------- physics ---------- */
+  function model(){
+    const zc=(T0-Td0)/(DRY-DEW), sat=zc<HT;
+    const Tc=T0-DRY*Math.min(zc,HT), Tdc=Td0-DEW*Math.min(zc,HT);
+    const Ttop=sat?Tc-MOIST*(HT-zc):Tc, Tdtop=sat?Ttop:Tdc;
+    return {zc,sat,Tc,Tdc,Ttop,Tdtop};
+  }
+  function state(x){
+    const z=surf(x);
+    if(x<=MC){
+      if(!M.sat||z<M.zc)return {z,T:T0-DRY*z,Td:Td0-DEW*z,ph:x<MC-HW?'sea':'dry'};
+      const t=M.Tc-MOIST*(z-M.zc);return {z,T:t,Td:t,ph:'moist'};
+    }
+    const d=HT-z;return {z,T:M.Ttop+DRY*d,Td:M.Tdtop+DEW*d,ph:'down'};
+  }
+
+  /* ---------- picture ---------- */
+  let parcel, trail, clipRect, tagsG, cbG;
+  function drawScene(){
+    const svg=$('scene');svg.innerHTML='';svg.setAttribute('viewBox',`0 0 ${W} ${HS}`);
+    const defs=el('defs',{},svg);
+    const lg=(id,a,stops)=>{const g=el('linearGradient',Object.assign({id},a),defs);stops.forEach(([o,c,op])=>el('stop',{offset:o,'stop-color':c,'stop-opacity':op??1},g));};
+    lg('sky',{x1:0,y1:0,x2:0,y2:1},[['0','#6ea4d4'],['1','#d8eaf6']]);
+    lg('haze',{x1:0,y1:0,x2:1,y2:0},[['0','#ffffff',.55],['.45','#ffffff',0]]);
+    lg('dryt',{x1:0,y1:0,x2:1,y2:0},[['.55','#f3c98a',0],['1','#f3c98a',.35]]);
+    lg('land',{gradientUnits:'userSpaceOnUse',x1:MC-HW,y1:0,x2:MC+HW,y2:0},
+      [['0','#4f8f46'],['.44','#3c6e36'],['.5','#6f7a48'],['.56','#a8905e'],['1','#d1b27a']]);
+    lg('sea',{x1:0,y1:0,x2:0,y2:1},[['0','#2f7fb5'],['1','#1b4f7a']]);
+    lg('cl',{x1:0,y1:0,x2:0,y2:1},[['0','#ffffff'],['1','#dfe7ee']]);
+    const cp=el('clipPath',{id:'reveal'},defs);clipRect=el('rect',{x:0,y:0,width:0,height:HS},cp);
+    // flat cloud base: nothing below the altitude where the air saturates
+    const cbY=M.sat?py(xWind(Math.max(M.zc,0.001))):HS;
+    el('rect',{x:0,y:0,width:W,height:cbY},el('clipPath',{id:'cbase'},defs));
+
+    el('rect',{x:0,y:0,width:W,height:HS,fill:'url(#sky)'},svg);
+    el('rect',{x:0,y:0,width:W,height:HS,fill:'url(#haze)'},svg);
+    el('rect',{x:0,y:0,width:W,height:HS,fill:'url(#dryt)'},svg);
+    // sun over the dry side
+    el('circle',{cx:860,cy:120,r:30,fill:'#fff3c2',opacity:.9},svg);
+
+    // distant range for depth
+    let d=`M300 ${BASE}`;for(let x=300;x<=1100;x+=10){const z=1.9*Math.exp(-Math.pow((x-780)/190,2))+0.6*Math.exp(-Math.pow((x-1000)/90,2));d+=` L${x} ${yOf(z).toFixed(1)}`;}
+    el('path',{d:d+` L1100 ${HS} L300 ${HS} Z`,fill:'#a8bccb',opacity:.75},svg);
+
+    // sea, with the shore sloping down and away under the water
+    const SHORE=152;
+    const ground=x=>x<SHORE?BASE+165*Math.pow((SHORE-x)/SHORE,1.3):yOf(surf(x));
+    el('rect',{x:0,y:BASE,width:SHORE+10,height:HS-BASE,fill:'url(#sea)'},svg);
+    // land (seabed + mountain as one shape)
+    d=`M0 ${HS} L0 ${ground(0).toFixed(1)}`;
+    for(let x=4;x<SHORE;x+=4)d+=` L${x} ${ground(x).toFixed(1)}`;
+    for(let x=SHORE;x<=MC+HW+0.1;x+=4)d+=` L${x} ${yOf(surf(x)).toFixed(1)}`;
+    d+=` L${W} ${yOf(ZL)} L${W} ${HS} Z`;
+    el('path',{d,fill:'url(#land)'},svg);
+    // seabed sediment under the water, fading into the land
+    el('linearGradient',{id:'sed',gradientUnits:'userSpaceOnUse',x1:0,y1:0,x2:SHORE+60,y2:0},defs);
+    el('stop',{offset:'0','stop-color':'#7d6b49'},defs.lastChild);el('stop',{offset:'.55','stop-color':'#7d6b49'},defs.lastChild);el('stop',{offset:'1','stop-color':'#7d6b49','stop-opacity':0},defs.lastChild);
+    let sed=`M0 ${HS} L0 ${ground(0).toFixed(1)}`;
+    for(let x=4;x<=SHORE+60;x+=4)sed+=` L${x} ${ground(x).toFixed(1)}`;
+    el('path',{d:sed+` L${SHORE+60} ${HS} Z`,fill:'url(#sed)'},svg);
+    // sand along the shoreline, running a little way under the water
+    let sand=`M0 ${ground(0).toFixed(1)}`;
+    for(let x=0;x<=SHORE+30;x+=3)sand+=` L${x} ${ground(x).toFixed(1)}`;
+    for(let x=SHORE+30;x>=0;x-=3)sand+=` L${x} ${(ground(x)+8).toFixed(1)}`;
+    el('path',{d:sand+' Z',fill:'#e2cf9c'},svg);
+    // water over the submerged slope
+    let wd=`M0 ${BASE} L${SHORE} ${BASE}`;
+    for(let x=SHORE;x>=0;x-=4)wd+=` L${x} ${ground(x).toFixed(1)}`;
+    wd+=` L0 ${ground(0).toFixed(1)} Z`;
+    el('path',{d:wd,fill:'url(#sea)','fill-opacity':.72},svg);
+    el('line',{x1:0,x2:SHORE,y1:BASE,y2:BASE,stroke:'#ffffff','stroke-opacity':.6,'stroke-width':1.5},svg);
+    for(let i=0;i<5;i++){const y=BASE+14+i*20;el('path',{d:`M${6+(i%2)*12} ${y} q12 -6 24 0 t24 0 t24 0 t24 0`,stroke:'#ffffff','stroke-opacity':.45,'stroke-width':2,fill:'none'},svg);}
+    if(ZL<0){ // sea-level reference where the lee side drops below it
+      const x0=xLee(0);
+      el('line',{x1:x0,x2:W,y1:BASE,y2:BASE,stroke:'#13202b','stroke-width':1.3,'stroke-dasharray':'6 6',opacity:.55},svg);
+      if(ZL>-0.35){const sl=el('text',{x:W-20,y:BASE-8,class:'sub','font-size':14,'text-anchor':'end'},svg);sl.textContent='sea level';}
+    }
+    // snow cap
+    let sc=`M${xWind(2.75)} ${yOf(2.75)}`;for(let x=xWind(2.75);x<=xLee(2.75);x+=3)sc+=` L${x.toFixed(1)} ${yOf(surf(x)).toFixed(1)}`;
+    el('path',{d:sc+' Z',fill:'#f4f8fb'},svg);
+
+    // windward forest
+    let seed=5;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+    for(let x=182;x<xWind(2.2);x+=13){
+      const yb=yOf(surf(x))+6, h=18+rnd()*14, w=7+rnd()*3, xx=x+(rnd()-.5)*6;
+      el('path',{d:`M${xx-w} ${yb} L${xx} ${yb-h} L${xx+w} ${yb} Z`,fill:rnd()>.5?'#2d5a2b':'#25502a'},svg);
+    }
+    // leeward sagebrush
+    for(let x=xLee(1.9);x<1090;x+=17){
+      const yb=yOf(surf(x))+5,xx=x+(rnd()-.5)*8;
+      el('ellipse',{cx:xx,cy:yb-3,rx:5+rnd()*3,ry:3+rnd()*1.5,fill:'#8c8f6a'},svg);
+    }
+
+    // labels
+    const t=(x,y,txt,cls,anchor)=>{const e=el('text',{x,y,class:cls,'text-anchor':anchor||'start'},svg);e.textContent=txt;return e;};
+    t(20,46,'WINDWARD','hdr');t(20,70,'West side · humid air from the sea','sub hsub');
+    t(W-20,46,'LEEWARD','hdr','end');t(W-20,70,'East side · dry','sub hsub','end');
+    const desert=t(MC+HW*0.5,HS-16,'Dry basin','sub','middle');desert.setAttribute('fill','#4a3a1c');desert.setAttribute('font-weight','600');
+    // wind arrow
+    const wg=el('g',{class:'wind'},svg);
+    el('path',{d:'M80 120 H170 m-11 -7 l11 7 l-11 7',stroke:'#13202b','stroke-width':2.4,fill:'none','stroke-linecap':'round','stroke-linejoin':'round'},wg);
+    const wt=el('text',{x:80,y:108,class:'sub'},wg);wt.textContent='Wind';
+
+    // cloud (revealed as the air moves through it)
+    const cg=el('g',{'clip-path':'url(#reveal)'},svg);
+    if(M.sat){
+      // a smooth lens-shaped cloud hugging the windward slope: overlapping ellipses tilted to the slope
+      const a=Math.max(MC-HW+6,xWind(Math.max(M.zc,0.001))), b=MC-30, pts=[];
+      for(let x=a;x<=b;x+=6){
+        const u=(x-a)/Math.max(1,b-a), h=18+40*Math.pow(Math.sin(Math.PI*(u*0.92+0.04)),0.7);
+        const dy=(yOf(surf(x+1))-yOf(surf(x-1)))/2, len=Math.hypot(1,dy), nx=dy/len, ny=-1/len;
+        const ys=yOf(surf(x)), ang=Math.atan2(dy,1)*180/Math.PI;
+        pts.push({cx:x+nx*(h-4),cy:ys+ny*(h-4),h,ang});
+      }
+      const inner=el('g',{'clip-path':'url(#cbase)'},cg);
+      const edge=el('g',{},inner), body=el('g',{},inner);
+      pts.forEach(p=>{
+        el('ellipse',{cx:p.cx.toFixed(1),cy:p.cy.toFixed(1),rx:40,ry:(p.h+2).toFixed(1),transform:`rotate(${p.ang.toFixed(1)} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)})`,fill:'#aebdca'},edge);
+        el('ellipse',{cx:p.cx.toFixed(1),cy:p.cy.toFixed(1),rx:38.5,ry:p.h.toFixed(1),transform:`rotate(${p.ang.toFixed(1)} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)})`,fill:'url(#cl)'},body);
+      });
+    }
+
+    // dotted altitude lines across the mountain, labeled in the middle
+    [1,2].forEach(k=>{
+      const x1=xWind(k), x2=k>ZL?xLee(k):W, y=yOf(k);
+      el('line',{x1,x2,y1:y,y2:y,stroke:'#ffffff','stroke-width':2.2,'stroke-dasharray':'2 7','stroke-linecap':'round',opacity:.9,class:'kmline'},svg);
+      const lt=el('text',{x:MC,y:y-9,'text-anchor':'middle',class:'kml'},svg);lt.textContent=`${k} km`;
+    });
+    trail=el('polyline',{fill:'none',stroke:'#ffffff','stroke-width':2.5,'stroke-dasharray':'3 7','stroke-linecap':'round',opacity:.9},svg);
+    cbG=el('g',{class:'cb'},svg);
+    tagsG=el('g',{},svg);
+    parcel=el('circle',{r:R,'stroke-width':3},svg);
+  }
+  function tempColor(t){const f=Math.min(1,Math.max(0,(t+10)/45));return `hsl(${Math.round(220-215*f)},72%,50%)`;}
+
+  /* ---------- km tags ---------- */
+  const TW=176, TH=54;
+  function tagLayout(){
+    // tag box position (left edge, top) and the point it points at
+    const L=[];
+    const near=k=>M.sat&&Math.abs(M.zc-k)<0.02;
+    L.push({id:'w0',x:XS,z:0,bx:14,by:BASE+20,title:'0 km · over the sea'});
+    [1,2].forEach(k=>L.push({id:'w'+k,x:xWind(k),z:k,bx:14,by:yOf(k)-TH/2,title:`${k} km`+(near(k)?' · saturated':'')}));
+    L.push({id:'top',x:MC,z:3,bx:MC-TW/2-6,by:yOf(3)-R*2-TH-26,title:'3 km · summit',w:TW+12});
+    [2,1,0].filter(k=>k>ZL+0.35).forEach(k=>L.push({id:'l'+k,x:xLee(k),z:k,bx:W-14-TW,by:yOf(k)-TH/2,title:k===0?'0 km · sea level':`${k} km`}));
+    L.push({id:'lb',x:XE,z:ZL,bx:W-14-TW,by:py(XE)+R+20,title:`${kmTxt(ZL)} km · lee base`});
+    return L;
+  }
+  function drawTag(t){
+    // a dot at the point plus the temperature and dew point written beside it
+    const s=state(t.x), g=el('g',{class:'tag',id:'tag-'+t.id},tagsG), pyy=py(t.x);
+    el('circle',{class:'pt',cx:t.x,cy:pyy,r:4,fill:'#13202b',stroke:'#ffffff','stroke-width':2},g);
+    const offInt=Math.abs(ZL-Math.round(ZL))>0.001;
+    const title={w0:'Over the sea',top:'Summit',l0:'Sea level',lb:'Lee base'+(offInt?` ${kmTxt(ZL)} km`:'')}[t.id];
+    let x,y,anchor,above=false;
+    if(t.id==='w0'){x=14;y=pyy+30;anchor='start';above=true;}
+    else if(t.id==='lb'){x=W-16;y=pyy+(NARROW.matches?30:20);anchor='end';above=true;}  // under the point, in the ground
+    else if(t.id==='top'||t.id[0]==='l'){x=t.x+24;y=pyy;anchor='start';}
+    else{x=t.x-24;y=pyy;anchor='end';}
+    const lines=[];if(title)lines.push(['vtl',title]);
+    lines.push(['vt vT',`T ${f1(s.T)}`],['vt vD',`Td ${f1(s.Td)}`]);
+    const n=lines.length, first=above?0.75:-(n-1)*1.15/2+0.35;  // 'above' now means stacked below the point, over the water
+    const tx=el('text',{class:'vlab',x,y,'text-anchor':anchor},g);
+    lines.forEach(([c,txt],i)=>{el('tspan',{class:c,x,dy:(i===0?first.toFixed(2):'1.15')+'em'},tx).textContent=txt;});
+    return g;
+  }
+  function drawCloudBase(){
+    cbG.innerHTML='';
+    if(!M.sat)return;
+    const x=xWind(Math.max(M.zc,0.001)), y=py(x);
+    el('circle',{cx:x,cy:y,r:5,fill:'#ffffff',stroke:'#13202b','stroke-width':1.5},cbG);
+    const big=NARROW.matches;
+    const t1=el('text',{class:'cbt1',x:x+(big?30:16),y:y+(big?66:38),fill:'#ffffff'},cbG);t1.textContent=`Cloud base ${kmTxt(M.zc)} km`;
+    const t2=el('text',{class:'cbt2',x:x+(big?30:16),y:y+(big?100:58),fill:'#ffffff'},cbG);t2.textContent=`T = Td = ${f1(M.Tc)}`;
+  }
+
+  /* ---------- live readouts ---------- */
+  function show(){
+    const s=state(S.x), y=py(S.x);
+    parcel.setAttribute('cx',S.x);parcel.setAttribute('cy',y);
+    if(s.ph==='moist'){parcel.setAttribute('fill','#ffffff');parcel.setAttribute('stroke','#7c8a96');}
+    else{parcel.setAttribute('fill',tempColor(s.T));parcel.setAttribute('stroke','#ffffff');}
+    clipRect.setAttribute('width',(S.phase==='done'||S.phase==='explore')?W:(M.sat&&S.x>=xWind(Math.max(M.zc,0.001))-0.5)?S.x+R+2:0);
+    $('vZ').textContent=`${s.z.toFixed(2)} km`;
+    $('vT').textContent=f1(s.T);$('vTd').textContent=f1(s.Td);
+    const air=$('vAir');
+    if(s.ph==='moist'){air.textContent='Saturated';air.dataset.s='sat';$('sAir').textContent=`in cloud · −${MOIST} °C/km`;}
+    else if(s.ph==='down'){air.textContent='Unsaturated';air.dataset.s='down';$('sAir').textContent=`sinking · +${DRY} °C/km`;}
+    else if(s.ph==='sea'){air.textContent='Unsaturated';air.dataset.s='';$('sAir').textContent='moving toward the coast';}
+    else{air.textContent='Unsaturated';air.dataset.s='';$('sAir').textContent=`rising · −${DRY} °C/km`;}
+    const where=S.x<MC-HW?'over the sea':S.x<=MC?'windward side':'leeward side';
+    const desc=`${where}, ${s.z.toFixed(2)} km, temperature ${f1(s.T)}, dew point ${f1(s.Td)}, ${s.ph==='moist'?'saturated, in the cloud':'unsaturated'}`;
+    if(S.phase==='done'||S.phase==='explore'){scene.setAttribute('aria-valuenow',Math.round((S.x-XS)/(XE-XS)*100));scene.setAttribute('aria-valuetext',desc);}
+    else scene.setAttribute('aria-label','Mountain picture. Air parcel: '+desc+'.');
+  }
+  function narrate(ph){
+    const m={
+      sea:`Wind carries humid air off the sea toward the mountain at ${f1(T0)} with a dew point of ${f1(Td0)}.`,
+      dry:`The air is forced up the windward slope. Rising air expands and cools ${DRY} °C/km, and its dew point drops ${DEW} °C/km.`,
+      moist:`At ${M.zc.toFixed(2).replace(/\.?0+$/,'')} km the temperature reaches the dew point (${f1(M.Tc)}). The air is saturated and a cloud forms. Above this, the temperature and dew point both drop ${MOIST} °C/km.`,
+      down:`Past the summit the air sinks and is no longer saturated, so no cloud forms. It warms ${DRY} °C/km, and its dew point rises ${DEW} °C/km.`
+    };
+    $('say').textContent=m[ph]||'';
+  }
+  function finale(){
+    const s=state(XE), dT=s.T-T0, sink=HT-ZL;
+    const dir=dT>=0?'warmer':'cooler', mag=f1(Math.abs(dT)).replace('°C',' °C');
+    const where=ZL===0?'at sea level':ZL>0?`${kmTxt(ZL)} km above sea level`:`${kmTxt(-ZL)} km below sea level`;
+    if(M.sat){
+      $('say').textContent=`At the lee base (${where}), the air is ${f1(s.T)} with a dew point of ${f1(s.Td)}. Over the sea it was ${f1(T0)} with a dew point of ${f1(Td0)}, so it is now ${mag} ${dir} and much drier. It cooled only ${MOIST} °C/km inside the cloud but warmed ${DRY} °C/km for the whole ${kmTxt(sink)} km trip down.`;
+    }else if(ZL===0){
+      $('say').textContent=`The air never cooled to its dew point, so no cloud formed. It warmed back to ${f1(s.T)} with a dew point of ${f1(s.Td)}, the same as it started.`;
+    }else{
+      $('say').textContent=`The air never cooled to its dew point, so no cloud formed. It warmed ${DRY} °C/km for the whole ${kmTxt(sink)} km trip down and reaches the lee base (${where}) at ${f1(s.T)} with a dew point of ${f1(s.Td)}. Without a cloud, the only difference from the sea comes from the lee base's altitude.`;
+    }
+  }
+
+  /* ---------- run control ---------- */
+  const play=$('play'), scene=$('scene');
+  function scrollToPicture(){
+    if(!NARROW.matches)return;
+    const r=scene.getBoundingClientRect();
+    if(r.top<0||r.bottom>window.innerHeight-90)scene.scrollIntoView({block:'start',behavior:REDUCED.matches?'auto':'smooth'});
+  }
+  function markRow(key){
+    const r=S.rows.find(r=>r.key===key);if(!r)return '';
+    r.seen=true;S.now=key;
+    return `${r.name}, ${kmTxt(r.z)} km: temperature ${f1(r.s.T)}, dew point ${f1(r.s.Td)}.`;
+  }
+  function renderLog(){
+    $('log').innerHTML=S.rows.map(r=>{
+      const alt=(r.key==='cb'&&!r.seen)?'?':`${kmTxt(r.z)} km`;
+      const cls=r.key===S.now?' class="now"':'';
+      if(!r.seen)return `<tr${cls}><th scope="row">${r.name}</th><td class="q">${alt}</td><td class="q">?</td><td class="q">?</td></tr>`;
+      return `<tr${cls}><th scope="row">${r.name}</th><td>${alt}</td><td class="tc">${f1(r.s.T)}</td><td class="dc">${f1(r.s.Td)}</td></tr>`;
+    }).join('');
+  }
+  function announce(msg){if(!msg)return;const r=$('sr');r.textContent='';setTimeout(()=>{r.textContent=msg;},50);}
+  function applySize(){
+    const n=NARROW.matches;
+    parcel.setAttribute('r',n?24:R);parcel.setAttribute('stroke-width',n?5:3);
+    tagsG.querySelectorAll('.pt').forEach(c=>c.setAttribute('r',n?10:4));
+    trail.setAttribute('stroke-width',n?5:2.5);
+  }
+  NARROW.addEventListener('change',()=>{applySize();drawCloudBase();if(S.phase==='done'||S.phase==='explore'||S.rows.find(r=>r.key==='cb'&&r.seen))cbG.classList.add('on');});
+  function reset(){
+    if(S)clearTimeout(S.timer);
+    M=model();drawScene();drawCloudBase();
+    const tags=tagLayout().map(t=>({...t,g:drawTag(t)}));
+    const onKm=M.sat&&Math.abs(M.zc-Math.round(M.zc))<0.02;
+    const events=tags.filter(t=>t.id!=='w0').map(t=>({x:t.x,tag:t,kind:'tag',cb:onKm&&t.id==='w'+Math.round(M.zc)}));
+    if(M.sat&&M.zc>0&&!onKm)events.push({x:xWind(M.zc),kind:'cb',cb:true});
+    events.sort((a,b)=>a.x-b.x);
+    scene.classList.remove('explore');scene.removeAttribute('tabindex');$('hint').hidden=true;
+    scene.setAttribute('role','img');['aria-valuenow','aria-valuetext','aria-valuemin','aria-valuemax'].forEach(a=>scene.removeAttribute(a));
+    // rows for the Readings table
+    const rowName={w0:'Over the sea',top:'Summit',lb:'Lee base'};
+    const rows=tags.map(t=>({key:t.id,x:t.x,z:t.z,name:rowName[t.id]||(t.id[0]==='w'?'Windward':'Leeward'),s:state(t.x),seen:t.id==='w0'}));
+    if(M.sat){const xc=xWind(Math.max(M.zc,0.001));rows.push({key:'cb',x:xc+0.01,z:M.zc,name:'Cloud base',s:{T:M.Tc,Td:M.Tc},seen:M.zc<=0});}
+    rows.sort((a,b)=>a.x-b.x);
+    S={phase:'idle',rows,now:'w0',x:XS,events,ei:0,last:0,timer:null,ph:'',pts:[`${XS},${py(XS).toFixed(1)}`]};
+    tags[0].g.classList.add('on');
+    applySize();renderLog();
+    trail.setAttribute('points',S.pts.join(' '));
+    show();
+    $('say').textContent=`Air over the sea: ${f1(T0)} with a dew point of ${f1(Td0)}. Press Play.`;
+    play.textContent='Play';
+  }
+  function run(){
+    S.phase='running';S.last=0;play.textContent='Pause';
+    if(REDUCED.matches)S.timer=setTimeout(()=>{if(S.phase!=='running')return;const ev=S.events[S.ei];move(ev?ev.x:XE);hit();},900/(+$('speed').value));
+    else requestAnimationFrame(tick);
+  }
+  function move(x){
+    for(let xx=S.x+4;xx<x;xx+=4)S.pts.push(`${xx.toFixed(1)},${py(xx).toFixed(1)}`);
+    S.x=x;S.pts.push(`${x.toFixed(1)},${py(x).toFixed(1)}`);
+    trail.setAttribute('points',S.pts.join(' '));
+    show();
+    const ph=state(x).ph;
+    if(ph!==S.ph){S.ph=ph;narrate(ph);}
+  }
+  function hit(){
+    const ev=S.events[S.ei];
+    if(!ev){done();return;}
+    S.ei++;
+    const said=[];
+    if(ev.kind==='tag'){ev.tag.g.classList.add('on');said.push(markRow(ev.tag.id));}
+    if(ev.cb){cbG.classList.add('on');said.unshift('Cloud base reached. The air is saturated and a cloud forms.');markRow('cb');}
+    renderLog();announce(said.filter(Boolean).join(' '));
+    if(ev.x>=XE){done();return;}
+    // "Pause at each km" on: wait for Continue. Off: brief 1-second stop, then keep going.
+    if($('stopkm').checked){S.phase='hold';play.textContent='Continue';return;}
+    S.phase='wait';
+    S.timer=setTimeout(()=>{if(S.phase==='wait')run();},1000);
+  }
+  function tick(ts){
+    if(S.phase!=='running')return;
+    if(!S.last)S.last=ts;
+    const dt=Math.min(.05,(ts-S.last)/1000);S.last=ts;
+    let x=S.x+dt*(+$('speed').value)*(XE-XS)/DUR;
+    const ev=S.events[S.ei];
+    if(ev&&x>=ev.x){move(ev.x);S.last=0;hit();return;}
+    move(Math.min(x,XE));
+    requestAnimationFrame(tick);
+  }
+  function done(){
+    S.phase='done';play.textContent='Replay';finale();show();
+    const sc=scene;sc.classList.add('explore');sc.setAttribute('tabindex','0');
+    sc.setAttribute('role','slider');sc.setAttribute('aria-label','Air parcel position. Use the arrow keys to move it along its path.');
+    sc.setAttribute('aria-valuemin','0');sc.setAttribute('aria-valuemax','100');show();
+    $('hint').hidden=false;
+  }
+  play.onclick=()=>{
+    if(S.phase==='done'||S.phase==='explore')reset();
+    if(S.phase==='running'||S.phase==='wait'){clearTimeout(S.timer);S.phase='hold';play.textContent='Continue';return;}
+    if(S.phase==='hold')clearTimeout(S.timer);
+    if(S.phase==='idle'){S.ph='';move(S.x);scrollToPicture();}
+    run();
+  };
+  $('reset').onclick=reset;
+
+  /* ---------- explore: drag the air parcel after the run ---------- */
+  let dragging=false;
+  function toX(e){const pt=scene.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(scene.getScreenCTM().inverse()).x;}
+  function explore(x){
+    S.phase='explore';S.x=Math.min(XE,Math.max(XS,x));show();
+    const ph=state(S.x).ph;
+    if(S.x>=XE){S.ph='end';finale();}
+    else if(S.x<=XS){S.ph='start';$('say').textContent=`Air over the sea: ${f1(T0)} with a dew point of ${f1(Td0)}.`;}
+    else if(ph!==S.ph){S.ph=ph;narrate(ph);}
+  }
+  scene.addEventListener('pointerdown',e=>{
+    if(S.phase!=='done'&&S.phase!=='explore')return;
+    dragging=true;scene.setPointerCapture(e.pointerId);scene.classList.add('dragging');explore(toX(e));e.preventDefault();
+  });
+  scene.addEventListener('pointermove',e=>{if(dragging)explore(toX(e));});
+  const stop=()=>{dragging=false;scene.classList.remove('dragging');};
+  scene.addEventListener('pointerup',stop);scene.addEventListener('pointercancel',stop);
+  scene.addEventListener('keydown',e=>{
+    if(S.phase!=='done'&&S.phase!=='explore')return;
+    const step=e.shiftKey?60:12;
+    if(e.key==='ArrowRight'){explore(S.x+step);e.preventDefault();}
+    else if(e.key==='ArrowLeft'){explore(S.x-step);e.preventDefault();}
+    else if(e.key==='Home'){explore(XS);e.preventDefault();}
+    else if(e.key==='End'){explore(XE);e.preventDefault();}
+  });
+
+  /* ---------- inputs ---------- */
+  function sync(){
+    $('t0').value=T0;$('td0').value=Td0;
+    $('t0Out').textContent=`${f1(T0)} (${Math.round(T0*1.8+32)}°F)`;
+    $('td0Out').textContent=`${f1(Td0)} (${Math.round(Td0*1.8+32)}°F)`;
+    $('t0').setAttribute('aria-valuetext',f1(T0));$('td0').setAttribute('aria-valuetext',f1(Td0));
+    $('zl').value=ZL;$('zlOut').textContent=`${ZL>0?'+':''}${ZL.toFixed(1)} km`;
+    $('zl').setAttribute('aria-valuetext',`${ZL.toFixed(1)} kilometers`);
+    $('sumVals').textContent=`T ${f1(T0)} · Td ${f1(Td0)} · Lee base ${ZL>0?'+':''}${ZL.toFixed(1)} km`;
+  }
+  $('zl').addEventListener('input',e=>{ZL=Math.round(+e.target.value*10)/10;sync();reset();});
+  $('t0').addEventListener('input',e=>{T0=+e.target.value;if(Td0>T0)Td0=T0;sync();reset();});
+  $('td0').addEventListener('input',e=>{Td0=Math.min(+e.target.value,T0);sync();reset();});
+  if(NARROW.matches)$('setup').open=false;  // phones: start collapsed so the picture is on screen
+  sync();reset();
+})();
+</script>
+
+</body></html>
