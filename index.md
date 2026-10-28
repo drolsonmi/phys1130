@@ -157,16 +157,21 @@ I look forward to exploring the science of the atmosphere with you!
 
 ## Animations
 * [Dew, Frost, and Frozen Dew](./animations/dew-mobile.html)
+
 * [Cloud Formation](./animations/cloud-development-mobile1.html)
 * [Cloud Formation with variable temperatures](./animations/cloud-development-mobile2.html)
 * [Orographic Uplift](./animations/orographic-uplift-mobile.html)
+
 * [Precipitation: Collision-Coalescence](./animations/collision-coalescence-mobile.html)
 * [Precipitation: Ice-Crystal (Bergeron) Process](./animations/ice-crystal-mobile.html)
 * [Precipitation: Accretion and Aggregation](./animations/accretion-aggregation-mobile.html)
 * [Precipitation: Winter Precipitation](./animations/winter-precipitation-mobile.html)
 * [Precipitation: Graupel (Corn Snow)](./animations/graupel-mobile.html)
 * [Precipitation: Hail](./animations/hail-mobile.html)
+
+* [Pressure: Sea Level Pressure](./animations/sea-level-pressure.html)
 * [Pressure: Isobaric Charts](./animations/isoheight-chart-mobile.html)
 * [Pressure: Thermal Circulations](./animations/thermal-circulation-mobile.html)
+
 * [Tropical: Upwelling](./animations/upwelling-mobile.html)
 * [Tropical: ENSO](./animations/enso-mobile.html)

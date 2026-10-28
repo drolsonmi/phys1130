@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sea Level Pressure</title>
+<meta name="description" content="An animated, scene-by-scene explanation of how station pressures are corrected to sea level pressure and turned into a surface pressure map.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #e9edf4; --bar: #ffffff; --ink: #25282b; --muted: #5d6470; --edge: #cfd6e2;
+  --brand: #1e376c; --accent: #f47920; --btn: #f1f4f9; --btn-ink: #1e376c; --focus: #c2410c;
+  color-scheme: light;
+  box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+    --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+  --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; background: var(--page); overflow-x: hidden; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100%; background: var(--page); color: var(--ink); font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 12px; top: -100px; z-index: 50; background: var(--bar); color: var(--brand); font-weight: 700; padding: 12px 16px; border-radius: 8px; border: 2px solid var(--brand); }
+.skip:focus { top: calc(12px + env(safe-area-inset-top, 0px)); outline: 3px solid var(--focus); outline-offset: 2px; }
+
+#app { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; min-height: 100vh; background: var(--page); }
+#main { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+#frame { width: min(100%, calc((100vh - 140px) * 16 / 9)); aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,.12); touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app:fullscreen #frame { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+#turn { display: none; }
+
+/* ---------- the animation (fixed light picture, like the other 1130 animations) ---------- */
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #ffffff;
+  --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; --stn:#c8322a; --slp:#1667c4;
+  color: var(--second); font-family: "Nunito Sans", system-ui, sans-serif; }
+.layer { position: absolute; inset: 0; display: none; }
+.ground { position: absolute; inset: 0; background: var(--ground); }
+.words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.words > * { margin: 0; }
+.line { font-family: "Zilla Slab", Georgia, serif; font-size: 84px; line-height: 1.04; font-weight: 700; color: var(--main); }
+.line .w { display: inline-block; white-space: pre; }
+.sub { font-size: 34px; line-height: 1.4; color: color-mix(in srgb, var(--second) 82%, var(--ground)); }
+.sub b.r { color: var(--stn); } .sub b.b { color: var(--slp); }
+.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.rule { width: 96px; height: 4px; background: var(--accent); border-radius: 2px; }
+.art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.label { font-family: "Nunito Sans", system-ui, sans-serif; font-size: 28px; font-weight: 700; fill: var(--main); }
+.val { font-family: "Nunito Sans", system-ui, sans-serif; font-size: 40px; font-weight: 700; }
+.halo { stroke: #ffffff; stroke-width: 8px; paint-order: stroke; stroke-linejoin: round; }
+.lead { fill: none; stroke: var(--main); stroke-width: 2.5; stroke-dasharray: 6 6; }
+.hut { fill: #ffffff; stroke: var(--main); stroke-width: 4; stroke-linejoin: round; }
+.card { position: absolute; border-radius: 16px; background: color-mix(in srgb, var(--main) 6%, var(--ground)); border: 2px solid color-mix(in srgb, var(--main) 18%, var(--ground)); }
+.note { font-size: 24px; color: color-mix(in srgb, var(--second) 60%, var(--ground)); }
+#stage.big .label { font-size: var(--lab); }
+#stage.big .val { font-size: var(--val); }
+#stage.big .sub { font-size: var(--sub); }
+#stage.big .tag { font-size: var(--tag); }
+#stage.big .note { font-size: var(--note); }
+#stage.big .rc { top: 400px !important; height: 580px !important; padding: 34px 26px !important; gap: 16px !important; }
+#stage.big .ri { width: 200px; height: 200px; }
+/* upright phone: the picture shows the right part of the scene; its text is shown below */
+#stage.port .ground > .words { display: none; }
+#stage.port .rc { left: 830px !important; width: 1060px !important; height: 320px !important; flex-direction: row !important; text-align: left !important; padding: 0 40px !important; gap: 40px !important; }
+#stage.port .rc0 { top: 30px !important; } #stage.port .rc1 { top: 380px !important; } #stage.port .rc2 { top: 730px !important; }
+#stage.port .rc .words { align-items: flex-start !important; gap: 14px !important; }
+#stage.port .ri { width: 220px; height: 220px; }
+
+/* ---------- scene text ---------- */
+#desc { width: min(100%, calc((100vh - 140px) * 16 / 9)); background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 16px 20px 18px; }
+#desc:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+#dTitle { margin: 0 0 6px; font-size: 18px; line-height: 1.3; color: var(--brand); }
+#dText { margin: 0; font-size: 17px; line-height: 1.6; max-width: 72ch; }
+#closeText { display: none; }
+#cap { display: none; }
+.cap-tag { margin: 0 0 2px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.cap-line { margin: 0 0 6px; font-family: "Zilla Slab", Georgia, serif; font-size: 24px; line-height: 1.15; color: var(--brand); }
+.cap-sub { margin: 0 0 4px; font-size: 16px; line-height: 1.5; }
+.cap-box { margin: 10px 0 4px; padding: 10px 12px; border-radius: 8px; background: var(--bar); border: 1px solid var(--edge); }
+.cap-note { margin: 0; font-size: 14px; color: var(--muted); }
+
+/* ---------- controls ---------- */
+#bar { width: min(100%, calc((100vh - 140px) * 16 / 9)); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 6px 8px; }
+#app:fullscreen #bar, #app:fullscreen #desc { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+button { font: inherit; font-weight: 700; font-size: 15px; color: var(--btn-ink); background: var(--btn); border: 1px solid var(--edge);
+  border-radius: 8px; min-height: 44px; min-width: 44px; padding: 0 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+button:hover { border-color: var(--brand); }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#next { background: var(--brand); color: var(--bar); border-color: var(--brand); padding: 0 20px; }
+#next.ready { background: var(--accent); border-color: var(--accent); color: #25282b; }
+#where { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 0; padding: 0 4px; }
+#title { font-size: 15px; font-weight: 700; color: var(--ink); padding-left: 9px; }
+#dots { display: flex; flex-wrap: nowrap; }
+#wtop { display: flex; align-items: baseline; gap: 12px; padding-right: 4px; }
+#wtop .hint { margin-left: auto; }
+#dots button { min-height: 44px; height: 44px; width: 38px; min-width: 38px; padding: 0; border: 0; background: transparent; border-radius: 6px; }
+#dots button::before { content: ""; width: 24px; height: 8px; border-radius: 4px; background: var(--edge); }
+#dots button.on::before { background: var(--brand); }
+#dots button.done::before { background: color-mix(in srgb, var(--brand) 45%, var(--edge)); }
+#count { display: none; font-size: 14px; font-weight: 700; color: var(--ink); text-align: center; white-space: nowrap; }
+.hint { font-size: 13px; color: var(--muted); }
+#textB[aria-expanded="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.no-fs #full { display: none !important; }
+
+/* ---------- phone held sideways ---------- */
+body.land #app { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 6px max(6px, env(safe-area-inset-right, 0px)) 6px max(6px, env(safe-area-inset-left, 0px)); }
+body.land #main { flex: 1; min-width: 0; justify-content: center; }
+body.land #frame { width: min(100%, calc((100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9));
+  width: min(100%, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9)); border-radius: 8px; }
+body.land #bar { width: 76px; flex: none; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 6px; gap: 5px; overflow-y: auto; }
+body.land #bar .t, body.land #where, body.land .hint { display: none; }
+body.land #count { display: block; order: 0; padding: 4px 0; }
+body.land #replay { order: 1; } body.land #pause { order: 2; } body.land #full { order: 3; } body.land #textB { order: 4; }
+body.land #spacer { order: 5; flex: 1; min-height: 4px; }
+body.land #back { order: 6; } body.land #next { order: 7; min-height: 64px; padding: 0; }
+body.land #next svg { width: 28px; height: 28px; }
+body.land button { padding: 0; }
+body.land #desc { position: fixed; z-index: 20; width: auto; overflow-y: auto;
+  top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-height: calc(100% - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  left: calc(max(6px, env(safe-area-inset-left, 0px)) + 10px); right: calc(max(6px, env(safe-area-inset-right, 0px)) + 96px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); padding: 12px 16px; }
+body.land #closeText { display: inline-flex; flex: none; padding: 0 16px; }
+body.land #dText { font-size: 16px; line-height: 1.55; }
+
+/* ---------- phone held upright ---------- */
+body.port #app { justify-content: flex-start; align-items: stretch; gap: 0; padding: 0; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+body.port #main { flex: none; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); }
+body.port #frame { width: 100%; aspect-ratio: 1120 / 1080; border-radius: 0; box-shadow: none; }
+body.port #turn { display: block; margin: 0; width: 100%; padding: 6px 16px; font-size: 14px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--edge); }
+body.port #desc { width: auto; flex: 1; min-height: 0; overflow-y: auto; border: 0; border-radius: 0; background: var(--page); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+body.port #desc.sr-only { position: static !important; width: auto; height: auto; margin: 0; overflow-y: auto; clip: auto; white-space: normal; }
+body.port #cap { display: block; margin: 4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--edge); }
+body.port #dText { font-size: 16px; }
+body.port #bar { width: auto; flex: none; flex-wrap: nowrap; border: 0; border-top: 1px solid var(--edge); border-radius: 0; gap: 8px;
+  padding: 8px max(10px, env(safe-area-inset-right, 0px)) 8px max(10px, env(safe-area-inset-left, 0px)); }
+body.port #where, body.port .hint, body.port #textB { display: none; }
+body.port #replay, body.port #pause, body.port #full { padding: 0; }
+body.port #replay .t, body.port #pause .t { display: none; }
+body.port #back, body.port #next { flex: 1; min-height: 52px; font-size: 17px; }
+body.port #back { order: 0; } body.port #replay { order: 1; } body.port #pause { order: 2; } body.port #full { order: 3; } body.port #next { order: 4; }
+body.port #spacer { display: none; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+
+<a class="skip" href="#desc" id="skip">Skip to scene text</a>
+<div id="app">
+  <div id="main">
+    <div id="frame" aria-hidden="true"><div id="stage"></div></div>
+    <p id="turn">Turn your phone sideways for a bigger picture.</p>
+  </div>
+  <section id="desc" tabindex="-1" aria-labelledby="dTitle" class="sr-only">
+    <div class="dhead">
+      <div id="live" aria-live="polite" aria-atomic="true"><h2 id="dTitle"></h2><div id="cap" aria-hidden="true"></div><p id="dText"></p></div>
+      <button id="closeText" aria-label="Close scene text">Close</button>
+    </div>
+  </section>
+  <nav id="bar" aria-label="Animation controls">
+    <button id="back" aria-label="Previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">Back</span></button>
+    <button id="replay" aria-label="Replay this scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" id="pauseIco"><path d="M8 5v14M16 5v14"/></svg><span class="t" id="pauseTxt">Pause</span></button>
+    <div id="where"><div id="wtop"><div id="title" aria-hidden="true"></div><span class="hint" aria-hidden="true">Arrow keys or Space</span></div><div id="dots" role="group" aria-label="Scenes"></div></div>
+    <div id="count" aria-hidden="true"></div>
+    <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="textB" aria-label="Show scene text" aria-controls="desc" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 10h14M5 14h10M5 18h7"/></svg><span class="t">Text</span></button>
+    <div id="spacer" aria-hidden="true"></div>
+    <button id="next" aria-label="Next scene"><span class="t">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </nav>
+</div>
+
+<script>
+(function () {
+document.documentElement.lang = 'en';
+// ---------- helpers ----------
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const sq = v => v * v;
+const fmt = n => n.toLocaleString('en-US');
+const NS = 'http://www.w3.org/2000/svg';
+function h(html) { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; }
+function fadeFromRight(el, t, t0) {
+  if (!el._w) {
+    const words = el.textContent.split(' ');
+    el.textContent = '';
+    el._w = words.map((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w + (i < words.length - 1 ? ' ' : ''); el.appendChild(s); return s; });
+  }
+  el._w.forEach((s, i) => { const p = eo(seg(t, t0 + i * .11, t0 + i * .11 + .5)); s.style.opacity = p; s.style.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)'; });
+}
+function subIn(st, t, a) { const p = eo(seg(t, a, a + .6)); st.opacity = p; st.transform = 'translateX(' + lerp(26, 0, p) + 'px)'; }
+const nb = x => x && x.replace(/(\d) (m|mb)\b/g, '$1\u00a0$2');
+const textBlock = (top, tag, line, sub) =>
+  '<div class="words" style="left:140px;top:' + top + 'px;width:640px">' +
+  '<p class="tag">' + tag + '</p><h2 class="line">' + nb(line) + '</h2>' + (sub ? '<p class="sub">' + nb(sub) + '</p>' : '') + '</div>';
+function textRefs(self, root) { self.tagS = root.querySelector('.words .tag').style; self.line = root.querySelector('.words .line'); const s = root.querySelector('.words .sub'); self.subS = s && s.style; }
+function textRender(self, t, subAt) { self.tagS.opacity = eo(seg(t, 0.2, 0.7)); fadeFromRight(self.line, t, 0.4); if (self.subS) subIn(self.subS, t, subAt); }
+const op = (el, v) => { el.style.opacity = v; };
+let SCALE = 0.6;   // current stage scale, used for canvas text size
+
+// ================= 2D cross-section: two stations =================
+const SLY = 820, K2 = 0.3, XA = 1150, XB = 1580;
+const A2 = { z: 50, P: 1008 }, B2 = { z: 1500, P: 866 };
+A2.S = A2.P + A2.z / 10; B2.S = B2.P + B2.z / 10;
+function z2(x) {
+  if (x < 1010) return -260 * Math.min(1, (1010 - x) / 120);
+  const b = 30 + 0.12 * (x - 1010), bb = 30 + 0.12 * (XB - 1010);
+  return b + (1500 - bb) * Math.exp(-sq((x - XB) / 170));
+}
+const y2 = x => SLY - z2(x) * K2;
+const YA = SLY - A2.z * K2, YB = SLY - B2.z * K2;
+function hut(x, y, cls) {
+  return '<g class="' + (cls || '') + '" transform="translate(' + x + ' ' + y + ')"><rect class="hut" x="-20" y="-32" width="40" height="32"/>' +
+    '<polygon class="hut" points="-27,-32 0,-54 27,-32"/><rect x="-6" y="-18" width="12" height="18" fill="#1e376c"/></g>';
+}
+function crossSVG(extraBack, extraFront) {
+  let d = 'M840 1080 L840 ' + y2(840).toFixed(1);
+  for (let x = 846; x <= 1920; x += 6) d += ' L' + x + ' ' + y2(x).toFixed(1);
+  d += ' L1920 1080 Z';
+  // air: more dots near the ground, fewer higher up
+  let dots = '', q = 5; const r = () => { q = (q * 16807) % 2147483647; return (q - 1) / 2147483646; };
+  for (let i = 0; i < 420; i++) {
+    const x = 860 + r() * 1040, f = r(), y = 140 + (1 - Math.pow(f, 1.8)) * 0 + Math.pow(f, 0.55) * 700;
+    if (y < y2(x) - 10) dots += '<circle cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" r="3.2"/>';
+  }
+  return '<svg class="art" viewBox="0 0 1920 1080">' +
+    '<g class="air" fill="#c9d3e6">' + dots + '</g>' + (extraBack || '') +
+    '<path d="' + d + '" fill="#e6dccb" stroke="#1e376c" stroke-width="3"/>' +
+    '<rect x="840" y="' + SLY + '" width="172" height="260" fill="#9fc4ea" opacity=".85"/>' +
+    '<line class="slline" x1="840" x2="1920" y1="' + SLY + '" y2="' + SLY + '" stroke="#1e376c" stroke-width="3" stroke-dasharray="12 9"/>' +
+    '<text class="label halo" x="860" y="' + (SLY - 14) + '">Sea level</text>' +
+    hut(XA, YA) + hut(XB, YB) + (extraFront || '') + '</svg>';
+}
+// label stack above a station: name, altitude, pressure (anchored at its bottom)
+function stack(x, yb, name, alt, P, cls) {
+  return '<text class="' + cls + '" x="' + x + '" y="' + yb + '" text-anchor="middle">' +
+    '<tspan class="label" x="' + x + '" dy="-2.5em" style="font-size:inherit">' + name + '</tspan>' +
+    '<tspan x="' + x + '" dy="1.15em" style="font-weight:400">Altitude ' + alt + '</tspan>' +
+    '<tspan class="pv" x="' + x + '" dy="1.35em" fill="#c8322a" style="font-weight:700">' + P + '</tspan></text>';
+}
+const stackA = (c) => stack(XA, YA - 72, 'Station A', '50 m', A2.P + ' mb', 'label halo ' + (c || 'sa'));
+const stackB = (c) => stack(XB, YB - 72, 'Station B', '1,500 m', B2.P + ' mb', 'label halo ' + (c || 'sb'));
+
+// ================= 3D terrain =================
+const coastX = y => 95 + 18 * Math.sin(y / 60) + 10 * Math.sin(y / 23);
+const g2 = (x, y, cx, cy, sx, sy) => Math.exp(-sq((x - cx) / sx) - sq((y - cy) / sy));
+function elevXY(x, y) {
+  const xc = coastX(y);
+  if (x < xc) return -1;
+  const u = Math.min(1, (x - xc) / 520);
+  let z = 40 + 1350 * Math.pow(u, 1.15);
+  const xr = 300 + 25 * Math.sin(y / 90);
+  z += 1900 * Math.exp(-sq((x - xr) / 46)) * (0.78 + 0.22 * Math.sin(y / 55 + 1));
+  z -= 520 * g2(x, y, 465, 290, 55, 160);
+  z += 650 * g2(x, y, 640, 120, 45, 70);
+  z *= Math.min(1, (x - xc) / 25 + 0.15);
+  return Math.max(0, z);
+}
+const HX = 165, HY = 100, LX = 505, LY = 345;
+const slpXY = (x, y) => 1011 + 15 * g2(x, y, HX, HY, 190, 170) - 17 * g2(x, y, LX, LY, 170, 150) + 0.004 * (y - 240);
+const elevUV = (u, v) => elevXY(u * 720, v * 480);
+const slpUV = (u, v) => slpXY(u * 720, v * 480);
+
+const T = (function () {
+  const NU = 72, NV = 48, PW = 880, PH = 600;
+  const Z = [], OC = [], SL = [];
+  for (let j = 0; j <= NV; j++) { Z[j] = []; OC[j] = []; SL[j] = []; for (let i = 0; i <= NU; i++) { const u = i / NU, v = j / NV, e = elevUV(u, v); Z[j][i] = Math.max(0, e); OC[j][i] = e < 0; SL[j][i] = slpUV(u, v); } }
+  const stops = [[0, [190, 214, 168]], [500, [214, 222, 178]], [1100, [230, 214, 172]], [1700, [208, 182, 146]], [2300, [184, 163, 142]], [2700, [240, 240, 236]]];
+  const hyp = z => { for (let k = 1; k < stops.length; k++) if (z <= stops[k][0]) { const [z0, c0] = stops[k - 1], [z1, c1] = stops[k], f = (z - z0) / (z1 - z0); return c0.map((c, n) => c + (c1[n] - c) * f); } return stops[stops.length - 1][1]; };
+  const cells = [];
+  for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) {
+    const zc = (Z[j][i] + Z[j][i + 1] + Z[j + 1][i] + Z[j + 1][i + 1]) / 4;
+    const oc = OC[j][i] && OC[j][i + 1] && OC[j + 1][i] && OC[j + 1][i + 1];
+    let col;
+    if (oc) col = [160, 198, 234];
+    else {
+      const dzu = (Z[j][i + 1] + Z[j + 1][i + 1] - Z[j][i] - Z[j + 1][i]) / 2, dzv = (Z[j + 1][i] + Z[j + 1][i + 1] - Z[j][i] - Z[j][i + 1]) / 2;
+      const sh = Math.max(0.72, Math.min(1.14, 1 + (-dzu * 0.9 - dzv * 0.5) * 0.0011));
+      col = hyp(zc).map(c => Math.min(255, c * sh));
+    }
+    cells.push({ i, j, u: (i + .5) / NU, v: (j + .5) / NV, fill: 'rgb(' + col.map(c => c | 0).join(',') + ')', segs: [] });
+  }
+  // contour segments per cell, draped on the surface
+  const FIELDS = {
+    E: { f: (j, i) => OC[j][i] ? -1 : Z[j][i], levels: [500, 1000, 1500, 2000] },
+    R: { f: (j, i) => SL[j][i] - Z[j][i] / 10, levels: [950, 900, 850, 800] },
+    B: { f: (j, i) => SL[j][i], levels: [996, 1000, 1004, 1008, 1012, 1016, 1020, 1024] },
+  };
+  Object.keys(FIELDS).forEach(key => {
+    const F = FIELDS[key]; F.mids = F.levels.map(() => []);
+    F.levels.forEach((L, li) => {
+      for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) {
+        const c = cells[j * NU + i];
+        const nodes = [[j, i], [j, i + 1], [j + 1, i + 1], [j + 1, i]];
+        const val = nodes.map(n => F.f(n[0], n[1]) - L);
+        const pts = [];
+        for (let k = 0; k < 4; k++) {
+          const a = val[k], b = val[(k + 1) % 4];
+          if ((a > 0) !== (b > 0)) {
+            const s = a / (a - b), n0 = nodes[k], n1 = nodes[(k + 1) % 4];
+            const jj = lerp(n0[0], n1[0], s), ii = lerp(n0[1], n1[1], s);
+            pts.push([ii / NU, jj / NV, lerp(Z[n0[0]][n0[1]], Z[n1[0]][n1[1]], s)]);
+          }
+        }
+        for (let k = 0; k + 1 < pts.length; k += 2) { c.segs.push({ key, li, a: pts[k], b: pts[k + 1] }); F.mids[li].push([(pts[k][0] + pts[k + 1][0]) / 2, (pts[k][1] + pts[k + 1][1]) / 2, (pts[k][2] + pts[k + 1][2]) / 2]); }
+      }
+    });
+  });
+  return { NU, NV, PW, PH, Z, OC, cells, FIELDS };
+})();
+
+const RAWST = [
+  ['A', 'Ship', 48, 270], ['D', 'Coast Town', 140, 322], ['F', 'Foothills', 225, 200], ['H', 'North Pass', 305, 60],
+  ['I', 'Ridge Summit', 305, 250], ['J', 'South Ridge', 285, 440], ['K', 'Lee Slope', 425, 110], ['L', 'Basin Lake', 455, 250],
+  ['N', 'Mesa', 560, 95], ['O', 'Plateau', 605, 235], ['P', 'Canyon Rim', 600, 420], ['R', 'High Desert', 690, 330]
+];
+const ST = RAWST.map(([id, name, x, y]) => {
+  const z = Math.round(Math.max(0, elevXY(x, y)) / 10) * 10, P = Math.round(slpXY(x, y) - z / 10);
+  return { id, name, u: x / 720, v: y / 480, z, P, C: z / 10, S: P + z / 10 };
+});
+const byId = id => ST.find(s => s.id === id);
+const DEMO = ['I', 'O', 'L'];   // demonstration stations, all above 100 m
+
+const V3D = { th: -0.3, c: 0.5, kz: 0.1, cx: 1360, cy: 610 };
+const VMAP = { th: 0, c: 1, kz: 0, cx: 1360, cy: 545 };
+const vMix = (a, b, p) => ({ th: lerp(a.th, b.th, p), c: lerp(a.c, b.c, p), kz: lerp(a.kz, b.kz, p), cx: lerp(a.cx, b.cx, p), cy: lerp(a.cy, b.cy, p) });
+function proj(u, v, z, V) {
+  const X = (u - .5) * T.PW, Y = (v - .5) * T.PH, c = Math.cos(V.th), s = Math.sin(V.th);
+  const rx = X * c - Y * s, ry = X * s + Y * c;
+  return [V.cx + rx, V.cy + ry * V.c - z * V.kz, ry];
+}
+const fpx = (target, lo, hi) => Math.min(hi, Math.max(lo, target / SCALE));
+const COL = { E: '#8a6a3f', R: '#c8322a', B: '#1667c4' };
+function label(ctx, txt, x, y, color, size, align, weight) {
+  ctx.font = (weight || 700) + ' ' + size + 'px "Nunito Sans", system-ui, sans-serif';
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.26; ctx.strokeStyle = 'rgba(255,255,255,.95)';
+  ctx.strokeText(txt, x, y); ctx.fillStyle = color; ctx.fillText(txt, x, y);
+  return ctx.measureText(txt).width;
+}
+function rich(ctx, parts, x, y, size) { // [[text,color],...] left to right
+  let cx = x; parts.forEach(p => { cx += label(ctx, p[0], cx, y, p[1], size); });
+}
+// choose a label spot for each contour level: away from stations and other labels, preferably near the viewer
+function pickLabels(key, V, avoid) {
+  const F = T.FIELDS[key], out = [];
+  F.levels.forEach((L, li) => {
+    let best = null, bs = -1e9;
+    F.mids[li].forEach(m => {
+      const p = proj(m[0], m[1], m[2], V);
+      if (p[0] < 900 || p[0] > 1830 || p[1] < 120 || p[1] > 960) return;
+      if (V.kz === 0 && (Math.abs(p[0] - V.cx) > T.PW / 2 - 45 || Math.abs(p[1] - V.cy) > T.PH / 2 - 25)) return;
+      let d = 1e9;
+      ST.forEach(s => { const q = proj(s.u, s.v, s.z, V); d = Math.min(d, Math.hypot(q[0] + 40 - p[0], q[1] - 40 * (V.kz > 0 ? 1 : 0) - p[1])); });
+      avoid.concat(out).forEach(o => { d = Math.min(d, Math.hypot(o[0] - p[0], (o[1] - p[1]) * 2)); });
+      const sc = Math.min(d, 160) + (V.kz > 0 ? p[2] * 0.25 : 0);
+      if (sc > bs) { bs = sc; best = [p[0], p[1]]; }
+    });
+    if (best) out.push(best);
+    else out.push(null);
+  });
+  return out;
+}
+const LABCACHE = {};
+function labelsFor(key, V, mode) {
+  const k = key + mode;
+  if (!LABCACHE[k]) { const ph = proj(HX / 720, HY / 480, 0, V), pl = proj(LX / 720, LY / 480, 0, V), o = fpx(34, 64, 110) * 0.75;
+    LABCACHE[k] = pickLabels(key, V, [ph, pl, [ph[0], ph[1] + o], [pl[0], pl[1] + o]]); }
+  return LABCACHE[k];
+}
+// place each station's label to the right of its pin unless that would overlap a label already placed
+function sides(V, pinH, fs) {
+  const boxes = [], out = {}, w = fs * 2.3, hh = fs * 2.1, r = fs * 0.5;
+  const pts = ST.map(s => ({ s, p: proj(s.u, s.v, s.z, V) })).sort((a, b) => a.p[0] - b.p[0]);
+  pts.forEach(({ p }) => boxes.push([p[0] - r, p[1] - pinH - r, p[0] + r, p[1] + 4]));   // pins themselves
+  const hit = b => boxes.some(q => b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1]);
+  pts.forEach(({ s, p }) => {
+    const hy = p[1] - pinH, gap = fs * 0.45, yb = Math.max(p[1], hy + fs * 1.05) + fs * 0.55;
+    const R = [p[0] + gap, hy - fs * 0.55, p[0] + gap + w, yb], L = [p[0] - gap - w, hy - fs * 0.55, p[0] - gap, yb];
+    let sd = 1;
+    if (R[2] > 1890 || (hit(R) && !hit(L) && L[0] > 860)) sd = -1;
+    out[s.id] = sd; boxes.push(sd > 0 ? R : L);
+  });
+  return out;
+}
+/* draw the whole 3D (or map) picture.
+   o = { V, rise (0..1 terrain height), sets:{E:[alpha per level],R:[...],B:[...]}, labs:{E,R,B}, pin(i)->appear, slp(i)->0..1, dim(i), focus:{s,q}, hl, legend } */
+function draw3D(ctx, o) {
+  const V = Object.assign({}, o.V); V.kz *= (o.rise === undefined ? 1 : o.rise);
+  ctx.clearRect(0, 0, 1920, 1080);
+  const order = T.cells.map(c => ({ c, d: proj(c.u, c.v, 0, V)[2] })).sort((a, b) => a.d - b.d);
+  const lw = Math.max(3, fpx(1.6, 3, 6));
+  const zOf = (i, j) => T.Z[j][i];
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  order.forEach(({ c }) => {
+    const { i, j } = c, NU = T.NU, NV = T.NV;
+    const p1 = proj(i / NU, j / NV, zOf(i, j), V), p2 = proj((i + 1) / NU, j / NV, zOf(i + 1, j), V),
+      p3 = proj((i + 1) / NU, (j + 1) / NV, zOf(i + 1, j + 1), V), p4 = proj(i / NU, (j + 1) / NV, zOf(i, j + 1), V);
+    ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.lineTo(p3[0], p3[1]); ctx.lineTo(p4[0], p4[1]); ctx.closePath();
+    ctx.fillStyle = c.fill; ctx.fill(); ctx.strokeStyle = c.fill; ctx.lineWidth = 1; ctx.stroke();
+    if (o.wash) { ctx.fillStyle = 'rgba(255,255,255,' + o.wash + ')'; ctx.fill(); }
+    if (o.sets) c.segs.forEach(sg => {
+      const al = o.sets[sg.key] && o.sets[sg.key][sg.li];
+      if (!al) return;
+      const a = proj(sg.a[0], sg.a[1], sg.a[2] + 8, V), b = proj(sg.b[0], sg.b[1], sg.b[2] + 8, V);
+      ctx.globalAlpha = al; ctx.strokeStyle = COL[sg.key]; ctx.lineWidth = lw * (sg.key === 'E' ? 0.8 : 1);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.globalAlpha = 1;
+    });
+  });
+  // side walls (south and west) down to a base below sea level
+  if (V.kz > 0.002) {
+    const base = -420, NU = T.NU, NV = T.NV;
+    const wall = (pts) => {
+      for (let k = 0; k + 1 < pts.length; k++) {
+        const [u0, v0, z0, oc0] = pts[k], [u1, v1, z1] = pts[k + 1];
+        const a = proj(u0, v0, z0, V), b = proj(u1, v1, z1, V), c = proj(u1, v1, base, V), d = proj(u0, v0, base, V);
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.lineTo(d[0], d[1]); ctx.closePath();
+        ctx.fillStyle = oc0 ? '#8fb8e0' : '#cbb594'; ctx.fill(); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1; ctx.stroke();
+      }
+      ctx.beginPath(); pts.forEach((p, k) => { const q = proj(p[0], p[1], 0, V); k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+      ctx.setLineDash([12, 9]); ctx.strokeStyle = '#1e376c'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); pts.forEach((p, k) => { const q = proj(p[0], p[1], base, V); k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+      pts.slice().reverse().forEach(p => { const q = proj(p[0], p[1], p[2], V); ctx.lineTo(q[0], q[1]); });
+      ctx.closePath(); ctx.strokeStyle = '#1e376c'; ctx.lineWidth = 2; ctx.stroke();
+    };
+    const south = [], west = [];
+    for (let i = 0; i <= NU; i++) south.push([i / NU, 1, zOf(i, NV), T.OC[NV][i]]);
+    for (let j = NV; j >= 0; j--) west.push([0, j / NV, zOf(0, j), true]);
+    wall(west); wall(south);
+    if (o.slLabel) { const q = proj(0.5, 1, 0, V); label(ctx, 'Sea level', q[0] + 150, q[1] + fpx(14, 26, 42) * 0.75, '#1e376c', fpx(13, 24, 40), 'left', 700); }
+  }
+  if (o.under) o.under(ctx, V);
+  // contour labels
+  if (o.labs) Object.keys(o.labs).forEach(key => {
+    const a = o.labs[key]; if (!a) return;
+    const F = T.FIELDS[key], L = labelsFor(key, o.V, o.mode || '3d');
+    F.levels.forEach((lv, li) => {
+      const al = (o.sets[key] && o.sets[key][li] || 0) * a;
+      if (!al || !L[li]) return;
+      ctx.globalAlpha = al; label(ctx, key === 'E' ? fmt(lv) + ' m' : lv + ' mb', L[li][0], L[li][1], COL[key], fpx(12, 24, 40), 'center'); ctx.globalAlpha = 1;
+    });
+  });
+  // H and L
+  if (o.hl) {
+    ctx.globalAlpha = o.hl;
+    const ph = proj(HX / 720, HY / 480, 0, o.V), pl = proj(LX / 720, LY / 480, 0, o.V), big = fpx(34, 64, 110);
+    label(ctx, 'H', ph[0], ph[1], '#1667c4', big, 'center', 700); label(ctx, '1025', ph[0], ph[1] + big * 0.75, '#1e376c', fpx(12, 24, 38), 'center');
+    label(ctx, 'L', pl[0], pl[1], '#c8322a', big, 'center', 700); label(ctx, '994', pl[0], pl[1] + big * 0.75, '#1e376c', fpx(12, 24, 38), 'center');
+    ctx.globalAlpha = 1;
+  }
+  // focus column for a demonstration station
+  if (o.focus) {
+    const s = o.focus.s, top = proj(s.u, s.v, s.z, V), bot = proj(s.u, s.v, 0, V), w = 36, q = o.focus.q;
+    const len = bot[1] - top[1];
+    ctx.globalAlpha = o.focus.a;
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(top[0] - w / 2, top[1], w, len);
+    ctx.fillStyle = 'rgba(22,103,196,.55)'; ctx.fillRect(top[0] - w / 2, top[1], w, len * q);
+    ctx.setLineDash([10, 7]); ctx.strokeStyle = '#f47920'; ctx.lineWidth = 4; ctx.strokeRect(top[0] - w / 2, top[1], w, len); ctx.setLineDash([]);
+    ctx.strokeStyle = '#1e376c'; ctx.lineWidth = 2;
+    for (let z = 100; z < s.z; z += 100) { const y = top[1] + z * V.kz; ctx.beginPath(); ctx.moveTo(top[0] - w / 2, y); ctx.lineTo(top[0] - w / 2 + (z % 500 ? 9 : 18), y); ctx.stroke(); }
+    // sea level marker at the bottom of the column
+    ctx.beginPath(); ctx.ellipse(bot[0], bot[1], w * 1.1, w * 0.4 * V.c / 0.5, 0, 0, 2 * Math.PI); ctx.strokeStyle = '#1e376c'; ctx.lineWidth = 3; ctx.stroke();
+    const fs = fpx(14, 28, 46);
+    label(ctx, 'sea level', bot[0] - w * 1.3, bot[1], '#1e376c', fpx(12, 24, 40), 'right');
+    const fl = fpx(12.5, 27, 40), lx = top[0] + w / 2 + 12;   // same x and size as the station pressure label
+    if (q > 0) {
+      const y = top[1] + len * q, add = Math.round(s.z * q / 10);
+      ctx.strokeStyle = '#1e376c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(top[0] - w / 2 - 6, y); ctx.lineTo(top[0] + w / 2 + 6, y); ctx.stroke();
+      label(ctx, '+' + add + ' mb', lx, q < 1 ? y : y - fl * 0.55, '#d4610c', fl, 'left');
+    }
+    if (o.focus.slp) { ctx.globalAlpha = o.focus.a * o.focus.slp; label(ctx, s.S + ' mb', lx, bot[1] + fl * 0.6, '#1667c4', fl, 'left'); }
+    ctx.globalAlpha = 1;
+  }
+  // station pins (far first)
+  if (o.pin) {
+    const fs = fpx(12.5, 27, 40);
+    const SD = sides(V, (o.pinH === undefined ? 46 : o.pinH), fs);
+    const list = ST.map((s, k) => ({ s, k, p: proj(s.u, s.v, s.z, V) })).sort((a, b) => a.p[2] - b.p[2]);
+    list.forEach(({ s, k, p }) => {
+      const ap = o.pin(k); if (!ap) return;
+      const dim = o.dim ? o.dim(k) : 1, sl = o.slp ? o.slp(k) : 0;
+      const ph = (o.pinH === undefined ? 46 : o.pinH) * eo(ap), hx = p[0], hy = p[1] - ph;
+      ctx.globalAlpha = ap * dim;
+      if (ph > 2) { ctx.strokeStyle = '#1e376c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(hx, hy); ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(hx, hy, fpx(4, 8, 13), 0, 2 * Math.PI); ctx.fillStyle = sl > 0.5 ? '#1667c4' : '#ffffff'; ctx.fill(); ctx.strokeStyle = '#1e376c'; ctx.lineWidth = 3; ctx.stroke();
+      const foc = o.focus && o.focus.s === s;
+      const sd = foc ? 1 : SD[s.id], lx = foc ? hx + 30 : hx + sd * fpx(7, 16, 22), al = sd > 0 ? 'left' : 'right';
+      const ra = o.redA === undefined ? 1 : o.redA;
+      if (ra > 0) { ctx.globalAlpha = ap * dim * ra; label(ctx, String(s.P), lx, hy, '#c8322a', fs, al); }
+      // sea level pressure written at the foot of the pin (stacks under the red value when the pin is short)
+      if (sl) { ctx.globalAlpha = ap * dim * sl; label(ctx, String(s.S), lx, lerp(hy, Math.max(p[1], hy + fs * 1.05), ra), '#1667c4', fs, al); }
+      ctx.globalAlpha = 1;
+    });
+  }
+  // legend
+  if (o.legend) {
+    const fs = fpx(12, 24, 38), y = 1040;
+    ctx.globalAlpha = o.legend;
+    let x = 1880; ctx.font = '700 ' + fs + 'px "Nunito Sans", sans-serif';
+    const items = [['Sea level pressure (mb)', '#1667c4'], ['Station pressure (mb)', '#c8322a']];
+    items.forEach(([t, c], n) => { ctx.globalAlpha = o.legend * (n === 1 && o.redA !== undefined ? o.redA : 1); const w = ctx.measureText(t).width; label(ctx, t, x, y, c, fs, 'right'); x -= w + fs * 1.6; });
+    ctx.globalAlpha = 1;
+  }
+}
+const canvasHTML = '<canvas class="art cv" width="1920" height="1080"></canvas>';
+
+// ---------- scenes ----------
+const SCENES = [];
+function scene(id, name, dur, def) { SCENES.push(Object.assign({ id, name, dur }, def)); }
+
+scene('title', 'Sea level pressure', 5, {
+  init(root) {
+    root.append(h('<div class="ground">' + crossSVG() +
+      '<div class="words" style="left:140px;top:300px;width:720px">' +
+      '<p class="tag">Introduction to meteorology</p><h1 class="line" style="font-size:104px">Sea level pressure</h1>' +
+      '<div class="rule"></div><p class="sub">Comparing barometers at different altitudes</p></div></div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style; this.subS = root.querySelector('.sub').style;
+    this.art = root.querySelector('.art');
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.1);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.9, 1.4)) + ')';
+    subIn(this.subS, t, 1.2);
+    this.art.style.opacity = eo(seg(t, 0.4, 1.6));
+  },
+});
+
+scene('two', 'Two stations', 7, {
+  init(root) {
+    root.append(h('<div class="ground">' + crossSVG('', stackA() + stackB()) +
+      textBlock(280, 'Two weather stations', 'Different altitudes', 'Station A is near the coast at 50 m. Station B is on a mountain at 1,500 m. Each barometer reads the <b class="r">station pressure</b>.') + '</div>'));
+    this.huts = [...root.querySelectorAll('svg > g')].slice(-2); this.sa = root.querySelector('.sa'); this.sb = root.querySelector('.sb');
+    this.pv = [...root.querySelectorAll('.pv')];
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    this.huts.forEach((g, k) => op(g, eo(seg(t, 0.8 + k * 0.6, 1.4 + k * 0.6))));
+    op(this.sa, eo(seg(t, 1.8, 2.4))); op(this.sb, eo(seg(t, 2.6, 3.2)));
+    this.pv.forEach((e, k) => op(e, eo(seg(t, 4 + k * 0.8, 4.6 + k * 0.8))));
+  },
+});
+
+scene('compare', 'Not comparable', 8, {
+  init(root) {
+    const bx = 1270, top = 210;
+    const back = '<g class="cols">' +
+      '<path class="lead" d="M' + bx + ' ' + top + ' V' + YA + '" style="stroke-dasharray:none;stroke-width:4"/>' +
+      '<path d="M' + (bx - 12) + ' ' + top + ' H' + (bx + 12) + ' M' + (bx - 12) + ' ' + YA + ' H' + (bx + 12) + '" stroke="#1e376c" stroke-width="4"/>' +
+      '<path class="ex" d="M' + (bx + 4) + ' ' + YB + ' V' + YA + '" stroke="#f47920" stroke-width="14"/>' +
+      '<path class="lead" d="M' + bx + ' ' + YB + ' H' + (XB - 40) + '"/>' +
+      '</g>';
+    const front = stackA() + stackB() +
+      '<text class="label halo ext" x="' + (bx + 26) + '" y="' + ((YA + YB) / 2 + 40) + '"><tspan x="' + (bx + 26) + '" dy="0">1,450 m more air</tspan><tspan x="' + (bx + 26) + '" dy="1.15em">above Station A</tspan></text>' +
+      '<g class="vs"><text class="val halo" x="1360" y="110" text-anchor="middle"><tspan fill="#c8322a">' + A2.P + ' mb</tspan><tspan fill="#1e376c"> vs </tspan><tspan fill="#c8322a">' + B2.P + ' mb</tspan></text>' +
+      '<text class="label halo" x="1360" y="160" text-anchor="middle">' + (A2.P - B2.P) + ' mb apart, mostly because of altitude</text></g>';
+    root.append(h('<div class="ground">' + crossSVG(back, front) +
+      textBlock(250, 'Station pressure', 'Not comparable', 'Higher stations have less air above them, so their pressure is lower. The difference is mostly altitude, not weather.') + '</div>'));
+    this.air = root.querySelector('.air'); this.cols = root.querySelector('.cols'); this.ex = root.querySelector('.ex'); this.ext = root.querySelector('.ext'); this.vs = root.querySelector('.vs');
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    op(this.vs, eo(seg(t, 0.8, 1.6)));
+    this.air.style.opacity = lerp(1, 1, 1);
+    this.air.style.fill = t > 2 ? '#aab9d6' : '#c9d3e6';
+    op(this.cols, eo(seg(t, 2.6, 3.4)));
+    const e = eo(seg(t, 4, 5));
+    this.ex.style.opacity = e; op(this.ext, eo(seg(t, 4.6, 5.4)));
+  },
+});
+
+scene('fix2d', 'Correct to sea level', 11, {
+  init(root) {
+    const w = 46, yb = YB, ya = YA;
+    let ticks = ''; for (let z = 100; z < 1500; z += 100) { const y = yb + z * K2; ticks += '<line x1="' + (XB - w / 2) + '" x2="' + (XB - w / 2 + (z % 500 ? 10 : 20)) + '" y1="' + y + '" y2="' + y + '" stroke="#1e376c" stroke-width="2"/>'; }
+    const front = stackA('sa') + stackB('sb') +
+      '<rect x="' + (XB - w / 2) + '" y="' + yb + '" width="' + w + '" height="' + (SLY - yb) + '" fill="#ffffff" fill-opacity=".6" stroke="#f47920" stroke-width="4" stroke-dasharray="10 7"/>' +
+      '<rect class="fB" x="' + (XB - w / 2) + '" y="' + yb + '" width="' + w + '" height="0" fill="#1667c4" fill-opacity=".5"/>' + ticks +
+      '<rect x="' + (XA - 22) + '" y="' + ya + '" width="44" height="' + (SLY - ya) + '" fill="#ffffff" fill-opacity=".6" stroke="#f47920" stroke-width="4"/>' +
+      '<rect class="fA" x="' + (XA - 22) + '" y="' + ya + '" width="44" height="0" fill="#1667c4" fill-opacity=".6"/>' +
+      '<g class="frB"><line x1="' + (XB - w / 2 - 8) + '" x2="' + (XB + w / 2 + 8) + '" y1="0" y2="0" stroke="#1e376c" stroke-width="4"/><text class="val halo cB" x="' + (XB + w / 2 + 18) + '" y="12" fill="#d4610c"></text></g>' +
+      '<text class="val halo cA" x="' + (XA + 34) + '" y="' + (SLY - 18) + '" fill="#d4610c">+5 mb</text>' +
+      '<g class="rB"><circle cx="' + XB + '" cy="' + SLY + '" r="9" fill="#1667c4"/><text class="val halo" x="' + XB + '" y="' + (SLY + 58) + '" text-anchor="middle" fill="#1667c4">' + B2.S + ' mb</text></g>' +
+      '<g class="rA"><circle cx="' + XA + '" cy="' + SLY + '" r="9" fill="#1667c4"/><text class="val halo" x="' + XA + '" y="' + (SLY + 58) + '" text-anchor="middle" fill="#1667c4">' + A2.S + ' mb</text></g>' +
+      '<g class="eqB"><text class="label halo" x="870" y="960"><tspan fill="#1e376c">B: </tspan><tspan fill="#c8322a">866 mb</tspan><tspan fill="#1e376c"> + 1,500 m ÷ 10 = 866 + 150 = </tspan><tspan fill="#1667c4">1016 mb</tspan></text></g>' +
+      '<g class="eqA"><text class="label halo" x="870" y="1012"><tspan fill="#1e376c">A: </tspan><tspan fill="#c8322a">1008 mb</tspan><tspan fill="#1e376c"> + 50 m ÷ 10 = 1008 + 5 = </tspan><tspan fill="#1667c4">1013 mb</tspan></text></g>';
+    root.append(h('<div class="ground">' + crossSVG('', front) +
+      textBlock(240, 'The correction', 'Add 1 mb per 10 m', 'Imagine each station\'s air column continues down to sea level. Every 10 m of extra air adds about 1 mb.') + '</div>'));
+    ['fB', 'fA', 'frB', 'cB', 'cA', 'rB', 'rA', 'eqB', 'eqA'].forEach(k => this[k] = root.querySelector('.' + k));
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    const qB = eio(seg(t, 1.8, 6.8)), lenB = SLY - YB;
+    this.fB.setAttribute('height', (lenB * qB).toFixed(1));
+    this.frB.setAttribute('transform', 'translate(0 ' + (YB + lenB * qB).toFixed(1) + ')');
+    op(this.frB, qB > 0 ? 1 : 0);
+    this.cB.textContent = '+' + Math.round(150 * qB) + ' mb';
+    op(this.rB, eo(seg(t, 6.9, 7.4))); op(this.eqB, eo(seg(t, 7.0, 7.6)));
+    const qA = eio(seg(t, 7.8, 8.8));
+    this.fA.setAttribute('height', ((SLY - YA) * qA).toFixed(1)); op(this.cA, qA > 0 ? 1 : 0);
+    op(this.rA, eo(seg(t, 8.9, 9.4))); op(this.eqA, eo(seg(t, 9.0, 9.6)));
+  },
+});
+
+scene('compare2', 'Now comparable', 6, {
+  init(root) {
+    const front = stackA('sa') + stackB('sb') +
+      '<g class="rB"><circle cx="' + XB + '" cy="' + SLY + '" r="9" fill="#1667c4"/><text class="val halo" x="' + XB + '" y="' + (SLY + 58) + '" text-anchor="middle" fill="#1667c4">' + B2.S + ' mb</text></g>' +
+      '<g class="rA"><circle cx="' + XA + '" cy="' + SLY + '" r="9" fill="#1667c4"/><text class="val halo" x="' + XA + '" y="' + (SLY + 58) + '" text-anchor="middle" fill="#1667c4">' + A2.S + ' mb</text></g>' +
+      '<line class="blu" x1="840" x2="1920" y1="' + SLY + '" y2="' + SLY + '" stroke="#1667c4" stroke-width="7"/>' +
+      '<g class="vs"><text class="val halo" x="1360" y="110" text-anchor="middle"><tspan fill="#1667c4">' + A2.S + ' mb</tspan><tspan fill="#1e376c"> &lt; </tspan><tspan fill="#1667c4">' + B2.S + ' mb</tspan></text>' +
+      '<text class="label halo" x="1360" y="160" text-anchor="middle">At sea level, Station B is ' + (B2.S - A2.S) + ' mb higher</text></g>';
+    root.append(h('<div class="ground">' + crossSVG('', front) +
+      textBlock(250, 'Sea level pressure', 'Now comparable', 'Both readings now describe the same level. Station B has the <b class="b">higher sea level pressure</b>, even though its station pressure was much lower.') + '</div>'));
+    ['sa', 'sb', 'rA', 'rB', 'vs', 'blu'].forEach(k => this[k] = root.querySelector('.' + k));
+    textRefs(this, root);
+  },
+  render(t) {
+    textRender(this, t, 1.2);
+    const f = lerp(1, 0.35, eo(seg(t, 0.6, 1.4)));
+    op(this.sa, f); op(this.sb, f);
+    op(this.blu, eo(seg(t, 0.8, 1.5)));
+    op(this.vs, eo(seg(t, 1.6, 2.4)));
+  },
+});
+
+// ---------- 3D scenes ----------
+function scene3d(id, name, dur, text, render) {
+  scene(id, name, dur, {
+    init(root) {
+      const tb = h(textBlock(text[0], text[1], text[2], text[3]));
+      if (text[4]) tb.append(h(text[4]));
+      root.append(h('<div class="ground">' + canvasHTML + '</div>'));
+      root.firstChild.append(tb);
+      this.ctx = root.querySelector('canvas').getContext('2d');
+      this.cn = root.querySelector('.cn');
+      textRefs(this, root);
+    },
+    render(t) { textRender(this, t, 1.2); if (this.cn) subIn(this.cn.style, t, 2.4); render.call(this, t, this.ctx); },
+  });
+}
+const none = () => 0, all = () => 1;
+const isDemo = k => DEMO.indexOf(ST[k].id) >= 0;
+const levels = (n, f) => Array.from({ length: n }, (_, i) => f(i));
+
+scene3d('many', 'Many stations', 7, [270, 'A whole region', 'Many stations', 'A region with a coast, a mountain range, a basin and a high plateau. Each pin is a weather station showing its <b class="r">station pressure</b> in mb.'], function (t, ctx) {
+  draw3D(ctx, { V: V3D, rise: eio(seg(t, 0.2, 2.2)), pin: k => seg(t, 2.4 + k * 0.18, 2.9 + k * 0.18), legend: eo(seg(t, 4.6, 5.2)) });
+});
+
+scene3d('terrain', 'Station pressure contours', 10, [240, 'Station pressure', 'Contours trace the terrain', 'Brown lines connect equal altitude. Red lines connect equal <b class="r">station pressure</b>. They have the same shape, so station pressure mostly shows the mountains.'], function (t, ctx) {
+  draw3D(ctx, {
+    V: V3D, pin: all, legend: 1, wash: 0,
+    sets: { E: levels(4, i => eo(seg(t, 1.2 + i * 0.35, 1.8 + i * 0.35)) * lerp(1, 0.55, eo(seg(t, 5, 6)))), R: levels(4, i => eo(seg(t, 4.2 + i * 0.5, 4.9 + i * 0.5))) },
+    labs: { E: lerp(1, 0, eo(seg(t, 5, 6))), R: 1 },
+  });
+});
+
+DEMO.forEach((id, n) => {
+  const s = byId(id);
+  scene3d('fix' + id, 'Correct station ' + id, 8.5, [230, 'Correcting station ' + id, s.name + ', ' + fmt(s.z) + ' m', 'Imagine the air column continuing ' + fmt(s.z) + ' m down to sea level. At 1 mb per 10 m that adds ' + s.C + ' mb: <b class="r">' + s.P + '</b> + ' + s.C + ' = <b class="b">' + s.S + ' mb</b>.'], function (t, ctx) {
+    const q = eio(seg(t, 1.8, 6.3)), done = seg(t, 6.3, 6.8);
+    draw3D(ctx, {
+      V: V3D, pin: all, legend: 1, slLabel: true,
+      slp: k => { const d = DEMO.indexOf(ST[k].id); return d >= 0 && d < n ? 1 : 0; },
+      dim: k => ST[k].id === id ? 1 : lerp(1, 0.3, eo(seg(t, 0.4, 1.2))),
+      focus: { s, q, a: eo(seg(t, 1, 1.6)), slp: done },
+    });
+    // the equation, written at the top of the picture
+    const fs = fpx(15, 30, 48), x = 880, y1 = 80, a = eo(seg(t, 1, 1.6));
+    ctx.globalAlpha = a;
+    rich(ctx, [['Station ' + id + ': ', '#1e376c'], [s.P + ' mb', '#c8322a'], [' + ' + fmt(s.z) + ' m ÷ 10', '#1e376c']], x, y1, fs);
+    ctx.globalAlpha = eo(seg(t, 6.3, 6.9));
+    rich(ctx, [['= ' + s.P + ' + ' + s.C + ' = ', '#1e376c'], [s.S + ' mb', '#1667c4']], x, y1 + fs * 1.3, fs);
+    ctx.globalAlpha = 1;
+  });
+});
+
+scene3d('allfix', 'Every station', 6, [260, 'Same rule everywhere', 'Every station', 'Each station gets the same correction: add 1 mb for every 10 m of altitude. Now every pin shows its <b class="b">sea level pressure</b> too.'], function (t, ctx) {
+  const rest = ST.map((s, k) => k).filter(k => !isDemo(k));
+  draw3D(ctx, {
+    V: V3D, pin: all, legend: 1,
+    slp: k => isDemo(k) ? 1 : eo(seg(t, 1.4 + rest.indexOf(k) * 0.3, 1.8 + rest.indexOf(k) * 0.3)),
+  });
+});
+
+const CONTOUR_NOTE = 'Every point on a contour line has the same value. On one side of the line, every point is higher than that value. On the other side, every point is lower. So the 1008 mb isobar separates pressures above 1008 mb from pressures below it.';
+scene3d('flat', 'A flat map', 9, [250, 'Seen from above', 'A flat map', 'The 3D view tips over into a map seen from straight above. Then the <b class="r">station pressures</b> fade away, leaving only the <b class="b">sea level pressures</b>.'], function (t, ctx) {
+  const p = eio(seg(t, 0.8, 4.2)), V = vMix(V3D, VMAP, p);
+  draw3D(ctx, { V, pin: all, pinH: lerp(46, 0, p), legend: 1, slp: all, wash: 0.3 * p, redA: 1 - eo(seg(t, 5.2, 6.4)) });
+});
+
+// ---------- pencils drawing the isobars on the flat map ----------
+const PENCIL = (function () {
+  // isobars as connected lines (marching squares, then chained), in map pixels
+  const NU = 176, NV = 120;
+  function lines(level) {
+    const v = [];
+    for (let j = 0; j <= NV; j++) { v[j] = []; for (let i = 0; i <= NU; i++) v[j][i] = slpUV(i / NU, j / NV) - level; }
+    const pt = k => { const [tp, i, j] = k.split(','), I = +i, J = +j;
+      if (tp === 'h') { const a = v[J][I], b = v[J][I + 1], f = a / (a - b); return [(I + f) / NU, J / NV]; }
+      const a = v[J][I], b = v[J + 1][I], f = a / (a - b); return [I / NU, (J + f) / NV]; };
+    const segs = [];
+    for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) {
+      const a = v[j][i] > 0, b = v[j][i + 1] > 0, c = v[j + 1][i + 1] > 0, d = v[j + 1][i] > 0;
+      const Tk = 'h,' + i + ',' + j, Bk = 'h,' + i + ',' + (j + 1), Lk = 'v,' + i + ',' + j, Rk = 'v,' + (i + 1) + ',' + j, e = [];
+      if (a !== b) e.push(Tk); if (b !== c) e.push(Rk); if (c !== d) e.push(Bk); if (d !== a) e.push(Lk);
+      if (e.length === 2) segs.push(e);
+      else if (e.length === 4) { const ctr = (v[j][i] + v[j][i + 1] + v[j + 1][i + 1] + v[j + 1][i]) > 0; if (ctr === a) { segs.push([Tk, Rk]); segs.push([Bk, Lk]); } else { segs.push([Tk, Lk]); segs.push([Rk, Bk]); } }
+    }
+    const adj = new Map(); segs.forEach((sg, n) => sg.forEach(k => { if (!adj.has(k)) adj.set(k, []); adj.get(k).push(n); }));
+    const used = segs.map(() => false), out = [];
+    const walk = (st, from) => { const o = []; let k = from, cur = st;
+      while (true) { used[cur] = true; const sg = segs[cur], nk = sg[0] === k ? sg[1] : sg[0]; o.push(nk); const nx = (adj.get(nk) || []).find(n => !used[n]); if (nx === undefined) break; cur = nx; k = nk; }
+      return o; };
+    for (let n = 0; n < segs.length; n++) { if (used[n]) continue; const f = walk(n, segs[n][0]); used[n] = false; const bk = walk(n, segs[n][1]); out.push(bk.reverse().concat(f).map(pt)); }
+    return out;
+  }
+  const SPEED = 520, MOVE = 0.5, START = 3.2, PARK = [[1900, 1000], [880, 40]];
+  const jobs = [];
+  T.FIELDS.B.levels.forEach((L, li) => {
+    lines(L).map(uv => uv.map(q => { const r = proj(q[0], q[1], 0, VMAP); return [r[0], r[1]]; }))
+      .map(pts => { const cum = [0]; for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1])); return { li, pts, cum, len: cum[cum.length - 1] }; })
+      .filter(j => j.len > 30).sort((a, b) => b.len - a.len).forEach(j => jobs.push(j));
+  });
+  // schedule: the first pencil starts at the low and works outward; after its first three isobars,
+  // a second pencil starts at the high and works outward until the two meet
+  const pens = [{ free: START, at: PARK[0], plan: [], on: START - 0.6 }, { free: Infinity, at: PARK[1], plan: [], on: Infinity }];
+  const NL = T.FIELDS.B.levels.length, byLevel = T.FIELDS.B.levels.map((_, li) => jobs.filter(j => j.li === li));
+  function doLevel(pen, li) {
+    byLevel[li].forEach(j => {
+      const t0 = pen.free + MOVE, t1 = t0 + j.len / SPEED;
+      pen.plan.push({ type: 'move', t0: pen.free, t1: t0, a: pen.at, b: j.pts[0] });
+      pen.plan.push({ type: 'draw', t0, t1, j });
+      j.t0 = t0; j.t1 = t1; pen.free = t1; pen.at = j.pts[j.pts.length - 1];
+    });
+  }
+  let lo = 0, hi = NL - 1;
+  for (; lo < 3; lo++) doLevel(pens[0], lo);
+  pens[1].free = pens[0].free - 2.2; pens[1].on = pens[1].free - 0.4;   // second pencil joins near the end of the third line
+  while (lo <= hi) {
+    if (pens[0].free <= pens[1].free) doLevel(pens[0], lo++);
+    else doLevel(pens[1], hi--);
+  }
+  pens.forEach((pen, k) => { pen.plan.push({ type: 'move', t0: pen.free, t1: pen.free + MOVE * 1.6, a: pen.at, b: PARK[k] }); pen.off = pen.free + MOVE * 1.6; });
+  const levelDone = T.FIELDS.B.levels.map((_, li) => Math.max(...jobs.filter(j => j.li === li).map(j => j.t1)));
+  const END = Math.max(...levelDone);
+  function at(j, d) { // point at distance d along a job's line
+    let k = 1; while (k < j.cum.length - 1 && j.cum[k] < d) k++;
+    const f = (d - j.cum[k - 1]) / Math.max(1e-6, j.cum[k] - j.cum[k - 1]);
+    return [lerp(j.pts[k - 1][0], j.pts[k][0], clamp01(f)), lerp(j.pts[k - 1][1], j.pts[k][1], clamp01(f))];
+  }
+  function drawPencil(ctx, x, y, body, alpha, lift) {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x + lift * 10, y - lift * 18); ctx.rotate(-0.95);
+    const sc = Math.max(1, Math.min(1.5, 0.6 / SCALE)); ctx.scale(sc, sc);
+    ctx.lineJoin = 'round'; ctx.strokeStyle = '#1e376c'; ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(30,55,108,.18)'; ctx.beginPath(); ctx.ellipse(70, 26, 110, 8, 0, 0, 2 * Math.PI); ctx.fill();   // shadow
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(40, -13); ctx.lineTo(40, 13); ctx.closePath(); ctx.fillStyle = '#e9c99b'; ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(13, -4.3); ctx.lineTo(13, 4.3); ctx.closePath(); ctx.fillStyle = '#1e376c'; ctx.fill();
+    ctx.fillStyle = body; ctx.fillRect(40, -13, 150, 26); ctx.strokeRect(40, -13, 150, 26);
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(42, -11, 146, 7);
+    ctx.fillStyle = '#b9c1cf'; ctx.fillRect(190, -14, 18, 28); ctx.strokeRect(190, -14, 18, 28);
+    ctx.beginPath(); ctx.moveTo(208, -13); ctx.lineTo(222, -13); ctx.quadraticCurveTo(230, -13, 230, -5); ctx.lineTo(230, 5); ctx.quadraticCurveTo(230, 13, 222, 13); ctx.lineTo(208, 13); ctx.closePath();
+    ctx.fillStyle = '#f2a1a8'; ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  function render(ctx, t) {
+    const lw = Math.max(3, fpx(1.6, 3, 6));
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = '#1667c4'; ctx.lineWidth = lw;
+    jobs.forEach(j => {
+      if (t <= j.t0) return;
+      const d = Math.min(j.len, (t - j.t0) * SPEED);
+      ctx.beginPath(); ctx.moveTo(j.pts[0][0], j.pts[0][1]);
+      for (let k = 1; k < j.pts.length && j.cum[k] <= d; k++) ctx.lineTo(j.pts[k][0], j.pts[k][1]);
+      const e = at(j, d); ctx.lineTo(e[0], e[1]); ctx.stroke();
+    });
+  }
+  function labels(ctx, t) {
+    const L = labelsFor('B', VMAP, 'map');
+    T.FIELDS.B.levels.forEach((lv, li) => {
+      const a = eo(seg(t, levelDone[li], levelDone[li] + 0.5));
+      if (!a || !L[li]) return;
+      ctx.globalAlpha = a; label(ctx, lv + ' mb', L[li][0], L[li][1], '#1667c4', fpx(12, 24, 40), 'center'); ctx.globalAlpha = 1;
+    });
+  }
+  function pencils(ctx, t) {
+    const cols = ['#f6c544', '#f47920'];
+    pens.forEach((pen, k) => {
+      if (t < pen.on || t > pen.off + 0.3) return;
+      let pos = PARK[k], lift = 1;
+      const st = pen.plan.find(p => t >= p.t0 && t < p.t1);
+      if (!st) { pos = t < pen.on + 0.6 ? PARK[k] : pen.plan[0].a; if (pen.plan.length) pos = t >= pen.off ? PARK[k] : pen.plan[0].a; }
+      else if (st.type === 'move') { const f = eio(seg(t, st.t0, st.t1)); pos = [lerp(st.a[0], st.b[0], f), lerp(st.a[1], st.b[1], f)]; lift = Math.sin(Math.PI * f) * 1.2 + (f < 0.5 ? 0 : 0); }
+      else { pos = at(st.j, (t - st.t0) * SPEED); lift = 0; }
+      const fade = Math.min(eo(seg(t, pen.on, pen.on + 0.5)), 1 - seg(t, pen.off, pen.off + 0.3));
+      drawPencil(ctx, pos[0], pos[1], cols[k], fade, lift);
+    });
+  }
+  return { render, labels, pencils, END, secondAt: pens[1].on };
+})();
+
+scene3d('isobars', 'Sea level isobars', Math.ceil(PENCIL.END + 2.5), [130, 'Surface pressure map', 'Draw the isobars', 'Blue lines connect equal <b class="b">sea level pressure</b>, every 4 mb. They cross the mountains freely: they show the weather, not the terrain.',
+  '<div class="card cn" style="position:static;padding:22px 26px;display:flex;flex-direction:column;gap:8px"><p class="tag" style="color:var(--main)">What is a contour?</p><p class="sub" style="font-size:28px">' + nb(CONTOUR_NOTE) + '</p></div>'], function (t, ctx) {
+  draw3D(ctx, {
+    V: VMAP, pin: all, pinH: 0, legend: 1, slp: all, wash: 0.3, mode: 'map', redA: 0,
+    under: c => { PENCIL.render(c, t); PENCIL.labels(c, t); },
+    hl: eo(seg(t, PENCIL.END + 0.6, PENCIL.END + 1.4)),
+  });
+  PENCIL.pencils(ctx, t);
+});
+
+scene('recap', 'Recap', 7, {
+  init(root) {
+    const icoA = '<rect x="-100" y="40" width="200" height="60" fill="#e6dccb" stroke="#1e376c" stroke-width="3"/><path d="M-100 40 L-30 40 L20 -70 L70 40 Z" fill="#e6dccb" stroke="#1e376c" stroke-width="3"/>' +
+      '<g transform="translate(-65 40) scale(.8)"><rect class="hut" x="-20" y="-32" width="40" height="32"/><polygon class="hut" points="-27,-32 0,-54 27,-32"/></g>' +
+      '<g transform="translate(20 -70) scale(.8)"><rect class="hut" x="-20" y="-32" width="40" height="32"/><polygon class="hut" points="-27,-32 0,-54 27,-32"/></g>' +
+      '<text x="-65" y="-30" text-anchor="middle" fill="#c8322a" style="font:700 30px Nunito Sans,sans-serif">1008</text><text x="80" y="-100" text-anchor="middle" fill="#c8322a" style="font:700 30px Nunito Sans,sans-serif">866</text>';
+    const icoB = '<rect x="-22" y="-90" width="44" height="170" fill="#1667c4" fill-opacity=".5" stroke="#f47920" stroke-width="4" stroke-dasharray="9 6"/><line x1="-90" x2="90" y1="80" y2="80" stroke="#1e376c" stroke-width="4" stroke-dasharray="10 8"/>' +
+      '<text x="36" y="0" fill="#d4610c" style="font:700 30px Nunito Sans,sans-serif">+1 mb</text><text x="36" y="34" fill="#1e376c" style="font:700 24px Nunito Sans,sans-serif">per 10 m</text>';
+    const icoC = '<rect x="-100" y="-90" width="200" height="180" rx="10" fill="#f1f4f9" stroke="#1e376c" stroke-width="3"/>' +
+      '<ellipse cx="-40" cy="-30" rx="40" ry="32" fill="none" stroke="#1667c4" stroke-width="4"/><ellipse cx="-40" cy="-30" rx="75" ry="62" fill="none" stroke="#1667c4" stroke-width="4"/>' +
+      '<ellipse cx="50" cy="40" rx="30" ry="26" fill="none" stroke="#1667c4" stroke-width="4"/><text x="-40" y="-18" text-anchor="middle" fill="#1667c4" style="font:700 40px Nunito Sans,sans-serif">H</text><text x="50" y="54" text-anchor="middle" fill="#c8322a" style="font:700 36px Nunito Sans,sans-serif">L</text>';
+    let ci = 0;
+    const card = (x, ico, head, sub) => '<div class="card rc rc' + (ci++) + '" style="left:' + x + 'px;top:420px;width:520px;height:520px;display:flex;flex-direction:column;align-items:center;gap:20px;padding:40px 36px;text-align:center">' +
+      '<svg class="ri" width="230" height="230" viewBox="-115 -115 230 230" style="flex:none;overflow:visible">' + ico + '</svg>' +
+      '<div class="words" style="position:static;align-items:center;gap:12px"><p class="line" style="font-size:48px">' + head + '</p><p class="sub" style="font-size:28px">' + sub + '</p></div></div>';
+    root.append(h('<div class="ground"><div class="words" style="left:140px;top:110px;width:1500px"><p class="tag">Recap</p><h2 class="line">From barometer to weather map</h2><div class="rule"></div></div>' +
+      card(140, icoA, 'Station pressure', 'Depends mostly on altitude') + card(700, icoB, 'Correct it', 'Add 1 mb for every 10 m') + card(1260, icoC, 'Sea level map', 'Isobars show the weather') + '</div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style;
+    this.cards = [...root.querySelectorAll('.card')];
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.2);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.8, 1.3)) + ')';
+    this.cards.forEach((c, i) => { const p = eo(seg(t, 1.4 + i * 0.6, 2.1 + i * 0.6)); c.style.opacity = p; c.style.transform = 'translateY(' + lerp(30, 0, p) + 'px)'; });
+  },
+});
+
+// ---------- scene text (shown on screen and read by screen readers) ----------
+const sI = byId('I'), sO = byId('O'), sL = byId('L');
+const corrDesc = s => 'Station ' + s.id + ', ' + s.name + ', is ' + fmt(s.z) + ' m above sea level and its barometer reads ' + s.P + ' mb. The other stations fade. A dashed column drops from the station straight down through the ground to sea level, and fills as a counter adds 1 mb for every 10 m: ' + fmt(s.z) + ' m ÷ 10 = ' + s.C + ' mb. So ' + s.P + ' + ' + s.C + ' = ' + s.S + ' mb, and the +' + s.C + ' mb stays at the bottom of the column with the sea level pressure, ' + s.S + ' mb, written in blue right under it at sea level.';
+const META = {
+  title: { still: 5, cap: { tag: 'Introduction to meteorology', line: 'Sea level pressure', sub: 'Comparing barometers at different altitudes' },
+    desc: 'This animation shows why weather stations at different altitudes can\'t compare their barometer readings directly, how each reading is corrected to sea level, and how the corrected values become a surface pressure map. The picture shows a coast with a mountain behind it, and two weather stations.' },
+  two: { still: 7, cap: { tag: 'Two weather stations', line: 'Different altitudes', sub: 'Station A is near the coast at 50 m. Station B is on a mountain at 1,500 m. Each barometer reads the station pressure (red).' },
+    desc: 'A side view of the coast and a mountain, with sea level marked as a dashed line. Station A sits near the coast at an altitude of 50 m and its barometer reads 1008 mb. Station B sits on top of the mountain at 1,500 m and reads 866 mb. These are station pressures, shown in red.' },
+  compare: { still: 8, cap: { tag: 'Station pressure', line: 'Not comparable', sub: 'Higher stations have less air above them, so their pressure is lower. The difference is mostly altitude, not weather.' },
+    desc: 'The two readings are 142 mb apart: 1008 mb versus 866 mb. A bracket shows the air above Station A, reaching from the station to the top of the atmosphere. The lowest part of it, highlighted in orange, is an extra 1,450 m of air that Station B does not have above it, because B sits higher. That extra air is why A reads so much higher. The difference is mostly altitude, not weather.' },
+  fix2d: { still: 11, cap: { tag: 'The correction', line: 'Add 1 mb per 10 m', sub: 'Imagine each station\'s air column continues down to sea level. Every 10 m of extra air adds about 1 mb.' },
+    desc: 'A dashed column drops from Station B straight down through the mountain to sea level. It fills as a counter climbs from +0 to +150 mb, because 1,500 m ÷ 10 = 150 mb. So B: 866 mb + 150 = 1016 mb, its sea level pressure, shown in blue. Station A needs only a tiny column: 50 m ÷ 10 = 5 mb, so A: 1008 mb + 5 = 1013 mb.' },
+  compare2: { still: 6, cap: { tag: 'Sea level pressure', line: 'Now comparable', sub: 'Both readings now describe the same level. Station B has the higher sea level pressure, even though its station pressure was much lower.' },
+    desc: 'The sea level line turns blue, and both sea level pressures sit on it: 1013 mb for Station A and 1016 mb for Station B. Now they can be compared. Station B actually has the higher pressure, by 3 mb, even though its station pressure was 142 mb lower.' },
+  many: { still: 7, cap: { tag: 'A whole region', line: 'Many stations', sub: 'A region with a coast, a mountain range, a basin and a high plateau. Each pin shows a station pressure (red) in mb.' },
+    desc: 'A 3D view of a region. An ocean is on the left, then a coastal plain, a north–south mountain range, a basin and a high plateau on the right. The terrain rises up, and twelve weather stations appear as pins. Each pin is labeled with its station pressure in red, from about 790 mb on the high ridge to about 1015 mb at sea.' },
+  terrain: { still: 10, cap: { tag: 'Station pressure', line: 'Contours trace the terrain', sub: 'Brown lines connect equal altitude. Red lines connect equal station pressure. They have the same shape, so station pressure mostly shows the mountains.' },
+    desc: 'Brown elevation contours appear at 500, 1,000, 1,500 and 2,000 m, circling the mountains. Then red contours of equal station pressure appear at 950, 900, 850 and 800 mb. They run right alongside the brown lines and have the same shape. A map of station pressure is basically a map of the terrain, so it can\'t show the weather.' },
+  fixI: { still: 8.5, cap: { tag: 'Correcting station I', line: sI.name + ', ' + fmt(sI.z) + ' m', sub: 'Imagine the air column continuing ' + fmt(sI.z) + ' m down to sea level. At 1 mb per 10 m that adds ' + sI.C + ' mb: ' + sI.P + ' + ' + sI.C + ' = ' + sI.S + ' mb.' }, desc: corrDesc(sI) },
+  fixO: { still: 8.5, cap: { tag: 'Correcting station O', line: sO.name + ', ' + fmt(sO.z) + ' m', sub: 'Imagine the air column continuing ' + fmt(sO.z) + ' m down to sea level. At 1 mb per 10 m that adds ' + sO.C + ' mb: ' + sO.P + ' + ' + sO.C + ' = ' + sO.S + ' mb.' }, desc: corrDesc(sO) },
+  fixL: { still: 8.5, cap: { tag: 'Correcting station L', line: sL.name + ', ' + fmt(sL.z) + ' m', sub: 'Imagine the air column continuing ' + fmt(sL.z) + ' m down to sea level. At 1 mb per 10 m that adds ' + sL.C + ' mb: ' + sL.P + ' + ' + sL.C + ' = ' + sL.S + ' mb.' }, desc: corrDesc(sL) },
+  allfix: { still: 6, cap: { tag: 'Same rule everywhere', line: 'Every station', sub: 'Each station gets the same correction: add 1 mb for every 10 m of altitude. Every pin now also shows its sea level pressure (blue).' },
+    desc: 'The rest of the stations are corrected the same way, one after another. Each pin now shows two numbers: station pressure in red at the top of the pin and sea level pressure in blue at its foot. The station pressures spanned more than 200 mb; the sea level pressures span only about 30 mb.' },
+  flat: { still: 9, cap: { tag: 'Seen from above', line: 'A flat map', sub: 'The 3D view tips over into a map seen from straight above. Then the station pressures (red) fade away, leaving only the sea level pressures (blue).' },
+    desc: 'The 3D view tips over and flattens into a map seen from straight above. The terrain stays faintly shaded underneath. Each station is a dot with two numbers, station pressure in red and sea level pressure in blue. Then the red station pressures fade away, leaving only the sea level pressures to work with.' },
+  isobars: { still: 40, cap: { tag: 'Surface pressure map', line: 'Draw the isobars', sub: 'Blue lines connect equal sea level pressure, every 4 mb. They cross the mountains freely: they show the weather, not the terrain.', box: ['What is a contour?', CONTOUR_NOTE] },
+    desc: 'On the flat map, a pencil draws the blue isobars one line at a time, starting at the low and working outward. After its first three lines, a second pencil starts at the high and works outward until the two pencils meet. The isobars are drawn every 4 mb from 996 to 1024 mb, connecting equal sea level pressures between the stations. Unlike the red station pressure contours, they don\'t follow the mountains. They form rings around a high pressure center, marked H at 1025 mb, over the ocean in the northwest, and a low pressure center, marked L at 994 mb, over the basin. The result is a surface pressure map.' },
+  recap: { still: 7, cap: { tag: 'Recap', line: 'From barometer to weather map' },
+    desc: 'Recap. Station pressure depends mostly on altitude. Correct it to sea level by adding 1 mb for every 10 m. Isobars of sea level pressure show the weather pattern.' },
+};
+SCENES.forEach(s => Object.assign(s, META[s.id]));
+
+// ---------- player ----------
+const $ = id => document.getElementById(id);
+const stage = $('stage'), frame = $('frame'), body = document.body;
+SCENES.forEach(s => { s.root = document.createElement('div'); s.root.className = 'layer'; stage.appendChild(s.root); s.init(s.root); });
+
+const mqPort = matchMedia('(orientation: portrait) and (max-width: 640px)');
+const mqLand = matchMedia('(orientation: landscape) and (max-height: 560px)');
+const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
+let mode = 'desk';
+function fit() {
+  const m = mqPort.matches ? 'port' : mqLand.matches ? 'land' : 'desk';
+  if (m !== mode) { body.classList.remove('desk', 'land', 'port'); mode = m; }
+  body.classList.add(mode);
+  const port = mode === 'port';
+  const s = frame.clientWidth / (port ? 1120 : 1920);
+  if (!s) return;
+  SCALE = s;
+  stage.style.transform = 'scale(' + s + ')' + (port ? ' translateX(-800px)' : '');
+  stage.classList.toggle('port', port);
+  const big = s < 0.55;
+  stage.classList.toggle('big', big);
+  const px = (target, lo, hi) => Math.min(hi, Math.max(lo, target / s)).toFixed(1) + 'px';
+  stage.style.setProperty('--lab', px(14, 28, 48));
+  stage.style.setProperty('--val', px(18, 40, 64));
+  stage.style.setProperty('--sub', px(15, 34, 46));
+  stage.style.setProperty('--tag', px(13, 24, 42));
+  stage.style.setProperty('--note', px(13, 24, 40));
+  Object.keys(LABCACHE).forEach(k => delete LABCACHE[k]);
+  applyText();
+}
+new ResizeObserver(fit).observe(frame);
+[mqPort, mqLand].forEach(q => q.addEventListener ? q.addEventListener('change', fit) : q.addListener(fit));
+addEventListener('resize', fit);
+addEventListener('orientationchange', () => setTimeout(fit, 250));
+
+// scene text panel
+let textOn = false;
+try { textOn = localStorage.getItem('slp-text') === '1'; } catch (e) {}
+const desc = $('desc'), textB = $('textB');
+function applyText() {
+  const shown = mode === 'port' || textOn;
+  desc.classList.toggle('sr-only', !shown);
+  textB.setAttribute('aria-expanded', textOn ? 'true' : 'false');
+  textB.setAttribute('aria-label', textOn ? 'Hide scene text' : 'Show scene text');
+}
+function setText(on) { textOn = on; try { localStorage.setItem('slp-text', on ? '1' : '0'); } catch (e) {} applyText(); }
+textB.onclick = () => setText(!textOn);
+$('closeText').onclick = () => { setText(false); textB.focus(); };
+$('skip').addEventListener('click', e => { e.preventDefault(); if (mode !== 'port') setText(true); desc.focus(); });
+
+// scene navigation
+const dots = $('dots'), title = $('title'), count = $('count'), nextB = $('next'), backB = $('back');
+SCENES.forEach((s, i) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ': ' + s.name); b.onclick = () => go(i); dots.appendChild(b); });
+const esc = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+let cur = -1, start = performance.now(), prev = null, prevT = 0, fadeStart = 0, paused = false, pausedAt = 0, still = false;
+const FADE = 0.4;
+function sceneTime(now) { return ((paused ? pausedAt : now) - start) / 1000; }
+function setPaused(p) {
+  const now = performance.now();
+  if (p === paused) return;
+  if (paused) { start += now - pausedAt; paused = false; } else { pausedAt = now; paused = true; }
+  $('pauseTxt').textContent = paused ? 'Play' : 'Pause';
+  $('pause').setAttribute('aria-label', paused ? 'Play' : 'Pause');
+  $('pauseIco').innerHTML = paused ? '<path d="M7 5l12 7-12 7z"/>' : '<path d="M8 5v14M16 5v14"/>';
+}
+function go(i) {
+  if (i < 0 || i >= SCENES.length) return;
+  const now = performance.now();
+  const reduce = mqReduce.matches;
+  if (i !== cur && cur >= 0 && !reduce) { prev = cur; prevT = sceneTime(now); fadeStart = now; } else prev = null;
+  cur = i;
+  const s = SCENES[i];
+  if (reduce) { setPaused(false); start = now - s.still * 1000; setPaused(true); still = true; }
+  else { start = now; if (paused) pausedAt = now; still = false; }
+  title.textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  count.textContent = (i + 1) + ' of ' + SCENES.length;
+  $('dTitle').textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  const c = s.cap;
+  $('cap').innerHTML = '<p class="cap-tag">' + esc(c.tag) + '</p><p class="cap-line">' + esc(c.line) + '</p>' +
+    (c.sub ? '<p class="cap-sub">' + esc(c.sub) + '</p>' : '') + (c.box ? '<div class="cap-box"><p class="cap-tag" style="color:var(--brand)">' + esc(c.box[0]) + '</p><p class="cap-sub">' + esc(c.box[1]) + '</p></div>' : '') + (c.note ? '<p class="cap-note">' + esc(c.note) + '</p>' : '');
+  $('dText').textContent = s.desc;
+  [...dots.children].forEach((d, k) => { d.className = k === i ? 'on' : k < i ? 'done' : ''; if (k === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  if (document.activeElement === backB && i === 0) nextB.focus();
+  if (document.activeElement === nextB && i === SCENES.length - 1) backB.focus();
+  backB.disabled = i === 0;
+  nextB.disabled = i === SCENES.length - 1;
+  if (mode === 'port') desc.scrollTop = 0;
+}
+function frameLoop(now) {
+  const t = sceneTime(now);
+  const fp = prev === null ? 1 : clamp01((now - fadeStart) / 1000 / FADE);
+  SCENES.forEach((s, k) => { s.root.style.display = (k === cur || (k === prev && fp < 1)) ? 'block' : 'none'; });
+  if (prev !== null && fp < 1) { const ps = SCENES[prev]; ps.root.style.opacity = 1 - fp; ps.root.style.zIndex = 1; ps.render(prevT + (now - fadeStart) / 1000); }
+  else prev = null;
+  const s = SCENES[cur];
+  s.root.style.opacity = fp; s.root.style.zIndex = 2;
+  s.render(Math.max(0, t));
+  nextB.classList.toggle('ready', (t >= s.dur || still) && cur < SCENES.length - 1);
+  requestAnimationFrame(frameLoop);
+}
+nextB.onclick = () => go(cur + 1);
+backB.onclick = () => go(cur - 1);
+$('replay').onclick = () => { prev = null; still = false; setPaused(false); start = performance.now(); };
+$('pause').onclick = () => setPaused(!paused);
+
+// full screen, hidden where the browser can't do it (such as Safari on iPhone)
+const app = $('app');
+const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(app.requestFullscreen || app.webkitRequestFullscreen);
+if (!fsOK) body.classList.add('no-fs');
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+$('full').onclick = () => {
+  try {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (app.requestFullscreen || app.webkitRequestFullscreen).call(app); if (r && r.catch) r.catch(() => {}); }
+  } catch (e) {}
+};
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { $('full').setAttribute('aria-label', fsEl() ? 'Exit full screen' : 'Full screen'); fit(); }));
+
+// keyboard
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const onButton = e.target.closest && e.target.closest('button, a');
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (k === ' ' || k === 'Spacebar') { if (!onButton) { e.preventDefault(); go(cur + 1); } }
+  else if (k === 'Home') { e.preventDefault(); go(0); }
+  else if (k === 'End') { e.preventDefault(); go(SCENES.length - 1); }
+  else if (k === 'r' || k === 'R') $('replay').click();
+  else if (k === 'p' || k === 'P') $('pause').click();
+  else if ((k === 'f' || k === 'F') && fsOK) $('full').click();
+  else if (k === 't' || k === 'T') setText(!textOn);
+  else if (k === 'Escape' && textOn && mode === 'land') { setText(false); textB.focus(); }
+});
+
+// touch: swipe left/right, tap the right side for next and the far left for back (mouse clicks ignored)
+let tp = null;
+frame.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; tp = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+frame.addEventListener('pointercancel', () => { tp = null; });
+frame.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch' || !tp) return;
+  const dx = e.clientX - tp.x, dy = e.clientY - tp.y, dt = performance.now() - tp.t; tp = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 800) { go(cur + (dx < 0 ? 1 : -1)); return; }
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) {
+    const r = frame.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+    if (fx > 0.5) go(cur + 1); else if (fx < 0.25) go(cur - 1);
+  }
+});
+
+// test hook: SLP.go(i), SLP.seek(seconds) freezes the current scene at a moment
+window.SLP = { go, seek(t) { setPaused(false); start = performance.now() - t * 1000; prev = null; setPaused(true); }, scenes: SCENES.length, ST };
+
+fit();
+go(0);
+requestAnimationFrame(frameLoop);
+})();
+</script>
+
+</body>
+</html>
