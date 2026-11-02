@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Global Atmospheric Circulation</title>
+<meta name="description" content="An animated, scene-by-scene explanation of global atmospheric circulation, from one giant cell to the three-cell model, jet streams, pressure belts and the Indian monsoon.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;800&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #e9edf4; --bar: #ffffff; --ink: #25282b; --muted: #5d6470; --edge: #cfd6e2;
+  --brand: #1e376c; --accent: #f47920; --accent-text: #a84508; --btn: #f1f4f9; --btn-ink: #1e376c; --focus: #c2410c;
+  color-scheme: light;
+  box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent-text: #ffa25c; --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+    --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --accent-text: #ffa25c; --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+  --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; background: var(--page); overflow-x: hidden; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100%; background: var(--page); color: var(--ink); font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 12px; top: -100px; z-index: 50; background: var(--bar); color: var(--brand); font-weight: 700; padding: 12px 16px; border-radius: 8px; border: 2px solid var(--brand); }
+.skip:focus { top: calc(12px + env(safe-area-inset-top, 0px)); outline: 3px solid var(--focus); outline-offset: 2px; }
+
+#app { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; min-height: 100vh; background: var(--page); }
+#main { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+#frame { width: min(100%, calc((100vh - 140px) * 16 / 9)); aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,.12); touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app:fullscreen #frame { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+#turn { display: none; }
+
+/* ---------- the animation (fixed light picture, like the other 1130 animations) ---------- */
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #ffffff;
+  --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; --stn:#c8322a; --slp:#1667c4;
+  color: var(--second); font-family: "Nunito Sans", system-ui, sans-serif; }
+.layer { position: absolute; inset: 0; display: none; }
+.ground { position: absolute; inset: 0; background: var(--ground); }
+.words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.words > * { margin: 0; }
+.line { font-family: "Zilla Slab", Georgia, serif; font-size: 84px; line-height: 1.04; font-weight: 700; color: var(--main); }
+.line .w { display: inline-block; white-space: pre; }
+.sub { font-size: 34px; line-height: 1.4; color: color-mix(in srgb, var(--second) 82%, var(--ground)); }
+.sub b.o { color: #a84508; }
+.pov { display: block; width: fit-content; margin-bottom: 16px; padding: 6px 14px; border-radius: 8px; font-size: 24px; font-weight: 700; color: var(--main); background: color-mix(in srgb, var(--main) 9%, var(--ground)); }
+#stage.big .pov { font-size: var(--tag); } .sub b.b { color: var(--slp); }
+.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #a84508; }
+.rule { width: 96px; height: 4px; background: var(--accent); border-radius: 2px; }
+.art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.card { position: absolute; border-radius: 16px; background: color-mix(in srgb, var(--main) 6%, var(--ground)); border: 2px solid color-mix(in srgb, var(--main) 18%, var(--ground)); }
+#stage.big .sub { font-size: var(--sub); }
+#stage.big .tag { font-size: var(--tag); }
+#stage.big .rc { top: 400px !important; height: 580px !important; padding: 34px 26px !important; gap: 16px !important; }
+canvas.ri { width: 230px; height: 230px; flex: none; }
+#stage.big .ri { width: 200px; height: 200px; }
+/* upright phone: the picture shows the right part of the scene; its text is shown below */
+#stage.port .ground > .words { display: none; }
+#stage.port .rc { left: 830px !important; width: 1060px !important; height: 320px !important; flex-direction: row !important; text-align: left !important; padding: 0 40px !important; gap: 40px !important; }
+#stage.port .rc0 { top: 30px !important; } #stage.port .rc1 { top: 380px !important; } #stage.port .rc2 { top: 730px !important; }
+#stage.port .rc .words { align-items: flex-start !important; gap: 14px !important; }
+#stage.port .ri { width: 220px; height: 220px; }
+
+/* ---------- scene text ---------- */
+#desc { width: min(100%, calc((100vh - 140px) * 16 / 9)); background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 16px 20px 18px; }
+#desc:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+#dTitle { margin: 0 0 6px; font-size: 18px; line-height: 1.3; color: var(--brand); }
+#dText { margin: 0; font-size: 17px; line-height: 1.6; max-width: 72ch; }
+#closeText { display: none; }
+#cap { display: none; }
+.cap-tag { margin: 0 0 2px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
+.cap-line { margin: 0 0 6px; font-family: "Zilla Slab", Georgia, serif; font-size: 24px; line-height: 1.15; color: var(--brand); }
+.cap-sub { margin: 0 0 4px; font-size: 16px; line-height: 1.5; }
+.cap-box { margin: 10px 0 4px; padding: 10px 12px; border-radius: 8px; background: var(--bar); border: 1px solid var(--edge); }
+.cap-list { margin: 4px 0 4px; padding-left: 22px; font-size: 16px; line-height: 1.5; } .cap-list li { margin-bottom: 4px; }
+.cap-note { margin: 0; font-size: 14px; color: var(--muted); }
+
+/* ---------- controls ---------- */
+#bar { width: min(100%, calc((100vh - 140px) * 16 / 9)); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 6px 8px; }
+#app:fullscreen #bar, #app:fullscreen #desc { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+button { font: inherit; font-weight: 700; font-size: 15px; color: var(--btn-ink); background: var(--btn); border: 1px solid var(--edge);
+  border-radius: 8px; min-height: 44px; min-width: 44px; padding: 0 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+button:hover { border-color: var(--brand); }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#next { background: var(--brand); color: var(--bar); border-color: var(--brand); padding: 0 20px; }
+#next.ready { background: var(--accent); border-color: var(--accent); color: #25282b; }
+#where { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 0; padding: 0 4px; }
+#title { font-size: 15px; font-weight: 700; color: var(--ink); padding-left: 9px; }
+#dots { display: flex; flex-wrap: nowrap; }
+#wtop { display: flex; align-items: baseline; gap: 12px; padding-right: 4px; }
+#wtop .hint { margin-left: auto; }
+#dots button { min-height: 44px; height: 44px; width: 38px; min-width: 38px; padding: 0; border: 0; background: transparent; border-radius: 6px; }
+#dots button::before { content: ""; width: 24px; height: 8px; border-radius: 4px; background: var(--edge); }
+#dots button.on::before { background: var(--brand); }
+#dots button.done::before { background: color-mix(in srgb, var(--brand) 45%, var(--edge)); }
+#count { display: none; font-size: 14px; font-weight: 700; color: var(--ink); text-align: center; white-space: nowrap; }
+.hint { font-size: 13px; color: var(--muted); }
+#textB[aria-expanded="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.no-fs #full { display: none !important; }
+
+/* ---------- phone held sideways ---------- */
+body.land #app { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 6px max(6px, env(safe-area-inset-right, 0px)) 6px max(6px, env(safe-area-inset-left, 0px)); }
+body.land #main { flex: 1; min-width: 0; justify-content: center; }
+body.land #frame { width: min(100%, calc((100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9));
+  width: min(100%, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9)); border-radius: 8px; }
+body.land #bar { width: 76px; flex: none; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 6px; gap: 5px; overflow-y: auto; }
+body.land #bar .t, body.land #where, body.land .hint { display: none; }
+body.land #count { display: block; order: 0; padding: 4px 0; }
+body.land #replay { order: 1; } body.land #pause { order: 2; } body.land #full { order: 3; } body.land #textB { order: 4; }
+body.land #spacer { order: 5; flex: 1; min-height: 4px; }
+body.land #back { order: 6; } body.land #next { order: 7; min-height: 64px; padding: 0; }
+body.land #next svg { width: 28px; height: 28px; }
+body.land button { padding: 0; }
+body.land #desc { position: fixed; z-index: 20; width: auto; overflow-y: auto;
+  top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-height: calc(100% - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  left: calc(max(6px, env(safe-area-inset-left, 0px)) + 10px); right: calc(max(6px, env(safe-area-inset-right, 0px)) + 96px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); padding: 12px 16px; }
+body.land #closeText { display: inline-flex; flex: none; padding: 0 16px; }
+body.land #dText { font-size: 16px; line-height: 1.55; }
+
+/* ---------- phone held upright ---------- */
+body.port #app { justify-content: flex-start; align-items: stretch; gap: 0; padding: 0; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+body.port #main { flex: none; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); }
+body.port #frame { width: 100%; aspect-ratio: 1120 / 1080; border-radius: 0; box-shadow: none; }
+body.port #turn { display: block; margin: 0; width: 100%; padding: 6px 16px; font-size: 14px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--edge); }
+body.port #desc { width: auto; flex: 1; min-height: 0; overflow-y: auto; border: 0; border-radius: 0; background: var(--page); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+body.port #desc.sr-only { position: static !important; width: auto; height: auto; margin: 0; overflow-y: auto; clip: auto; white-space: normal; }
+body.port #cap { display: block; margin: 4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--edge); }
+body.port #dText { font-size: 16px; }
+body.port #bar { width: auto; flex: none; flex-wrap: nowrap; border: 0; border-top: 1px solid var(--edge); border-radius: 0; gap: 8px;
+  padding: 8px max(10px, env(safe-area-inset-right, 0px)) 8px max(10px, env(safe-area-inset-left, 0px)); }
+body.port #where, body.port .hint, body.port #textB { display: none; }
+body.port #replay, body.port #pause, body.port #full { padding: 0; }
+body.port #replay .t, body.port #pause .t { display: none; }
+body.port #back, body.port #next { flex: 1; min-height: 52px; font-size: 17px; }
+body.port #back { order: 0; } body.port #replay { order: 1; } body.port #pause { order: 2; } body.port #full { order: 3; } body.port #next { order: 4; }
+body.port #spacer { display: none; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<a class="skip" href="#desc" id="skip">Skip to scene text</a>
+<div id="app">
+  <div id="main">
+    <div id="frame" aria-hidden="true"><div id="stage"></div></div>
+    <p id="turn">Turn your phone sideways for a bigger picture.</p>
+  </div>
+  <section id="desc" tabindex="-1" aria-labelledby="dTitle" class="sr-only">
+    <div class="dhead">
+      <div id="live" aria-live="polite" aria-atomic="true"><h2 id="dTitle"></h2><div id="cap" aria-hidden="true"></div><p id="dText"></p></div>
+      <button id="closeText" aria-label="Close scene text">Close</button>
+    </div>
+  </section>
+  <nav id="bar" aria-label="Animation controls">
+    <button id="back" aria-label="Previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">Back</span></button>
+    <button id="replay" aria-label="Replay this scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" id="pauseIco"><path d="M8 5v14M16 5v14"/></svg><span class="t" id="pauseTxt">Pause</span></button>
+    <div id="where"><div id="wtop"><div id="title" aria-hidden="true"></div><span class="hint" aria-hidden="true">Arrow keys or Space</span></div><div id="dots" role="group" aria-label="Scenes"></div></div>
+    <div id="count" aria-hidden="true"></div>
+    <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="textB" aria-label="Show scene text" aria-controls="desc" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 10h14M5 14h10M5 18h7"/></svg><span class="t">Text</span></button>
+    <div id="spacer" aria-hidden="true"></div>
+    <button id="next" aria-label="Next scene"><span class="t">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </nav>
+</div>
+
+<script>
+(function () {
+document.documentElement.lang = 'en';
+// ---------- helpers ----------
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const TAU = Math.PI * 2, DEG = Math.PI / 180;
+function h(html) { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; }
+function fadeFromRight(el, t, t0) {
+  if (!el._w) {
+    const words = el.textContent.split(' ');
+    el.textContent = '';
+    el._w = words.map((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w + (i < words.length - 1 ? ' ' : ''); el.appendChild(s); return s; });
+  }
+  el._w.forEach((s, i) => { const p = eo(seg(t, t0 + i * .11, t0 + i * .11 + .5)); s.style.opacity = p; s.style.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)'; });
+}
+function subIn(st, t, a) { const p = eo(seg(t, a, a + .6)); st.opacity = p; st.transform = 'translateX(' + lerp(26, 0, p) + 'px)'; }
+const textBlock = (top, tag, line, sub) =>
+  '<div class="words" style="left:140px;top:' + top + 'px;width:640px">' +
+  '<p class="tag">' + tag + '</p><h2 class="line">' + line + '</h2>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div>';
+function textRefs(self, root) { self.tagS = root.querySelector('.words .tag').style; self.line = root.querySelector('.words .line'); const s = root.querySelector('.words .sub'); self.subS = s && s.style; }
+function textRender(self, t, subAt) { self.tagS.opacity = eo(seg(t, 0.2, 0.7)); fadeFromRight(self.line, t, 0.4); if (self.subS) subIn(self.subS, t, subAt); }
+let SCALE = 0.6;   // current stage scale, used for canvas text size
+const fpx = (target, lo, hi) => Math.min(hi, Math.max(lo, target / SCALE));
+
+// ---------- canvas drawing kit ----------
+const C = { navy: '#1e376c', ink: '#25282b', orange: '#f47920', orangeDk: '#a84508', blue: '#1667c4', red: '#c8322a', grid: '#8fa7cc', sea: '#dbe8f6', grass: '#e4efd9', tree: '#a8cf94', treeEdge: '#5f8f4e', plate: '#f4f6fa', wedge: '#dfe6f2' };
+const P = (cx, cy, r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];   // math angle (counterclockwise) to screen
+function label(ctx, txt, x, y, color, size, align, weight) {
+  ctx.font = (weight || 700) + ' ' + size + 'px "Nunito Sans", system-ui, sans-serif';
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.26; ctx.strokeStyle = 'rgba(255,255,255,.95)';
+  ctx.strokeText(txt, x, y); ctx.fillStyle = color; ctx.fillText(txt, x, y);
+  return ctx.measureText(txt).width;
+}
+function disc(ctx, x, y, r, fill, stroke, lw) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 3; ctx.stroke(); } }
+function line(ctx, pts, color, w, dash) {
+  if (pts.length < 2) return;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]); ctx.stroke(); ctx.setLineDash([]);
+}
+function head(ctx, x, y, ang, size, color) {   // arrowhead at (x,y) pointing along screen angle ang
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x, y);
+  ctx.lineTo(x - size * Math.cos(ang - 0.45), y - size * Math.sin(ang - 0.45));
+  ctx.lineTo(x - size * Math.cos(ang + 0.45), y - size * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill();
+}
+function arrow(ctx, x1, y1, x2, y2, color, w) {
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 3) return;
+  const a = Math.atan2(y2 - y1, x2 - x1), hd = Math.min(w * 4, L * 0.7);
+  line(ctx, [[x1, y1], [x2 - Math.cos(a) * hd * 0.7, y2 - Math.sin(a) * hd * 0.7]], color, w);
+  head(ctx, x2, y2, a, hd, color);
+}
+function pathArrow(ctx, pts, color, w, dash) {   // a line with an arrowhead at its end
+  if (pts.length < 2) return;
+  const n = pts.length - 1; let k = n - 1;
+  while (k > 0 && Math.hypot(pts[n][0] - pts[k][0], pts[n][1] - pts[k][1]) < w * 3) k--;
+  const a = Math.atan2(pts[n][1] - pts[k][1], pts[n][0] - pts[k][0]), hd = w * 4;
+  line(ctx, pts.slice(0, n).concat([[pts[n][0] - Math.cos(a) * hd * 0.7, pts[n][1] - Math.sin(a) * hd * 0.7]]), color, w, dash);
+  head(ctx, pts[n][0], pts[n][1], a, hd, color);
+}
+function arcPts(cx, cy, r, a0, a1, n) { const o = []; for (let i = 0; i <= (n || 40); i++) o.push(P(cx, cy, r, lerp(a0, a1, i / (n || 40)))); return o; }
+function badge(ctx, x, y, letter, on, alpha) {
+  ctx.globalAlpha = alpha;
+  disc(ctx, x, y, 28, on ? C.orange : '#ffffff', on ? C.orange : C.navy, 4);
+  ctx.font = '700 32px "Nunito Sans", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = on ? '#ffffff' : C.navy; ctx.fillText(letter, x, y + 1);
+  ctx.globalAlpha = 1;
+}
+function clear(ctx) { ctx.clearRect(0, 0, 1920, 1080); }
+
+// ================= globe seen from the side, with its atmosphere on the right =================
+const G = { cx: 1360, cy: 520, R: 350, H: 100 };
+const COL = { hadley: '#7b4bb0', ferrel: '#2f7d4f', polar: '#1f7a99', wind: '#d4610c', aloft: '#1e376c', hi: '#1667c4', lo: '#c8322a', jet: '#f47920', land: '#e4efd9', landEdge: '#7da36a', sea: '#dbe8f6' };
+const gy = lat => G.cy - G.R * Math.sin(lat * DEG);
+const gw = lat => G.R * Math.cos(lat * DEG);
+function shellPt(lat, f) { const r = G.R + 12 + f * (G.H - 24); return [G.cx + r * Math.cos(lat * DEG), G.cy - r * Math.sin(lat * DEG)]; }
+const latTxt = L => L === 0 ? '0°' : Math.abs(Math.round(L * 10) / 10) + '°' + (L > 0 ? 'N' : 'S');
+
+function drawGlobe(ctx, o) {
+  o = o || {};
+  const { cx, cy, R, H } = G, a0 = ctx.globalAlpha;
+  if (o.shell !== false) {
+    ctx.beginPath(); ctx.arc(cx, cy, R + H, -Math.PI / 2, Math.PI / 2); ctx.arc(cx, cy, R, Math.PI / 2, -Math.PI / 2, true); ctx.closePath();
+    ctx.fillStyle = '#f1f5fb'; ctx.fill(); ctx.strokeStyle = '#c3d0e4'; ctx.lineWidth = 2; ctx.stroke();
+    if (o.shellLabel !== false) label(ctx, 'Atmosphere (not to scale)', cx + 24, cy - R - H + 2, C.navy, fpx(10, 20, 30), 'left', 400);
+  }
+  const gr = ctx.createRadialGradient(cx - R * .3, cy - R * .35, R * .1, cx, cy, R);
+  gr.addColorStop(0, '#e6f0fb'); gr.addColorStop(1, '#b4cfee');
+  disc(ctx, cx, cy, R, gr, C.navy, 3);
+  if (o.face) { o.face(); ctx.globalAlpha = a0; }
+  const fs = fpx(11, 21, 34);
+  ctx.globalAlpha = a0 * (o.grid ?? 1);
+  (o.lats || [60, 30, 0, -30, -60]).forEach(L => {
+    line(ctx, [[cx - gw(L), gy(L)], [cx + gw(L), gy(L)]], L === 0 ? '#5f7fae' : '#86a1c9', L === 0 ? 2.5 : 2, L === 0 ? null : [10, 9]);
+    if (o.latLabels !== false && !(o.noLab && o.noLab.includes(L))) label(ctx, latTxt(L), cx - gw(L) - 12, gy(L), C.navy, fs, 'right');
+  });
+  ctx.globalAlpha = a0 * (o.tropics || 0);
+  if (o.tropics) [23.5, -23.5].forEach(L => {
+    line(ctx, [[cx - gw(L), gy(L)], [cx + gw(L), gy(L)]], C.orange, 3, [4, 8]);
+    label(ctx, L > 0 ? 'Tropic of Cancer 23.5°N' : 'Tropic of Capricorn 23.5°S', cx + 40, gy(L) + (L > 0 ? -18 : 18), C.orangeDk, fpx(9, 19, 28), 'center');
+  });
+  ctx.globalAlpha = a0;
+}
+
+// a circulation cell in the atmosphere: direct cells rise at their equator-side end
+function cellAt(A, B, direct, s, sc) {
+  const th = TAU * (direct ? 1 - s : s), c = Math.cos(th), sn = Math.sin(th), p = 0.4;
+  const u = 0.5 + 0.5 * sc * 0.84 * Math.sign(c) * Math.pow(Math.abs(c), p);
+  const v = 0.5 + 0.5 * sc * 0.8 * Math.sign(sn) * Math.pow(Math.abs(sn), p);
+  return shellPt(A + u * (B - A), v);
+}
+function arcLabel(ctx, txt, lat, color, size) {
+  const [x, y] = shellPt(lat, 0.5);
+  ctx.save(); ctx.translate(x, y); ctx.rotate(lat >= 0 ? Math.PI / 2 - lat * DEG : -Math.PI / 2 - lat * DEG);
+  label(ctx, txt, 0, 0, color, size, 'center'); ctx.restore();
+}
+function drawCell(ctx, A, B, direct, color, t, o) {
+  o = o || {}; const sc = o.sc ?? 1, a0 = ctx.globalAlpha;
+  if (a0 < 0.01) return;
+  const pts = []; for (let i = 0; i <= 90; i++) pts.push(cellAt(A, B, direct, i / 90, sc));
+  ctx.globalAlpha = a0 * 0.45; line(ctx, pts, color, 3); ctx.globalAlpha = a0;
+  const n = Math.round(Math.abs(B - A) / 5) + 2;
+  for (let k = 0; k < n; k++) {
+    const s = (((k / n + t * (o.speed || 0.06)) % 1) + 1) % 1;
+    const p = cellAt(A, B, direct, s, sc), q = cellAt(A, B, direct, (s + 0.004) % 1, sc);
+    head(ctx, p[0], p[1], Math.atan2(q[1] - p[1], q[0] - p[0]), 17, color);
+  }
+  if (o.name) arcLabel(ctx, o.name, (A + B) / 2, color, fpx(9, 19, 26));
+}
+// the standard three cells in both hemispheres, shifted by sh degrees
+function threeCells(ctx, t, o) {
+  o = o || {}; const sh = o.sh || 0, nm = o.names !== false, a0 = ctx.globalAlpha, al = o.alpha || [1, 1, 1];
+  [1, -1].forEach(h => {
+    ctx.globalAlpha = a0 * al[0]; drawCell(ctx, sh, h * 30 + sh, true, COL.hadley, t, { name: nm && 'Hadley cell', sc: o.sc && o.sc[0] });
+    ctx.globalAlpha = a0 * al[1]; drawCell(ctx, h * 30 + sh, h * 60 + sh, false, COL.ferrel, t, { name: nm && 'Ferrel cell', sc: o.sc && o.sc[1] });
+    ctx.globalAlpha = a0 * al[2]; drawCell(ctx, h * 60 + sh, h * 90, true, COL.polar, t, { name: nm && 'Polar cell', sc: o.sc && o.sc[2] });
+  });
+  ctx.globalAlpha = a0;
+}
+function windArrow(ctx, x, y, dx, dy, len, color, w, t, ph) {
+  const d = Math.hypot(dx, dy); dx /= d; dy /= d;
+  const off = 9 * Math.sin(t * 2.2 + (ph || 0));
+  const x0 = x - dx * len / 2 + dx * off, y0 = y - dy * len / 2 + dy * off;
+  arrow(ctx, x0, y0, x0 + dx * len, y0 + dy * len, color, w);
+}
+function beltArrows(ctx, lat, dx, dy, t, o) {
+  o = o || {}; const half = Math.max(0, gw(lat) - (o.margin || 75)), step = o.step || 165, len = o.len || 84;
+  const n = Math.floor(2 * half / step) + 1, span = (n - 1) * step;
+  for (let i = 0; i < n; i++) windArrow(ctx, G.cx - span / 2 + i * step, gy(lat), dx, dy, len, o.color || COL.wind, o.w || 6, t, i * 1.3);
+}
+// curved surface winds: each starts out moving straight north or south, then the Coriolis effect bends it
+const BELTS = [
+  { lat: 25, h: Math.PI / 2, L: 120, xs: [-290, -190, 150, 260] },    // trade winds
+  { lat: 33, h: -Math.PI / 2, L: 100, xs: [-220, -130, 90, 160] },    // westerlies
+  { lat: 84, h: Math.PI / 2, L: 105, xs: [18], turn: 95 },            // polar easterlies: leave the pole like the polar cell, then turn west
+];
+const EVEN = [[-270, -160, -50, 60, 170, 280], [-220, -130, -40, 50, 140], [18]];
+function curvedBelt(ctx, i, o) {
+  o = o || {};
+  if (i === 2) {   // leaves the pole heading toward the equator, then turns west before reaching 60°
+    [1, -1].forEach(hs => { const P0 = [G.cx + 40, gy(hs * 81)], P1 = [G.cx + 40, gy(hs * 66)], P2 = [G.cx - 80, gy(hs * 65.5)], pts = [];
+      for (let k = 0; k <= 30; k++) { const u = k / 30, a = (1 - u) * (1 - u), b2 = 2 * u * (1 - u), c = u * u; pts.push([a * P0[0] + b2 * P1[0] + c * P2[0], a * P0[1] + b2 * P1[1] + c * P2[1]]); }
+      pathArrow(ctx, pts, COL.wind, o.w || 6); });
+    return;
+  }
+  const b = BELTS[i], L = b.L * (o.k || 1), lat = b.lat + (o.dl || 0), xs = o.even ? EVEN[i] : b.xs;
+  [1, -1].forEach(hs => xs.forEach(x => pathArrow(ctx, bendPath(G.cx + x, gy(hs * lat), hs * b.h, hs * (b.turn || 60) * DEG, L), COL.wind, o.w || 6)));
+}
+function bendPath(x, y, h0, turn, L) {
+  const pts = [[x, y]]; let hd = h0;
+  for (let i = 0; i < 30; i++) { hd += turn / 30 * (0.4 + 1.2 * i / 30); x += Math.cos(hd) * L / 30; y += Math.sin(hd) * L / 30; pts.push([x, y]); }
+  return pts;
+}
+function pLetter(ctx, x, y, kind, size) {
+  label(ctx, kind, x, y, kind === 'H' ? COL.hi : COL.lo, size || fpx(16, 40, 56), 'center', 800);
+}
+function stripe(ctx, lat, kind, a) {
+  const a0 = ctx.globalAlpha; ctx.globalAlpha = a0 * a * 0.28;
+  line(ctx, [[G.cx - gw(lat) + 6, gy(lat)], [G.cx + gw(lat) - 6, gy(lat)]], kind === 'H' ? COL.hi : COL.lo, 18);
+  ctx.globalAlpha = a0;
+}
+function vArrow(ctx, lat, up, color) {
+  const a = shellPt(lat, up ? 0.12 : 0.88), b = shellPt(lat, up ? 0.88 : 0.12);
+  arrow(ctx, a[0], a[1], b[0], b[1], color, 7);
+}
+function _unusedEastArrow(ctx, x, y, a) {
+  ctx.globalAlpha = a; arrow(ctx, x, y, x + 230, y, C.navy, 6);
+  label(ctx, 'Earth turns toward the east', x, y - 40, C.navy, fpx(10, 22, 32), 'left'); ctx.globalAlpha = 1;
+}
+function sunIcon(ctx, x, y, r, t) {
+  ctx.strokeStyle = C.orange; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  for (let k = 0; k < 10; k++) { const a = k * TAU / 10 + t * 0.3; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * (r + 8), y + Math.sin(a) * (r + 8)); ctx.lineTo(x + Math.cos(a) * (r + 20), y + Math.sin(a) * (r + 20)); ctx.stroke(); }
+  disc(ctx, x, y, r, '#ffc24a', C.orange, 3);
+}
+function rayToGlobe(sx, sy, dx, dy) {   // where a ray from (sx,sy) along (dx,dy) first meets the globe
+  const ox = sx - G.cx, oy = sy - G.cy, b = ox * dx + oy * dy, c = ox * ox + oy * oy - G.R * G.R, d = b * b - c;
+  if (d < 0) return null; const tt = -b - Math.sqrt(d); return [sx + dx * tt, sy + dy * tt];
+}
+
+// ================= world map =================
+const LAND = [
+  // North America
+  [[-166,68],[-157,71],[-140,69.5],[-125,70],[-110,68],[-95,68],[-82,69],[-82,64],[-90,64],[-94,59],[-90,57],[-82,55],[-79,52],[-77,60],[-78,62.5],[-72,62],[-65,60],[-61,56],[-56,52],[-60,47],[-66,45],[-70,43],[-71,41.5],[-74,40.5],[-76,38],[-76,35],[-81,31.5],[-80,27],[-80.5,25.2],[-82,27],[-83,29.5],[-85,30],[-89,30.2],[-94,29.5],[-97,27.5],[-97.5,24],[-97,21],[-95,18.5],[-91,19],[-90.5,21],[-87,21.5],[-88,16],[-84,15.5],[-83.5,11],[-79.5,9],[-77.5,8.5],[-79,7.5],[-81,8],[-85.5,10],[-87.5,13],[-92,14.5],[-96,15.7],[-101,17.5],[-105.5,20],[-105.5,22.5],[-109,25.8],[-112.7,30.8],[-114.7,31.7],[-114,30],[-112,27.5],[-110,23],[-112,24.8],[-114,28],[-115.8,30.4],[-117,32.5],[-120.5,34.5],[-122.5,37.5],[-124,40.5],[-124,46],[-124.7,48.4],[-127.5,50.5],[-130,54.5],[-133,57.5],[-137,58.5],[-141,60],[-147,60.8],[-152,59],[-154,57.5],[-158,56.5],[-162,55],[-164,54.6],[-158,58],[-162,58.6],[-165,60.5],[-166,62],[-164,64],[-168,65.5]],
+  // Canadian Arctic islands
+  [[-80,73.6],[-71,70.8],[-67,69.2],[-62,66.8],[-65.2,63.5],[-68,62],[-73,64],[-78,64.4],[-74,66.5],[-77.5,69.5],[-89,70.5]],
+  [[-120,72],[-110,73],[-100,73.5],[-95,72],[-102,69.5],[-112,68.8],[-118,70.5]],
+  [[-123,75.5],[-118,77.5],[-95,77],[-85,76],[-90,74.5],[-105,74.5],[-115,74.5]],
+  [[-90,77],[-80,76.5],[-75,79],[-62,82],[-75,83],[-90,81.5],[-95,79]],
+  // Greenland, Iceland
+  [[-73,78],[-60,82],[-30,83.5],[-20,81.5],[-18,77],[-20,72],[-22,70],[-32,68],[-40,65],[-43,60],[-48,61],[-52,64.5],[-54,68],[-56,72],[-60,76],[-68,77.5]],
+  [[-22.5,64],[-24,65.5],[-22,66.4],[-16,66.5],[-13.6,65.3],[-15,64.3],[-18.7,63.4]],
+  // Cuba, Hispaniola
+  [[-85,21.9],[-82,23.1],[-77,22.3],[-74.2,20.2],[-77.5,19.9],[-81,21.6]],
+  [[-74.5,18.4],[-72.8,19.9],[-69,19.7],[-68.5,18.4],[-71.5,17.6]],
+  // South America
+  [[-77,8.7],[-75,11],[-71.5,12.4],[-68,10.5],[-62,10.7],[-60,8.3],[-55,6],[-51.5,4],[-50,0],[-48,-1],[-44,-2.5],[-40,-3],[-35,-5.5],[-35,-9],[-38.5,-13],[-39,-17.5],[-40.5,-21],[-43,-23],[-48,-25.5],[-48.6,-28.5],[-51,-31],[-53,-34],[-57,-35],[-57,-37],[-62,-39],[-65,-41],[-64,-42.5],[-67,-46],[-66,-48],[-69,-51],[-68.5,-53],[-71,-54],[-74.5,-52.5],[-75.5,-47],[-74,-43],[-73.5,-37],[-71.5,-30],[-70.5,-23],[-70.2,-18],[-76,-14],[-79,-8],[-81,-5.5],[-80,-2],[-80,0.5],[-78.5,2.5],[-77.5,4],[-77.5,7]],
+  // Eurasia
+  [[-9,43],[-9,39],[-8.9,37],[-6,36.2],[-2,36.7],[0,38.5],[3,42],[3.2,43.3],[6,43.1],[8.7,44.4],[10.5,43],[12,41.5],[14,40.8],[15.7,40],[15.7,38],[16.6,38.5],[17.2,39.5],[18.5,40.1],[16.5,41.2],[14,42.5],[12.3,44.3],[13.7,45.7],[15,45],[17.5,43],[19.5,41.8],[19.8,39.6],[21.5,37],[23,36.5],[23,38],[22.8,40.4],[26,40.8],[26.3,40],[26.3,39],[27.3,37],[28,36.6],[30.5,36.2],[32.5,36.1],[36,36.6],[35.9,35],[35,33],[34.5,31.5],[34.5,29.5],[35,28],[37,25],[39,21.5],[41,17.5],[43,13],[45,12.8],[49,14],[52,16],[55,17.5],[57,18.8],[59.8,22.5],[58,23.8],[56.4,24.5],[56,26],[54,24.2],[51.5,24.3],[51.5,26],[50,26.5],[48.5,28.5],[48,30],[50,30],[51.5,27.8],[54,26.6],[56.5,27],[57.5,25.7],[61.5,25.2],[66.5,25.4],[67.5,23.8],[68.8,22.5],[70,22.8],[69,22.3],[70.5,20.8],[72.6,21.3],[72.8,19],[73.5,16],[74.8,12.8],[76.2,10],[77.5,8.1],[78.2,8.9],[79.8,10.3],[80.3,13.5],[80.2,15.7],[82.3,16.6],[84.5,18.8],[86.9,20.8],[88,22],[89,21.8],[90.5,22.2],[91.8,22.5],[92.3,20.7],[94.3,18],[94.5,16],[97.6,16.5],[98.5,13],[98.3,9.5],[100.3,6],[101,3],[103.5,1.3],[104.2,1.5],[103.4,4],[102.2,6.2],[100.4,7.7],[100,12.7],[101,12.6],[102.6,12.2],[104.8,10.5],[105.1,8.6],[106.7,10.4],[109.2,11.6],[109.3,13.5],[108.5,15.5],[106.5,17.7],[105.6,19],[106.7,20.7],[108,21.5],[110.4,20.4],[111.6,21.6],[114,22.3],[117,23.6],[119.6,25.7],[120.6,28],[122,30],[121,32.5],[119.2,35],[120.8,36.6],[122.5,37],[119,37.3],[118,38.5],[117.7,39],[119.5,39.9],[121.6,40.9],[122.3,39.5],[124.3,39.9],[126,37.7],[126.5,34.5],[129.3,35.3],[129.4,37],[128,38.5],[129.7,41],[131,42.5],[133,42.8],[135.5,43.9],[138.2,46.5],[140.4,48.5],[141,52],[141.4,53.3],[137.2,54],[135.5,54.6],[137.7,56.5],[142.2,59],[148,59.3],[152.3,59],[155,59.3],[156.8,61.7],[160,61.8],[163.3,62.5],[162,60],[156.7,57],[156,51],[158.5,52.9],[161.9,54.9],[163.7,59.8],[166.3,60.4],[170.3,60],[172.7,61],[177.5,62.5],[180,63],[180,69],[178,69.4],[170,70],[161,69.6],[152,70.8],[143,72.7],[132,71.8],[128,72.8],[118,73.6],[113,73.7],[110,76.6],[104,77.7],[97,76],[88,75.2],[80,73.5],[72.5,72],[69,73],[67,69],[60,69.8],[55,68.5],[48,67.6],[44,66.5],[40,64.5],[36,66.3],[41,67.5],[33,69.4],[28,71],[20,70],[14,68],[12,65],[5,62],[5,59],[7,58],[10.5,59.5],[11.5,58.5],[12.5,56.3],[13,55.5],[16,56.2],[18.5,59.5],[17.5,62],[21.5,65],[25.3,65.5],[21.5,63],[21.5,60.5],[23,59.9],[28,60.5],[29.5,59.9],[23.5,59.2],[23.4,57.5],[21,57],[21,56],[19.9,54.9],[14.3,53.9],[11,54],[10.9,56.4],[9.5,57.6],[8.2,56.8],[8.6,55.3],[8.7,53.9],[7,53.4],[4.5,52],[3.3,51.3],[1.6,50.9],[0,49.5],[-1.5,49.6],[-1.8,48.6],[-4.6,48.4],[-2.3,47.2],[-1.2,46],[-1.8,43.4],[-8,43.7]],
+  // Britain, Ireland
+  [[-5.7,50],[1.4,51.2],[1.7,52.7],[0,53.5],[-0.4,54.5],[-1.6,55.6],[-2,57.6],[-3.3,58.6],[-5,58.6],[-6.2,56.8],[-5.6,55.3],[-3,54.9],[-3.2,53.4],[-4.6,52.8],[-4.2,51.6]],
+  [[-6,52.2],[-6,54],[-7.3,55.3],[-8.5,54.5],[-10,54.2],[-10,51.8],[-8.5,51.6]],
+  // Japan, Sri Lanka, islands of Southeast Asia
+  [[130.9,34],[132.5,35.4],[135.9,35.7],[137.6,37],[139.8,38.2],[140,40],[141.4,41.4],[142,39.5],[140.8,36],[139.8,34.9],[137,34.6],[135.3,33.7],[132,33.8]],
+  [[140,41.5],[140.5,43.3],[141.7,45.4],[145.5,43.3],[143,42]],
+  [[79.8,9.5],[80.2,9.8],[81.8,7.5],[81.4,6.2],[80.1,6]],
+  [[109,1.5],[110,-2.5],[114,-3.5],[116.5,-3.8],[118,1],[119,5],[116.5,6.8],[114,4.5],[111,2]],
+  [[95.3,5.5],[98,4],[103.5,-1],[106,-3.5],[106,-6],[102.3,-4],[100.3,-1],[98.6,1.7],[95.4,3.5]],
+  [[105.2,-6.7],[108,-6.3],[112.5,-6.9],[114.5,-7.7],[110,-8.2],[106.5,-7.4]],
+  [[131,-1.3],[135,-3.3],[138,-1.6],[141,-2.6],[145.5,-4.5],[147.5,-6.2],[150,-10.5],[147,-9.5],[144,-7.8],[141,-9.2],[138,-8.3],[137.8,-5.3],[134,-3.9],[132,-2.9]],
+  [[120.2,18.5],[122.3,18.4],[121.7,16],[122,14],[124,13],[121,13.5],[120.6,15.5]],
+  [[122,7],[125.5,9.8],[126.5,7.3],[125.3,5.7],[124,6.5]],
+  // Africa, Madagascar
+  [[-17,21],[-16,24],[-14.5,26.2],[-13,27.7],[-10,29],[-9.8,31.5],[-6.8,34],[-5.9,35.8],[-2,35.1],[1,36.5],[5,36.8],[9.8,37.3],[11,36.9],[10.3,35],[11.1,33.3],[15,32.3],[19.9,30.9],[20,32.2],[23,32.6],[25,31.7],[29,30.9],[32,31.3],[34.2,31.2],[34.4,28],[35.6,23.9],[37.3,21],[37.5,18.6],[39.2,15.7],[41.2,14.5],[43.3,12.4],[44.5,10.4],[48,11.2],[51.2,11.8],[51,10.4],[50.1,8.1],[48.6,5.3],[46.5,2.7],[44,0.9],[41.5,-1.7],[40,-3.5],[39.2,-4.7],[38.8,-6.5],[39.4,-8.1],[40.4,-10.8],[40.5,-15],[37,-17.6],[35.3,-21.5],[35.5,-24],[32.6,-26],[32.4,-28.6],[30.8,-30.5],[28,-33],[25.7,-34],[22.5,-34],[20,-34.8],[18.4,-34],[17.9,-31.5],[16.3,-28.6],[15.2,-26.5],[14.4,-22.9],[13.4,-20.9],[11.8,-17.3],[12.2,-14],[13.6,-12],[13.2,-9],[12,-5.6],[11.1,-3.9],[9.4,-1],[9.8,3],[9.6,4.2],[8.5,4.5],[6.7,4.3],[5.9,4.3],[4.3,6.3],[2,6.2],[-2,4.7],[-4,5.2],[-7.5,4.4],[-9,5],[-11.4,6.8],[-13.2,8.9],[-15,11],[-16.7,12.4],[-16.9,14.6],[-17.5,14.7],[-16,17],[-16.2,19.5]],
+  [[49.3,-12],[50.4,-15.5],[49.8,-17.5],[47.1,-24.9],[45,-25.5],[43.6,-23.5],[43.3,-21.7],[44.4,-19.5],[44,-17],[46.3,-15.8],[48,-13.5]],
+  // Australia, New Zealand
+  [[113.5,-22],[114,-26.3],[115,-30],[115,-33.5],[116.6,-35],[118,-35],[121,-33.8],[124,-33],[126,-32.3],[129,-31.6],[131.3,-31.5],[134,-32.5],[135.6,-34.8],[137.8,-32.7],[137.7,-35.5],[139.6,-36.3],[140.6,-38],[143.5,-38.8],[146.3,-39.1],[148,-37.8],[150,-37.4],[150.8,-35],[152.5,-32.5],[153.5,-28.5],[153,-25.3],[150.8,-22.5],[149.2,-21],[146.5,-19],[145.4,-16],[145.3,-14.8],[143.5,-14],[142.5,-10.7],[141.5,-12.6],[141.6,-15.3],[140.7,-17.4],[139,-17.3],[136,-15.8],[135.5,-14.6],[136.8,-12.2],[133,-11.4],[130.5,-12.3],[129.5,-14.9],[127.8,-14.3],[125.8,-14.5],[124.4,-16.3],[122.3,-17.9],[121,-19.6],[117.5,-20.7]],
+  [[172.7,-34.4],[174.5,-36.5],[176,-37.6],[178.5,-37.7],[177,-39.3],[176,-41.3],[174.6,-41.3],[175,-39.5]],
+  [[172.7,-40.5],[174.3,-41.7],[173,-43.7],[171.2,-44.5],[170.6,-45.9],[168.4,-46.6],[166.5,-46],[168.3,-44],[170.5,-43],[172,-41.5]],
+];
+const SEAS = [
+  [[47,44.5],[49,46.5],[51.5,47],[53,45.5],[51,44.5],[52.5,41.7],[53.5,40],[53,37.4],[51,36.7],[49,37.6],[49.5,40.2],[47.8,42.5]],
+  [[28,41.3],[28.5,43.5],[29.8,45],[30.8,46.5],[33.5,46],[32.5,45.3],[33.5,44.5],[36.5,45.2],[38,47],[39.3,47.2],[37.5,44.5],[39.7,43.3],[41.6,41.6],[38,40.9],[35,42],[31.3,41.2]],
+];
+const TIBET = [[72,36],[75,34],[79,32.5],[81,30],[84,28.5],[88,27.5],[92,27.8],[96,28.5],[100,30],[101,33],[98,36],[92,37],[86,36.5],[80,36.5],[76,37.5]];
+const VIEW_G = { k: 3, lon: 0, lat: 10, x: 1370, y: 505, clip: [830, 310, 1080, 390] };
+const VIEW_Z = { k: 14, lon: 80, lat: 22, x: 1370, y: 505, clip: [830, 150, 1080, 720] };
+function viewAt(p) {
+  const a = VIEW_G, b = VIEW_Z;
+  return { k: Math.exp(lerp(Math.log(a.k), Math.log(b.k), p)), lon: lerp(a.lon, b.lon, p), lat: lerp(a.lat, b.lat, p), x: a.x, y: a.y, clip: a.clip.map((v, i) => lerp(v, b.clip[i], p)) };
+}
+const prj = (v, lon, lat) => [v.x + (lon - v.lon) * v.k, v.y - (lat - v.lat) * v.k];
+function poly(ctx, v, pts) { ctx.beginPath(); pts.forEach((p, i) => { const q = prj(v, p[0], p[1]); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }); ctx.closePath(); }
+function drawMap(ctx, v, o) {
+  o = o || {}; const a0 = ctx.globalAlpha, [X, Y, W, Hh] = v.clip;
+  ctx.save(); ctx.beginPath(); ctx.rect(X, Y, W, Hh); ctx.clip();
+  ctx.fillStyle = COL.sea; ctx.fillRect(X, Y, W, Hh);
+  [60, 30, 0, -30, -60].forEach(L => { const y = prj(v, 0, L)[1]; line(ctx, [[X, y], [X + W, y]], '#9fb6d6', L === 0 ? 2 : 1.5, L === 0 ? null : [8, 8]); });
+  ctx.globalAlpha = a0 * (o.land ?? 1);
+  LAND.forEach(p => { poly(ctx, v, p); ctx.fillStyle = COL.land; ctx.fill(); ctx.strokeStyle = COL.landEdge; ctx.lineWidth = 1.5; ctx.stroke(); });
+  SEAS.forEach(p => { poly(ctx, v, p); ctx.fillStyle = COL.sea; ctx.fill(); ctx.strokeStyle = COL.landEdge; ctx.lineWidth = 1.2; ctx.stroke(); });
+  if (o.mtn) { ctx.globalAlpha = a0 * (o.land ?? 1) * o.mtn; poly(ctx, v, TIBET); ctx.fillStyle = '#cdb58a'; ctx.fill(); }
+  ctx.globalAlpha = a0;
+  if (o.inside) o.inside(v);
+  ctx.globalAlpha = a0;
+  [60, 30, 0, -30, -60].forEach(L => { const y = prj(v, 0, L)[1]; if (y > Y + 14 && y < Y + Hh - 14) label(ctx, latTxt(L), X + 8, y - 13, C.navy, fpx(9, 18, 28), 'left'); });
+  ctx.restore();
+  ctx.strokeStyle = C.navy; ctx.lineWidth = 2; ctx.strokeRect(X, Y, W, Hh);
+}
+// semi-permanent highs and lows: [lat, lon, strength] in January (j) and July (u); label side
+const SYS = [
+  { n: 'Aleutian Low', p: 'L', j: [50, -168, 1], u: [56, -165, 0], s: 'r' },
+  { n: 'Icelandic Low', p: 'L', j: [62, -30, 1], u: [63, -30, 0.25], s: 'r' },
+  { n: 'Pacific High', p: 'H', j: [30, -138, 0.65], u: [37, -148, 1], s: 'b' },
+  { n: 'Bermuda High', p: 'H', j: [31, -40, 0.65], u: [33, -50, 1], s: 'b' },
+  { n: 'Siberian High', p: 'H', j: [42, 95, 1], u: [42, 95, 0], s: 'b', india: true },
+  { n: 'Thermal Low', p: 'L', j: [26, 70, 0], u: [26, 70, 1], s: 'l', india: true },
+  { n: 'S. Pacific High', p: 'H', j: [-32, -100, 0.75], u: [-28, -100, 1], s: 'b' },
+  { n: 'S. Atlantic High', p: 'H', j: [-30, -12, 0.75], u: [-26, -12, 1], s: 'b' },
+  { n: 'Indian Ocean High', p: 'H', j: [-32, 75, 0.75], u: [-30, 65, 1], s: 'b' },
+  { n: 'Australian Low', p: 'L', j: [-18, 132, 0.8], u: [-18, 132, 0], s: 'b' },
+  { n: 'Australian High', p: 'H', j: [-28, 134, 0], u: [-28, 134, 0.8], s: 'b' },
+];
+const ITCZ_J = [0, 4, 5, 3, -10, 0, 2, -12, -8, -8, -12, -8, 0];
+const ITCZ_U = [8, 9, 10, 11, 8, 8, 14, 16, 18, 24, 18, 12, 8];
+function itczLat(lon, s) {
+  const f = (lon + 180) / 30, i = Math.min(11, Math.floor(f)), u = (1 - Math.cos(Math.PI * (f - i))) / 2;
+  return lerp(lerp(ITCZ_J[i], ITCZ_J[i + 1], u), lerp(ITCZ_U[i], ITCZ_U[i + 1], u), s);
+}
+function drawSystems(ctx, v, s, o) {
+  o = o || {}; const a0 = ctx.globalAlpha, zk = Math.sqrt(v.k / 3);
+  // ITCZ
+  ctx.globalAlpha = a0 * (o.itcz ?? 1);
+  if (o.itcz !== 0) {
+    const pts = []; for (let lon = -180; lon <= 180; lon += 3) pts.push(prj(v, lon, itczLat(lon, s)));
+    line(ctx, pts, COL.lo, 3.5, [14, 10]);
+    const p = prj(v, -100, itczLat(-100, s));
+    if (o.labels !== 0) { ctx.globalAlpha = a0 * (o.itcz ?? 1) * (o.labels ?? 1); label(ctx, 'ITCZ', p[0], p[1] + 22, COL.lo, fpx(9, 19, 28), 'center'); }
+  }
+  SYS.forEach((m, i) => {
+    const g = eo(clamp01(((o.grow ?? 1) * SYS.length - i)));
+    const lat = lerp(m.j[0], m.u[0], s), lon = lerp(m.j[1], m.u[1], s), st = lerp(m.j[2], m.u[2], s) * g;
+    if (st < 0.03) return;
+    const [x, y] = prj(v, lon, lat), r = (20 + 24 * st) * Math.min(1.7, zk), col = m.p === 'H' ? COL.hi : COL.lo;
+    ctx.globalAlpha = a0 * Math.min(1, st * 1.6);
+    disc(ctx, x, y, r, m.p === 'H' ? 'rgba(22,103,196,.16)' : 'rgba(200,50,42,.16)', null);
+    pLetter(ctx, x, y, m.p, fpx(13, 30, 44) * (0.8 + 0.3 * st) * Math.min(1.5, zk));
+    const la = (o.labels ?? 1) * (m.india ? 1 : (o.others ?? 1));
+    if (la > 0.01) {
+      ctx.globalAlpha = a0 * Math.min(1, st * 1.6) * la;
+      const fs = fpx(9, 20, 30) * Math.min(1.3, zk);
+      if (m.s === 'r') label(ctx, m.n, x + r + 6, y, C.navy, fs, 'left');
+      else if (m.s === 'l') label(ctx, m.n, x - r - 6, y, C.navy, fs, 'right');
+      else label(ctx, m.n, x, y + r + fs * 0.7, C.navy, fs, 'center');
+    }
+  });
+  ctx.globalAlpha = a0;
+}
+function seasonPill(ctx, v, s, dir, a) {
+  const txt = s < 0.12 ? 'January: Sun overhead near 23.5°S' : s > 0.88 ? 'July: Sun overhead near 23.5°N' : dir > 0 ? 'Spring: Sun moving north' : 'Autumn: Sun moving south';
+  ctx.globalAlpha = a; label(ctx, txt, v.clip[0], v.clip[1] - 30, C.navy, fpx(11, 26, 38), 'left'); ctx.globalAlpha = 1;
+}
+function mapLegend(ctx, y, a) {
+  if (a < 0.01) return;
+  ctx.globalAlpha = a; const fs = fpx(9, 20, 30);
+  let x = 840; pLetter(ctx, x + 10, y, 'H', fs * 1.4); x += 34 + label(ctx, 'High pressure', x + 30, y, C.ink, fs, 'left', 400) + 40;
+  pLetter(ctx, x + 10, y, 'L', fs * 1.4); x += 34 + label(ctx, 'Low pressure', x + 30, y, C.ink, fs, 'left', 400) + 40;
+  line(ctx, [[x, y], [x + 60, y]], COL.lo, 3.5, [14, 10]); label(ctx, 'ITCZ (equatorial low)', x + 72, y, C.ink, fs, 'left', 400);
+  ctx.globalAlpha = 1;
+}
+function cloud(ctx, x, y, sc, t) {
+  ctx.fillStyle = '#9aa7b8';
+  [[-22, 4, 18], [0, -8, 24], [22, 4, 18], [0, 8, 18]].forEach(c => { ctx.beginPath(); ctx.arc(x + c[0] * sc, y + c[1] * sc, c[2] * sc, 0, TAU); ctx.fill(); });
+  ctx.strokeStyle = COL.hi; ctx.lineWidth = 3 * sc; ctx.lineCap = 'round';
+  for (let k = 0; k < 4; k++) { const ph = ((t * 1.4 + k * 0.37) % 1); const xx = x + (-21 + k * 14) * sc, yy = y + (26 + ph * 26) * sc; ctx.globalAlpha *= 1; ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - 4 * sc, yy + 12 * sc); ctx.stroke(); }
+}
+function indiaWinds(ctx, v, s, t, a) {   // January: dry winds off the Siberian High; July: moist winds into the Thermal Low
+  const a0 = ctx.globalAlpha, w = 7;
+  const flow = (pts, col, al) => { if (al < 0.02) return; ctx.globalAlpha = a0 * a * al; pts.forEach((p, i) => { const off = 0.06 * Math.sin(t * 2 + i); const A = prj(v, p[0], p[1]), B = prj(v, p[2], p[3]); const dx = B[0] - A[0], dy = B[1] - A[1]; arrow(ctx, A[0] + dx * off, A[1] + dy * off, B[0] + dx * off, B[1] + dy * off, col, w); }); };
+  flow([[78, 30, 70, 20], [88, 28, 81, 17], [93, 25, 88, 15]], '#9a6b2f', 1 - s);
+  flow([[61, 9, 71, 19], [75, 4, 83, 13], [84, 13, 89, 24]], COL.hi, s);
+  ctx.globalAlpha = a0 * a * s;
+  if (s > 0.02) { const c1 = prj(v, 74, 16), c2 = prj(v, 89, 25); cloud(ctx, c1[0], c1[1], 1, t); cloud(ctx, c2[0], c2[1], 1, t + .4); }
+  ctx.globalAlpha = a0 * a;
+  const fs = fpx(9, 20, 30);
+  [['India', 78, 21.5], ['Arabian Sea', 63, 17], ['Bay of Bengal', 92, 14]].forEach(q => { const p = prj(v, q[1], q[2]); label(ctx, q[0], p[0], p[1], C.ink, fs, 'center', 400); });
+  const m = prj(v, 80, 33.4); label(ctx, 'Himalayas', m[0], m[1], '#6b5326', fs, 'center');
+  ctx.globalAlpha = a0;
+}
+
+// ---------- scenes ----------
+const SCENES = [];
+function scene(id, name, dur, def) { SCENES.push(Object.assign({ id, name, dur }, def)); }
+function cscene(id, name, dur, text, render) {
+  scene(id, name, dur, {
+    init(root) {
+      root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas></div>'));
+      root.firstChild.append(h(textBlock(text[0], text[1], text[2], text[3])));
+      this.ctx = root.querySelector('canvas').getContext('2d');
+      textRefs(this, root);
+    },
+    render(t) { textRender(this, t, 1.2); clear(this.ctx); this.ctx.globalAlpha = 1; render.call(this, t, this.ctx); this.ctx.globalAlpha = 1; },
+  });
+}
+
+scene('title', 'Global atmospheric circulation', 5, {
+  init(root) {
+    root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas>' +
+      '<div class="words" style="left:140px;top:280px;width:680px">' +
+      '<p class="tag">Introduction to meteorology</p><h1 class="line" style="font-size:100px">Global atmospheric circulation</h1>' +
+      '<div class="rule"></div><p class="sub">How rising and sinking air sets up Earth’s wind belts</p></div></div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style; this.subS = root.querySelector('.sub').style;
+    this.ctx = root.querySelector('canvas').getContext('2d');
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.1);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.9, 1.4)) + ')';
+    subIn(this.subS, t, 1.2);
+    const ctx = this.ctx; clear(ctx);
+    ctx.globalAlpha = eo(seg(t, 0.3, 1.5));
+    drawGlobe(ctx, { shellLabel: false });
+    threeCells(ctx, t, { names: false });
+    ctx.globalAlpha = eo(seg(t, 1.2, 2.2));
+    curvedBelt(ctx, 0, { even: true }); curvedBelt(ctx, 1, { even: true }); curvedBelt(ctx, 2);
+    ctx.globalAlpha = 1;
+  },
+});
+
+cscene('assume', 'Three assumptions', 6, [250, 'Start simple', 'Three assumptions', '<b class="o">1.</b> Earth is made only of water.<br><b class="o">2.</b> The Sun is always over the equator.<br><b class="o">3.</b> Earth is not turning.'], function (t, ctx) {
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawGlobe(ctx, { shell: false, grid: 0.5, latLabels: false, lats: [0] });
+  const fs = fpx(11, 26, 38);
+  // 1: all water
+  ctx.globalAlpha = eo(seg(t, 1.3, 1.9));
+  for (let k = 0; k < 3; k++) { const y = G.cy + 110 + k * 26, pts = []; for (let x = -150; x <= 150; x += 6) pts.push([G.cx + x, y + 6 * Math.sin(x / 22 + t * 2 + k)]); line(ctx, pts, '#5f8fc9', 3); }
+  badge(ctx, G.cx - 120, G.cy - 30, '1', true, ctx.globalAlpha); ctx.globalAlpha = eo(seg(t, 1.3, 1.9));
+  label(ctx, 'All water', G.cx - 80, G.cy - 30, C.navy, fs, 'left');
+  // 2: sun over the equator
+  ctx.globalAlpha = eo(seg(t, 2.2, 2.8));
+  sunIcon(ctx, 880, G.cy, 34, t);
+  [-60, -30, 0, 30, 60].forEach(dy => { const e = rayToGlobe(930, G.cy + dy, 1, 0); if (e) arrow(ctx, 930, G.cy + dy, e[0] - 6, e[1], dy ? '#f6a55c' : C.orange, dy ? 3 : 5); });
+  badge(ctx, 880, G.cy - 110, '2', true, ctx.globalAlpha); ctx.globalAlpha = eo(seg(t, 2.2, 2.8));
+  label(ctx, 'Sun over the equator', 920, G.cy - 110, C.navy, fs, 'left');
+  // 3: not turning
+  ctx.globalAlpha = eo(seg(t, 3.1, 3.7));
+  const ex = G.cx, ey = G.cy - G.R - 40;
+  line(ctx, [[ex, G.cy - G.R + 6], [ex, ey - 40]], C.navy, 3);
+  const arc = []; for (let i = 0; i <= 40; i++) { const a = Math.PI * (0.15 + 1.7 * i / 40); arc.push([ex + 90 * Math.cos(a), ey + 22 * Math.sin(a)]); }
+  pathArrow(ctx, arc, C.navy, 4);
+  line(ctx, [[ex - 80, ey + 40], [ex + 80, ey - 40]], COL.lo, 7);
+  badge(ctx, ex + 150, ey, '3', true, ctx.globalAlpha); ctx.globalAlpha = eo(seg(t, 3.1, 3.7));
+  label(ctx, 'Not turning', ex + 190, ey, C.navy, fs, 'left');
+});
+
+cscene('onecell', 'One giant cell', 8, [240, 'With all three assumptions', 'One giant cell', 'Hot air <b class="o">rises</b> at the equator and flows high up toward the pole. There it cools, <b class="o">sinks</b>, and flows back along the surface. Surface winds blow from the poles to the equator.'], function (t, ctx) {
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawGlobe(ctx);
+  ctx.globalAlpha = eo(seg(t, 1, 2));
+  drawCell(ctx, 0, 90, true, COL.hadley, t, { name: 'Hadley cell' });
+  drawCell(ctx, 0, -90, true, COL.hadley, t, { name: 'Hadley cell' });
+  ctx.globalAlpha = eo(seg(t, 2.2, 3));
+  [-130, 0, 130].forEach((x, i) => { windArrow(ctx, G.cx + x, gy(34), 0, 1, 160, COL.wind, 7, t, i); windArrow(ctx, G.cx + x, gy(-34), 0, -1, 160, COL.wind, 7, t, i); });
+  const fs = fpx(11, 23, 34);
+  ctx.globalAlpha = eo(seg(t, 3.2, 3.9));
+  [-1, 1].forEach(s => { pLetter(ctx, G.cx + s * 260, G.cy, 'L'); });
+  label(ctx, 'Warm air rises: low pressure', G.cx, G.cy + 40, COL.lo, fs, 'center');
+  ctx.globalAlpha = eo(seg(t, 4, 4.7));
+  pLetter(ctx, G.cx, gy(80), 'H'); pLetter(ctx, G.cx, gy(-80), 'H');
+  label(ctx, 'Cold air sinks: high pressure', G.cx - 40, G.cy - G.R - 34, COL.hi, fs, 'right');
+  label(ctx, 'Cold air sinks: high pressure', G.cx - 40, G.cy + G.R + 34, COL.hi, fs, 'right');
+  ctx.globalAlpha = 1;
+});
+
+cscene('spin', 'Earth turns', 7, [230, 'Remove assumption 3', 'Earth turns', 'The <b class="o">Coriolis effect</b> returns. Moving air turns to the <b class="o">right</b> in the Northern Hemisphere and to the <b class="o">left</b> in the Southern Hemisphere.'], function (t, ctx) {
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawGlobe(ctx, { shell: false });
+  // rotation arrow around the axis, above the North Pole
+  ctx.globalAlpha = eo(seg(t, 0.6, 1.4));
+  const ex = G.cx, ey = G.cy - G.R - 45, sp = t * 0.9;
+  line(ctx, [[ex, G.cy - G.R + 4], [ex, ey - 45]], C.navy, 3);
+  const back = [], front = [];
+  for (let i = 0; i <= 30; i++) { const a = Math.PI * (1.08 + 0.84 * i / 30); back.push([ex + 125 * Math.cos(a), ey + 30 * Math.sin(a)]); }
+  for (let i = 0; i <= 40; i++) { const a = Math.PI * (0.95 - 0.9 * i / 40); front.push([ex + 125 * Math.cos(a), ey + 30 * Math.sin(a)]); }
+  ctx.globalAlpha *= 0.45; line(ctx, back, C.navy, 4, [8, 7]); ctx.globalAlpha = eo(seg(t, 0.6, 1.4));
+  pathArrow(ctx, front.map(p => p), C.navy, 5);
+  const dot = Math.PI * (0.95 - 0.9 * ((sp % 1))); disc(ctx, ex + 125 * Math.cos(dot), ey + 30 * Math.sin(dot), 8, C.orange, null);
+  const fl = fpx(10, 24, 36), fsm = fpx(9, 18, 26);
+  label(ctx, 'Earth rotates', ex - 140, ey - 30, C.navy, fl, 'right');
+  label(ctx, 'counter-clockwise', ex - 140, ey + 4, C.navy, fl, 'right');
+  label(ctx, '(seen from above the North Pole)', ex - 140, ey + 36, C.ink, fsm, 'right', 400);
+  const turnS = 80 * DEG * eio(seg(t, 1.6, 4)), fs = fpx(10, 22, 32);
+  ctx.globalAlpha = eo(seg(t, 1.2, 1.8));
+  [-120, 10, 140].forEach(x => { pathArrow(ctx, bendPath(G.cx + x, gy(58), Math.PI / 2, turnS, 230), COL.wind, 7); pathArrow(ctx, bendPath(G.cx + x, gy(-58), -Math.PI / 2, -turnS, 230), COL.wind, 7); });
+  arrow(ctx, 880, 1010, 940, 1010, COL.wind, 6); label(ctx, 'Surface winds turn toward the west', 960, 1010, C.ink, fs, 'left', 400);
+  ctx.globalAlpha = eo(seg(t, 4.2, 4.9));
+  label(ctx, 'Turns right', G.cx + 250, gy(28), C.orangeDk, fs, 'center'); label(ctx, 'Turns left', G.cx + 250, gy(-28), C.orangeDk, fs, 'center');
+  ctx.globalAlpha = 1;
+});
+
+cscene('split', 'One cell becomes three', 7, [250, 'Remove assumption 3', 'One cell becomes three', 'The single cell breaks into three in each hemisphere: the <b class="o">Hadley cell</b> (0–30°), the <b class="o">Ferrel cell</b> (30–60°) and the <b class="o">Polar cell</b> (60–90°).'], function (t, ctx) {
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawGlobe(ctx);
+  ctx.globalAlpha = 1 - seg(t, 2, 2.9);
+  drawCell(ctx, 0, 90, true, COL.hadley, t); drawCell(ctx, 0, -90, true, COL.hadley, t);
+  ctx.globalAlpha = eo(seg(t, 1, 1.8)) * (1 - 0.6 * seg(t, 4.6, 5.4));
+  [30, 60, -30, -60].forEach(L => { const a = shellPt(L, -0.25), b = shellPt(L, 1.25); line(ctx, [a, b], C.orange, 4, [8, 7]); line(ctx, [[G.cx - gw(L), gy(L)], [G.cx + gw(L), gy(L)]], C.orange, 4, [16, 10]); });
+  const p = [eo(seg(t, 2.3, 3.1)), eo(seg(t, 3.1, 3.9)), eo(seg(t, 3.9, 4.7))];
+  ctx.globalAlpha = 1;
+  threeCells(ctx, t, { alpha: p, sc: p.map(x => lerp(0.5, 1, x)) });
+  const fs = fpx(11, 23, 32);
+  [[15, 'Hadley cell', COL.hadley, 0], [45, 'Ferrel cell', COL.ferrel, 1], [75, 'Polar cell', COL.polar, 2]].forEach(q => {
+    ctx.globalAlpha = p[q[3]]; label(ctx, q[1], G.cx, gy(q[0]), q[2], fs, 'center'); label(ctx, q[1], G.cx, gy(-q[0]), q[2], fs, 'center');
+  });
+  ctx.globalAlpha = 1;
+});
+
+cscene('winds', 'Three wind belts', 8, [230, 'At the surface', 'Three wind belts', 'Each cell drives its own surface winds. Air flowing toward the equator turns west, and air flowing toward the poles turns east.'], function (t, ctx) {
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawGlobe(ctx);
+  ctx.globalAlpha = 0.5 * eo(seg(t, 0.2, 1));
+  threeCells(ctx, t);
+  const fs = fpx(11, 24, 34);
+  ctx.globalAlpha = eo(seg(t, 1.4, 2.1));
+  curvedBelt(ctx, 0);
+  label(ctx, 'Northeast trade winds', G.cx - 30, gy(16), C.orangeDk, fs, 'center'); label(ctx, 'Southeast trade winds', G.cx - 30, gy(-16), C.orangeDk, fs, 'center');
+  ctx.globalAlpha = eo(seg(t, 3, 3.7));
+  curvedBelt(ctx, 1);
+  label(ctx, 'Westerlies', G.cx - 20, gy(44), C.orangeDk, fs, 'center'); label(ctx, 'Westerlies', G.cx - 20, gy(-44), C.orangeDk, fs, 'center');
+  ctx.globalAlpha = eo(seg(t, 4.6, 5.3));
+  curvedBelt(ctx, 2);
+  label(ctx, 'Polar easterlies', G.cx - 70, G.cy - G.R - 22, C.orangeDk, fs, 'right'); label(ctx, 'Polar easterlies', G.cx - 70, G.cy + G.R + 22, C.orangeDk, fs, 'right');
+  ctx.globalAlpha = 1;
+});
+
+function pressureGlobe(ctx, t, A) {
+  const txt = A.txt ?? 1;
+  ctx.globalAlpha = A.base;
+  drawGlobe(ctx, { grid: 0.6, face: A.face });
+  ctx.globalAlpha = 0.4 * A.base;
+  threeCells(ctx, t, { names: false });
+  const nm = fpx(11, 25, 34), dt = fpx(9, 20, 28);
+  const band = (L, kind, a, name, detail, inset) => {
+    ctx.globalAlpha = a; stripe(ctx, L, kind, 1);
+    const up = inset || L === 0 ? -1 : (L > 0 ? 1 : -1), yN = gy(L) + up * 22;
+    ctx.globalAlpha = a * txt;
+    const w = label(ctx, name, G.cx, yN, kind === 'L' ? COL.lo : COL.hi, nm, 'center');
+    if (detail) label(ctx, detail, G.cx, gy(L) - up * 22, C.ink, dt, 'center', 400);
+    ctx.globalAlpha = a;
+    if (inset) { const xo = gw(L) - inset; pLetter(ctx, G.cx - xo, gy(L), kind); pLetter(ctx, G.cx + xo, gy(L), kind); }
+    else pLetter(ctx, G.cx - w / 2 - nm * 0.9, yN, kind, nm * 1.4);
+    vArrow(ctx, L, kind === 'L', kind === 'L' ? COL.lo : COL.hi);
+  };
+  ctx.globalAlpha = 0.55 * A.winds;
+  if (A.winds > 0.01) { curvedBelt(ctx, 0, { k: 0.72, dl: -3, w: 5, even: true }); curvedBelt(ctx, 1, { k: 0.7, dl: 4, w: 5, even: true }); curvedBelt(ctx, 2, { w: 5, k: 0.85 }); }
+  band(0, 'L', A.a[0], 'Doldrums', 'Equatorial low (ITCZ): calm, rainy', 55);
+  band(30, 'H', A.a[1], 'Subtropical high', 'Horse latitudes: calm, dry, deserts', 50); band(-30, 'H', A.a[1], 'Subtropical high', 'Horse latitudes: calm, dry, deserts', 50);
+  band(60, 'L', A.a[2], 'Subpolar low', '', 0); band(-60, 'L', A.a[2], 'Subpolar low', '', 0);
+  ctx.globalAlpha = A.a[3];
+  vArrow(ctx, 90, false, COL.hi); vArrow(ctx, -90, false, COL.hi);
+  [-1, 1].forEach(sg => { const y = G.cy + sg * (G.R + 28); ctx.globalAlpha = A.a[3]; pLetter(ctx, G.cx - 34, y, 'H', nm * 1.4); ctx.globalAlpha = A.a[3] * txt; label(ctx, 'Polar high', G.cx - 34 - nm, y, COL.hi, nm, 'right'); });
+  ctx.globalAlpha = 1;
+}
+cscene('pressure', 'Belts of high and low pressure', 10, [230, 'Rising and sinking air', 'Belts of high and low pressure', 'Rising air leaves <b class="o">low pressure</b> at the equator and near 60°. Sinking air builds <b class="o">high pressure</b> near 30° and at the poles.'], function (t, ctx) {
+  pressureGlobe(ctx, t, { base: eo(seg(t, 0.2, 1)), winds: eo(seg(t, 0.4, 1.2)),
+    a: [eo(seg(t, 1.2, 1.9)), eo(seg(t, 2.6, 3.3)), eo(seg(t, 4, 4.7)), eo(seg(t, 5.2, 5.9))] });
+});
+
+// rainforests (rising air, low pressure) and deserts (sinking air, high pressure)
+const FOREST = [
+  { n: 'Amazon', at: [-62, -4], p: [[-78,2],[-70,4],[-60,5],[-52,3],[-49,-1],[-50,-5],[-56,-9],[-66,-12],[-74,-9],[-77,-3]] },
+  { n: 'Congo', at: [20, -1], p: [[9,4],[18,4.5],[28,3],[30,-1],[27,-6],[14,-5],[10,-1]] },
+  { n: '', at: [-5, 7], p: [[-12,8.5],[-5,7.5],[0,7],[5,7],[6,5],[-3,5.2],[-8,5]] },
+  { n: 'Southeast Asia', at: [108, 1], p: [[95,5],[101,6.5],[110,3],[117,6],[119,1],[116,-4],[106,-6],[101,-3.5],[96,2]] },
+  { n: '', at: [140, -5], p: [[131,-1.5],[138,-2],[145,-4.5],[147,-7],[141,-8.5],[135,-4]] },
+  { n: '', at: [-84, 12], p: [[-89,15.5],[-84,15],[-83.5,11],[-79.5,9],[-82,8.5],[-86,11],[-88,14]] },
+];
+const DESERT = [
+  { n: 'Sahara', at: [8, 23], p: [[-16,19],[-13,27],[-6,30],[5,31.5],[15,30.5],[25,30],[32,28],[33,21],[28,16],[15,16],[0,17],[-12,17]] },
+  { n: 'Arabian', at: [46, 23], p: [[36,28],[44,30],[49,27],[56,22],[52,17.5],[45,16],[40,20]] },
+  { n: '', at: [71, 26], p: [[68,24],[71,29],[75,28],[73,24]] },
+  { n: 'Sonoran', at: [-111, 30], p: [[-117,35],[-111,36],[-104,33],[-102,28],[-106,27],[-112,29],[-115,31]] },
+  { n: 'Australian', at: [128, -25], p: [[118,-22],[126,-20],[134,-21],[140,-24],[138,-30],[130,-30.5],[122,-28],[117,-26]] },
+  { n: 'Kalahari', at: [20, -24], p: [[14,-18],[20,-19],[24,-22],[22,-28],[16,-28],[14,-22]] },
+  { n: 'Atacama', at: [-70, -23], p: [[-71,-18],[-69,-18],[-69,-28],[-71,-28]] },
+];
+// the world painted on a turning globe: an equirectangular picture, re-projected every frame
+const ANTARCTICA = [[-180,-90],[180,-90],[180,-78],[160,-70],[120,-66],[80,-67],[40,-69],[0,-70],[-40,-77],[-58,-73],[-58,-64],[-65,-66],[-75,-72],[-100,-73],[-140,-76],[-180,-78]];
+let TEX = null, GLUT = null;
+const GN = 520, gcan = document.createElement('canvas'); gcan.width = gcan.height = GN;
+function globeTexture() {
+  if (TEX) return TEX;
+  const W = 1440, H = 720, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const fill = (pts, col) => { x.beginPath(); pts.forEach((p, i) => { const q = [(p[0] + 180) * 4, (90 - p[1]) * 4]; i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); }); x.closePath(); x.fillStyle = col; x.fill(); };
+  LAND.concat([ANTARCTICA]).forEach(p => fill(p, '#cfe3bf'));
+  x.globalCompositeOperation = 'destination-out'; SEAS.forEach(p => fill(p, '#000')); x.globalCompositeOperation = 'source-over';
+  TEX = x.getImageData(0, 0, W, H).data;
+  GLUT = new Float32Array(GN * GN * 2);
+  for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) {
+    const nx = (i + 0.5) / GN * 2 - 1, ny = (j + 0.5) / GN * 2 - 1, k = (j * GN + i) * 2;
+    if (nx * nx + ny * ny >= 1) { GLUT[k] = -1; continue; }
+    const lat = Math.asin(-ny), d = Math.asin(nx / Math.cos(lat));
+    GLUT[k] = Math.min(H - 1, Math.round((Math.PI / 2 - lat) / DEG * 4)); GLUT[k + 1] = d / DEG * 4;
+  }
+  return TEX;
+}
+function drawEarthFace(ctx, l0, a) {
+  const tex = globeTexture(), gx = gcan.getContext('2d'), img = gx.createImageData(GN, GN), o = img.data, W = 1440;
+  const base = (l0 + 180) * 4;
+  for (let p = 0, n = GN * GN; p < n; p++) {
+    const row = GLUT[p * 2]; if (row < 0) continue;
+    let u = Math.round(base + GLUT[p * 2 + 1]) % W; if (u < 0) u += W;
+    const s = (row * W + u) * 4; if (!tex[s + 3]) continue;
+    const q = p * 4; o[q] = tex[s]; o[q + 1] = tex[s + 1]; o[q + 2] = tex[s + 2]; o[q + 3] = tex[s + 3];
+  }
+  gx.putImageData(img, 0, 0);
+  const a0 = ctx.globalAlpha; ctx.globalAlpha = a0 * a; ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(gcan, G.cx - G.R, G.cy - G.R, G.R * 2, G.R * 2);
+  // deserts and rainforests as smooth shapes, projected onto the globe
+  ctx.save(); ctx.beginPath(); ctx.arc(G.cx, G.cy, G.R - 1, 0, TAU); ctx.clip();
+  [[DESERT, '#e2a94a'], [FOREST, '#2f8a40']].forEach(g => g[0].forEach(f => {
+    const pts = []; let any = false;
+    f.p.forEach((p, i) => { const q = f.p[(i + 1) % f.p.length]; for (let k = 0; k < 4; k++) pts.push([lerp(p[0], q[0], k / 4), lerp(p[1], q[1], k / 4)]); });
+    ctx.beginPath();
+    pts.forEach((p, i) => { const d = (p[0] - l0) * DEG, c = Math.cos(p[1] * DEG); let sx = Math.sin(d); if (Math.cos(d) > 0) any = true; else sx = sx >= 0 ? 1 : -1;
+      const X = G.cx + G.R * c * sx, Y = gy(p[1]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+    ctx.closePath(); if (any) { ctx.fillStyle = g[1]; ctx.fill(); }
+  }));
+  ctx.restore(); ctx.globalAlpha = a0;
+}
+const RAIN_L0 = t => 20 - 20 * Math.max(0, t - 3);
+cscene('rain', 'Rainforests and deserts', 21, [220, 'On the ground', 'Rainforests and deserts', 'Rising air near the equator cools and builds clouds and rain almost every day: the <b class="o">rainforests</b>. Sinking air near 30° warms and dries out: the great <b class="o">deserts</b>.'], function (t, ctx) {
+  const l0 = RAIN_L0(t), fade = 1 - eo(seg(t, 0.6, 2)), land = eo(seg(t, 0.8, 2.2));
+  pressureGlobe(ctx, t, { base: 1, winds: fade, txt: fade, a: [1, 1, 1, 1], face: () => drawEarthFace(ctx, l0, 0.85 * land) });
+  // names of the regions facing us
+  const fs = fpx(9, 19, 28);
+  [[FOREST, '#1f5c2a'], [DESERT, '#6e4a10']].forEach(g => g[0].forEach(f => {
+    if (!f.n) return;
+    let d = ((f.at[0] - l0 + 540) % 360) - 180; d *= DEG;
+    const vis = clamp01((Math.cos(d) - 0.3) / 0.35); if (vis <= 0) return;
+    ctx.globalAlpha = vis * land; label(ctx, f.n, G.cx + G.R * Math.cos(f.at[1] * DEG) * Math.sin(d), gy(f.at[1]), g[1], fs, 'center');
+  }));
+  const fl = fpx(10, 22, 32);
+  ctx.globalAlpha = eo(seg(t, 2, 2.8));
+  ctx.fillStyle = '#2f8a40'; ctx.fillRect(880, 990, 34, 24); label(ctx, 'Rainforest: rising air, low pressure, heavy rain', 926, 1002, C.ink, fl, 'left', 400);
+  ctx.globalAlpha = eo(seg(t, 2.6, 3.4));
+  ctx.fillStyle = '#e2a94a'; ctx.fillRect(880, 1032, 34, 24); label(ctx, 'Desert: sinking air, high pressure, little rain', 926, 1044, C.ink, fl, 'left', 400);
+  ctx.globalAlpha = 1;
+});
+
+function jetRibbon(ctx, lat0, amp, waves, t, txt, below) {
+  const pts = [], P = u => { const lat = lat0 + amp * Math.sin(TAU * u * waves - t * 0.9); return [G.cx + (u * 2 - 1) * gw(lat) * 0.9, gy(lat)]; };
+  for (let i = 0; i <= 80; i++) pts.push(P(i / 80));
+  const a0 = ctx.globalAlpha;
+  ctx.globalAlpha = a0 * 0.3; line(ctx, pts, COL.jet, 18); ctx.globalAlpha = a0; line(ctx, pts, COL.jet, 4);
+  for (let k = 0; k < 6; k++) { const u = ((k / 6 + t * 0.07) % 1) * 0.96 + 0.02, p = P(u), q = P(u + 0.005); head(ctx, p[0], p[1], Math.atan2(q[1] - p[1], q[0] - p[0]), 20, C.orangeDk); }
+  label(ctx, txt, G.cx - gw(lat0) * 0.5, gy(lat0) + (below ? 30 : -30), C.orangeDk, fpx(11, 24, 34), 'center');
+}
+function jetCause(ctx, lat0, t, T) {   // air aloft flows from warm toward cold, then the Coriolis effect turns it east
+  const a = eo(seg(t, T, T + 0.5)) * (1 - eo(seg(t, T + 2.6, T + 3.2))); if (a < 0.01) return;
+  const turn = 80 * DEG * eio(seg(t, T + 0.9, T + 2.1)), fs = fpx(10, 21, 30);
+  [1, -1].forEach(hs => {
+    ctx.globalAlpha = a;
+    [-150, -20, 110].forEach(x => pathArrow(ctx, bendPath(G.cx + x, gy(hs * (lat0 - 11)), -hs * Math.PI / 2, hs * turn, 62), COL.aloft, 5));
+    label(ctx, 'Warmer', G.cx - 20, gy(hs * (lat0 - 17)), COL.lo, fs, 'center');
+    label(ctx, 'Colder', G.cx - 20, gy(hs * (lat0 + 6)), COL.hi, fs, 'center');
+  });
+  ctx.globalAlpha = 1;
+}
+cscene('jets', 'The jet streams', 12, [140, 'High above the cells', 'The jet streams', 'Jets form where the <b class="o">temperature difference</b> between cells is largest. Air aloft flows from the warm side toward the cold side, and the <b class="o">Coriolis effect</b> turns it to the east: the <b class="o">polar jet</b> (near 60°) and the <b class="o">subtropical jet</b> (near 30°).'], function (t, ctx) {
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawGlobe(ctx, { latLabels: true });
+  ctx.globalAlpha = 0.45 * eo(seg(t, 0.2, 1));
+  threeCells(ctx, t);
+  const jet = (L, a) => { ctx.globalAlpha = a; const p = shellPt(L, 1.02), pulse = 0.5 + 0.5 * Math.sin(t * 4); disc(ctx, p[0], p[1], 20 + 6 * pulse, 'rgba(244,121,32,.25)', null); disc(ctx, p[0], p[1], 11, COL.jet, '#ffffff', 2);
+    const q = shellPt(L, 1.55); label(ctx, 'jet', q[0], q[1], C.orangeDk, fpx(9, 19, 26), 'center'); };
+  jetCause(ctx, 60, t, 1.2); jetCause(ctx, 30, t, 5);
+  const aP = eo(seg(t, 3.9, 4.5)), aS = eo(seg(t, 7.7, 8.3));
+  jet(60, aP); jet(-60, aP); jet(30, aS); jet(-30, aS);
+  ctx.globalAlpha = aP; jetRibbon(ctx, 57, 5, 2, t, 'Polar jet', false); jetRibbon(ctx, -57, 5, 2, t + 2, 'Polar jet', true);
+  ctx.globalAlpha = aS; jetRibbon(ctx, 30, 2, 3, t, 'Subtropical jet', false); jetRibbon(ctx, -30, 2, 3, t + 1, 'Subtropical jet', true);
+  const fs = fpx(10, 22, 32);
+  ctx.globalAlpha = eo(seg(t, 1.6, 2.2)) * (1 - eo(seg(t, 8.6, 9.1)));
+  pathArrow(ctx, [[880, 1000], [940, 1000]], COL.aloft, 5); label(ctx, 'Air aloft: warm side toward cold side, turned east', 960, 1000, C.ink, fs, 'left', 400);
+  ctx.globalAlpha = eo(seg(t, 9, 9.6));
+  label(ctx, 'Both jets blow from west to east, about 9 to 16 km up', 880, 1035, C.ink, fs, 'left', 400);
+  ctx.globalAlpha = 1;
+});
+
+const SUN_T0 = 1, SUN_P = 10;
+cscene('sun', 'The belts follow the Sun', 12, [230, 'Remove assumption 2', 'The belts follow the Sun', 'Earth’s tilt moves the overhead Sun between <b class="o">23.5°N</b> in June and <b class="o">23.5°S</b> in December. The cells and pressure belts shift north and south with it.'], function (t, ctx) {
+  const ph = Math.max(0, t - SUN_T0) / SUN_P, ss = 23.5 * Math.sin(TAU * ph), sh = 0.45 * ss;
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawGlobe(ctx, { tropics: eo(seg(t, 0.4, 1.2)), grid: 0.5 });
+  ctx.globalAlpha = 0.6 * eo(seg(t, 0.2, 1));
+  threeCells(ctx, t, { sh, names: false });
+  ctx.globalAlpha = eo(seg(t, 0.4, 1.2));
+  [[0, 'L', 55], [30, 'H', 50], [-30, 'H', 50], [60, 'L', 32], [-60, 'L', 32]].forEach(b => { const L = b[0] + sh; stripe(ctx, L, b[1], 1); pLetter(ctx, G.cx - gw(L) + b[2], gy(L), b[1], fpx(14, 34, 48)); pLetter(ctx, G.cx + gw(L) - b[2], gy(L), b[1], fpx(14, 34, 48)); });
+  label(ctx, 'Equatorial low (ITCZ)', G.cx + 60, gy(sh) + 24, COL.lo, fpx(9, 20, 28), 'center');
+  // the Sun and its direct ray
+  const n = [-Math.cos(ss * DEG), -Math.sin(ss * DEG)], D = G.R + 150, sx = G.cx + n[0] * D, sy = G.cy - (-n[1]) * D * -1;
+  const sunX = G.cx - Math.cos(ss * DEG) * D, sunY = G.cy - Math.sin(ss * DEG) * D;
+  const dx = Math.cos(ss * DEG), dy = Math.sin(ss * DEG);
+  [-70, 70, 0].forEach(o => { const x0 = sunX + 40 * dx - o * dy, y0 = sunY + 40 * dy + o * dx; const e = rayToGlobe(x0, y0, dx, dy); if (e) arrow(ctx, x0, y0, e[0], e[1], o ? '#f6a55c' : C.orange, o ? 3 : 6); });
+  sunIcon(ctx, sunX, sunY, 30, t);
+  const fs = fpx(11, 26, 38);
+  const months = ['March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February'];
+  const mo = months[Math.round(((ph % 1) + 1) % 1 * 12) % 12];
+  label(ctx, mo + ': Sun overhead at ' + latTxt(Math.round(ss * 2) / 2), 880, 60, C.navy, fs, 'left');
+  ctx.globalAlpha = 1;
+});
+
+const LAND_T = 9;
+cscene('land', 'Land breaks up the belts', 10, [210, 'Remove assumption 1', 'Land breaks up the belts', 'Land heats and cools faster than water, and mountains and rough ground add friction. The belts break into separate highs and lows that return to the same places each year.'], function (t, ctx) {
+  const v = VIEW_G, land = eo(seg(t, 1.6, 3)), belts = 1 - eo(seg(t, 3.6, 4.8)), grow = seg(t, 4.2, 7.2);
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawMap(ctx, v, { land, mtn: 1, inside: () => {
+    ctx.globalAlpha = belts;
+    [[0, 'L'], [30, 'H'], [-30, 'H'], [60, 'L'], [-60, 'L']].forEach(b => { const y = prj(v, 0, b[0])[1]; ctx.globalAlpha = belts * 0.28; line(ctx, [[830, y], [1910, y]], b[1] === 'H' ? COL.hi : COL.lo, 16); ctx.globalAlpha = belts; for (let lon = -150; lon <= 150; lon += 60) pLetter(ctx, prj(v, lon, b[0])[0], y, b[1], fpx(12, 28, 40)); });
+    ctx.globalAlpha = 1;
+    drawSystems(ctx, v, 0, { grow, itcz: eo(seg(t, 7, 8)), labels: eo(seg(t, 4.6, 7.6)) });
+  } });
+  seasonPill(ctx, v, 0, 1, eo(seg(t, 7, 7.8)));
+  mapLegend(ctx, 760, eo(seg(t, 7.4, 8.2)));
+  ctx.globalAlpha = 1;
+});
+
+// January -> July, then zoom in on India and replay the flip
+function monsoonState(t) {
+  const sA = eio(seg(t, 2.4, 5)), z = eio(seg(t, 6.6, 8.6)), sB = eio(seg(t, 9.2, 10.6)), sC = eio(seg(t, 12.8, 14.4));
+  return { s: z < 0.001 ? sA : clamp01(1 - sB + sC), z };
+}
+cscene('monsoon', 'India’s monsoon flips', 16, [190, 'Highs and lows shift', 'India’s monsoon flips', 'In winter, the <b class="o">Siberian High</b> sends cold, dry air down off the mountains. In summer, it is replaced by a <b class="o">Thermal Low</b> near the Indian coast that pulls in moist ocean air: the <b class="o">monsoon rains</b>.'], function (t, ctx) {
+  const st = monsoonState(t), st2 = monsoonState(t - 0.05), v = viewAt(st.z);
+  const dir = st.s >= st2.s ? 1 : -1;
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  drawMap(ctx, v, { mtn: 1, inside: () => {
+    drawSystems(ctx, v, st.s, { others: 1 - st.z, itcz: 1 - 0.4 * st.z, labels: 1 });
+    indiaWinds(ctx, v, st.s, t, eo(seg(t, 7.6, 8.8)));
+  } });
+  seasonPill(ctx, v, st.s, dir, eo(seg(t, 0.4, 1)));
+  const m = 1 - eo(seg(t, 6.6, 7.4));
+  mapLegend(ctx, 760, m);
+  const fs = fpx(10, 24, 34), cap = eo(seg(t, 8.6, 9.2));
+  if (cap > 0) {
+    ctx.globalAlpha = cap * (1 - st.s);
+    label(ctx, 'January: cold, dry air drains down off the mountains', 840, 930, '#7a5524', fs, 'left'); label(ctx, '(katabatic winds). Little rain.', 840, 972, '#7a5524', fs, 'left', 400);
+    ctx.globalAlpha = cap * st.s;
+    label(ctx, 'July: moist ocean air flows in toward the Low', 840, 930, COL.hi, fs, 'left'); label(ctx, 'and rises, bringing the monsoon rains.', 840, 972, COL.hi, fs, 'left', 400);
+  }
+  ctx.globalAlpha = 1;
+});
+
+const VIEW_JAN = { k: 3, lon: 0, lat: 10, x: 1370, y: 265, clip: [830, 70, 1080, 390] };
+const VIEW_JUL = { k: 3, lon: 0, lat: 10, x: 1370, y: 735, clip: [830, 540, 1080, 390] };
+cscene('summary', 'The big picture', 7, [150, 'Putting it together', 'The big picture', '<b class="o">1.</b> Earth’s rotation splits the general circulation into three cells.<br><b class="o">2.</b> Rainforests form under steady low pressure, and deserts under steady high pressure.<br><b class="o">3.</b> These highs and lows shift with the time of year and with land and sea.'], function (t, ctx) {
+  [[VIEW_JAN, 0, 0], [VIEW_JUL, 1, 1.4]].forEach(m => {
+    const v = m[0], d = m[2];
+    ctx.globalAlpha = eo(seg(t, 0.2 + d, 1 + d));
+    drawMap(ctx, v, { mtn: 1, inside: () => { drawSystems(ctx, v, m[1], { grow: seg(t, 0.6 + d, 2.6 + d), itcz: eo(seg(t, 2 + d, 2.8 + d)), labels: eo(seg(t, 1 + d, 3 + d)) }); } });
+    seasonPill(ctx, v, m[1], 1, eo(seg(t, 0.6 + d, 1.2 + d)));
+  });
+  mapLegend(ctx, 975, eo(seg(t, 3.6, 4.4)));
+  ctx.globalAlpha = 1;
+});
+
+// ---------- scene text (shown on screen and read by screen readers) ----------
+const META = {
+  title: { still: 5, cap: { tag: 'Introduction to meteorology', line: 'Global atmospheric circulation', sub: 'How rising and sinking air sets up Earth’s wind belts' },
+    desc: 'This animation builds the model of global atmospheric circulation step by step. It starts from a simple Earth with three assumptions, then removes them one at a time. The picture shows Earth from the side, with its atmosphere drawn on the right, much thicker than it really is. Three loops of moving air sit in each hemisphere, and arrows on Earth’s surface show the trade winds, the westerlies and the polar easterlies.' },
+  assume: { still: 6, cap: { tag: 'Start simple', line: 'Three assumptions', sub: '1. Earth is made only of water. 2. The Sun is always over the equator. 3. Earth is not turning.' },
+    desc: 'To start, imagine a simpler Earth with three assumptions. One: Earth is made only of water, with no land. Two: the Sun is always directly over the equator. Three: Earth is not turning. The picture shows an all-water Earth, the Sun shining straight at the equator, and Earth’s spin arrow crossed out.' },
+  onecell: { still: 8, cap: { tag: 'With all three assumptions', line: 'One giant cell', sub: 'Hot air rises at the equator and flows high up toward the pole. There it cools, sinks, and flows back along the surface. Surface winds blow from the poles to the equator.' },
+    desc: 'With all three assumptions, each hemisphere has one giant loop of air, a single Hadley cell reaching from the equator to the pole. The Sun heats the equator most, so warm air rises there, leaving low pressure at the surface. High up, the air flows toward the pole. Over the pole it cools and sinks, building high pressure. Then it flows back along the surface toward the equator. In the picture, the loop runs up at the equator, toward the pole aloft, down at the pole and back along the surface. Surface wind arrows point straight from each pole toward the equator: south in the Northern Hemisphere and north in the Southern Hemisphere.' },
+  spin: { still: 7, cap: { tag: 'Remove assumption 3', line: 'Earth turns', sub: 'The Coriolis effect returns. Moving air turns to the right in the Northern Hemisphere and to the left in the Southern Hemisphere.' },
+    desc: 'Now let Earth turn. Seen from above the North Pole, Earth rotates counter-clockwise, shown by a curved arrow around Earth’s axis above the North Pole. The Coriolis effect returns: moving air turns to the right in the Northern Hemisphere and to the left in the Southern Hemisphere. The surface winds flowing from each pole toward the equator start out straight, then bend. In both hemispheres they bend toward the west.' },
+  split: { still: 7, cap: { tag: 'Remove assumption 3', line: 'One cell becomes three', sub: 'The single cell breaks into three in each hemisphere: the Hadley cell (0–30°), the Ferrel cell (30–60°) and the Polar cell (60–90°).' },
+    desc: 'Dividing lines appear at 30° and 60° latitude, and the single giant cell breaks into three cells in each hemisphere. The Hadley cell, from the equator to 30°, rises at the equator and sinks near 30°. The Polar cell, from 60° to the pole, rises near 60° and sinks at the pole. The Ferrel cell sits between them, from 30° to 60°. It turns the opposite way, like a gear driven by its neighbors: it sinks near 30°, flows poleward along the surface, and rises near 60°.' },
+  winds: { still: 8, cap: { tag: 'At the surface', line: 'Three wind belts', sub: 'Each cell drives its own surface winds. Air flowing toward the equator turns west, and air flowing toward the poles turns east.' },
+    desc: 'Each cell creates a belt of surface winds. In the Hadley cells, air flows toward the equator and turns west, making the northeast trade winds in the Northern Hemisphere and the southeast trade winds in the Southern Hemisphere. In the Ferrel cells, from 30° to 60°, air flows toward the poles and turns east, making the westerlies in both hemispheres. In the Polar cells, air flows away from the poles and turns west, making the polar easterlies.' },
+  jets: { still: 12, cap: { tag: 'High above the cells', line: 'The jet streams', sub: 'Jets form where the temperature difference between cells is largest. Air aloft flows from the warm side toward the cold side, and the Coriolis effect turns it to the east: the polar jet (near 60°) and the subtropical jet (near 30°).' },
+    desc: 'Jet streams are narrow bands of very fast wind near the top of the troposphere. They form where the temperature gradient, the difference in temperature from one place to the next, is largest. That happens where two cells meet: near 60°, where cold polar air meets milder air along the polar front, and near 30°, at the poleward edge of the warm Hadley cell. High up, air flows from the warmer side toward the colder side. In the picture, navy arrows start moving toward the pole, from the side labeled Warmer toward the side labeled Colder, then bend to the east as the Coriolis effect turns them, right in the Northern Hemisphere and left in the Southern Hemisphere. The result is fast winds blowing from west to east: the polar jet near 60°, usually the stronger one, about 9 to 12 km up, and the subtropical jet near 30°, about 10 to 16 km up. Orange dots mark the jets at the top of the atmosphere, and wavy orange ribbons show them flowing east in both hemispheres.' },
+  pressure: { still: 10, cap: { tag: 'Rising and sinking air', line: 'Belts of high and low pressure', sub: 'Rising air leaves low pressure at the equator and near 60°. Sinking air builds high pressure near 30° and at the poles.', box: ['Why the names?', 'Doldrums: near the equator, winds are light and sailing ships could be stuck for days. Horse latitudes: near 30°, sinking air brings calm, dry weather. Legend says becalmed ships threw horses overboard to save water.'] },
+    desc: 'Because of the three-cell model, belts of high and low pressure form around Earth. At the equator, air rises, leaving a belt of low pressure called the equatorial low, or ITCZ. The surface wind arrows from the wind-belt scene are shown faintly, evenly spaced, as a reminder: winds blow out of the highs and toward the lows. Its light, changing winds are known as the doldrums, with frequent showers and thunderstorms. Near 30° north and south, air sinks, building the subtropical highs. Here the weather is calm and dry, many of the world’s deserts are found, and the belt is known as the horse latitudes. Near 60°, air rises again, making the subpolar lows, with stormy weather. At the poles, cold air sinks, making the polar highs. Sailors named the doldrums because ships could be stuck for days in the light winds. Legend says ships becalmed in the horse latitudes threw horses overboard to save water.' },
+  sun: { still: 3.5, cap: { tag: 'Remove assumption 2', line: 'The belts follow the Sun', sub: 'Earth’s tilt moves the overhead Sun between 23.5°N in June and 23.5°S in December. The cells and pressure belts shift north and south with it.' },
+    desc: 'Now let Earth be tilted. Through the year, the point where the Sun is directly overhead moves between the Tropic of Cancer, 23.5°N, around June, and the Tropic of Capricorn, 23.5°S, around December. The Sun moves up and down beside the globe, and its direct ray tracks this point. The cells and the belts of high and low pressure shift north and south with the Sun, though not as far. The equatorial low, or ITCZ, moves north in the northern summer and south in the northern winter.' },
+  land: { still: 10, cap: { tag: 'Remove assumption 1', line: 'Land breaks up the belts', sub: 'Land heats and cools faster than water, and mountains and rough ground add friction. The belts break into separate highs and lows that return to the same places each year.' },
+    desc: 'Finally, add the continents. A world map first shows the smooth belts: lows at the equator and near 60°, highs near 30°. Then land appears. Land heats and cools much faster than water, and mountains and rough ground add friction, so the belts break into separate highs and lows that return to roughly the same places each year. The map shows a typical January, northern winter. Over the oceans near 30° sit the Pacific High and the Bermuda High in the north, and the South Pacific, South Atlantic and Indian Ocean Highs in the south. Over cold Asia sits the Siberian High. Near 60° north sit the Aleutian Low and the Icelandic Low. Over hot northern Australia sits the Australian Low. A dashed line marks the ITCZ, which dips south over the southern continents.' },
+  monsoon: { still: 16, cap: { tag: 'Highs and lows shift', line: 'India’s monsoon flips', sub: 'In winter, the Siberian High sends cold, dry air down off the mountains. In summer, it is replaced by a Thermal Low near the Indian coast that pulls in moist ocean air: the monsoon rains.' },
+    desc: 'The map changes from January to July as the Sun moves north. The Pacific and Bermuda Highs grow stronger and move north. The Aleutian and Icelandic Lows fade. The Southern Hemisphere highs strengthen, and the Australian Low is replaced by a high. The ITCZ moves north, reaching farthest north over India. Most strikingly, the Siberian High disappears, and a Thermal Low forms over northwest India near the Arabian Sea coast. The map then zooms in on India. In January, cold, dry air drains down off the Himalayas and blows from the northeast across India and out to sea. These katabatic winds bring little rain. In July, the Low pulls moist air in from the Indian Ocean, from the southwest. The air rises over India and brings the monsoon rains. This flip matches the general shift of highs and lows with the Sun, made stronger because land heats and cools faster than the ocean.' },
+  rain: { still: 2.5, cap: { tag: 'On the ground', line: 'Rainforests and deserts', sub: 'Rising air near the equator cools and builds clouds and rain almost every day: the rainforests. Sinking air near 30° warms and dries out: the great deserts.' },
+    desc: 'The globe from the previous scene stays in place, with its three cells and its belts of high and low pressure. Faint continents appear on it, and the globe turns counter-clockwise, as seen from above the North Pole, so every continent passes by. Rainforests, shown in green, line up along the equator, under the belt of rising air and low pressure. Rising air cools, its water vapor condenses into clouds, and it rains heavily almost every day: the Amazon, the Congo, and Southeast Asia, including Indonesia and New Guinea. Deserts, shown in tan, line up near 30° north and south, under the subtropical highs. Sinking air warms and dries out, so clouds and rain are rare: the Sahara, the Arabian, the Sonoran, the Kalahari, the Atacama and the Australian deserts.' },
+  summary: { still: 7, cap: { tag: 'Putting it together', line: 'The big picture', list: ['Earth’s rotation splits the general circulation into three cells.', 'Rainforests form under steady low pressure, and deserts under steady high pressure.', 'These highs and lows shift with the time of year and with land and sea.'] },
+    desc: 'Two world maps of typical pressure patterns. The top map shows January: the Pacific and Bermuda Highs, the Siberian High over Asia, the Aleutian and Icelandic Lows, the South Pacific, South Atlantic and Indian Ocean Highs, the Australian Low, and the ITCZ dipping south over the southern continents. The bottom map shows July: the Pacific and Bermuda Highs are stronger and farther north, the Siberian High is replaced by the Thermal Low over northwest India, the Aleutian and Icelandic Lows have faded, the Southern Hemisphere highs are stronger, an Australian High replaces the Australian Low, and the ITCZ has moved north. Summary. One: Earth’s rotation splits the general circulation into three cells in each hemisphere. Two: rainforests form in regions of steady low pressure, and deserts form in regions of steady high pressure. Three: these pressure systems shift with the time of year and with the land masses.' },
+};
+SCENES.forEach(s => Object.assign(s, META[s.id]));
+
+
+// ---------- player ----------
+const $ = id => document.getElementById(id);
+const stage = $('stage'), frame = $('frame'), body = document.body;
+SCENES.forEach(s => { s.root = document.createElement('div'); s.root.className = 'layer'; stage.appendChild(s.root); s.init(s.root); });
+
+const mqPort = matchMedia('(orientation: portrait) and (max-width: 640px)');
+const mqLand = matchMedia('(orientation: landscape) and (max-height: 560px)');
+const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
+let mode = 'desk';
+function fit() {
+  const m = mqPort.matches ? 'port' : mqLand.matches ? 'land' : 'desk';
+  if (m !== mode) { body.classList.remove('desk', 'land', 'port'); mode = m; }
+  body.classList.add(mode);
+  const port = mode === 'port';
+  const s = frame.clientWidth / (port ? 1120 : 1920);
+  if (!s) return;
+  SCALE = s;
+  stage.style.transform = 'scale(' + s + ')' + (port ? ' translateX(-800px)' : '');
+  stage.classList.toggle('port', port);
+  stage.classList.toggle('big', s < 0.55);
+  const px = (target, lo, hi) => Math.min(hi, Math.max(lo, target / s)).toFixed(1) + 'px';
+  stage.style.setProperty('--sub', px(15, 34, 46));
+  stage.style.setProperty('--tag', px(13, 24, 42));
+  applyText();
+}
+new ResizeObserver(fit).observe(frame);
+[mqPort, mqLand].forEach(q => q.addEventListener ? q.addEventListener('change', fit) : q.addListener(fit));
+addEventListener('resize', fit);
+addEventListener('orientationchange', () => setTimeout(fit, 250));
+
+// scene text panel
+let textOn = false;
+try { textOn = localStorage.getItem('gac-text') === '1'; } catch (e) {}
+const desc = $('desc'), textB = $('textB');
+function applyText() {
+  const shown = mode === 'port' || textOn;
+  desc.classList.toggle('sr-only', !shown);
+  textB.setAttribute('aria-expanded', textOn ? 'true' : 'false');
+  textB.setAttribute('aria-label', textOn ? 'Hide scene text' : 'Show scene text');
+}
+function setText(on) { textOn = on; try { localStorage.setItem('gac-text', on ? '1' : '0'); } catch (e) {} applyText(); }
+textB.onclick = () => setText(!textOn);
+$('closeText').onclick = () => { setText(false); textB.focus(); };
+$('skip').addEventListener('click', e => { e.preventDefault(); if (mode !== 'port') setText(true); desc.focus(); });
+
+// scene navigation
+const dots = $('dots'), title = $('title'), count = $('count'), nextB = $('next'), backB = $('back');
+SCENES.forEach((s, i) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ': ' + s.name); b.onclick = () => go(i); dots.appendChild(b); });
+const esc = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+let cur = -1, start = performance.now(), prev = null, prevT = 0, fadeStart = 0, paused = false, pausedAt = 0, still = false;
+const FADE = 0.4;
+function sceneTime(now) { return ((paused ? pausedAt : now) - start) / 1000; }
+function setPaused(p) {
+  const now = performance.now();
+  if (p === paused) return;
+  if (paused) { start += now - pausedAt; paused = false; } else { pausedAt = now; paused = true; }
+  $('pauseTxt').textContent = paused ? 'Play' : 'Pause';
+  $('pause').setAttribute('aria-label', paused ? 'Play' : 'Pause');
+  $('pauseIco').innerHTML = paused ? '<path d="M7 5l12 7-12 7z"/>' : '<path d="M8 5v14M16 5v14"/>';
+}
+function go(i) {
+  if (i < 0 || i >= SCENES.length) return;
+  const now = performance.now();
+  const reduce = mqReduce.matches;
+  if (i !== cur && cur >= 0 && !reduce) { prev = cur; prevT = sceneTime(now); fadeStart = now; } else prev = null;
+  cur = i;
+  const s = SCENES[i];
+  if (reduce) { setPaused(false); start = now - s.still * 1000; setPaused(true); still = true; }
+  else { start = now; if (paused) pausedAt = now; still = false; }
+  title.textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  count.textContent = (i + 1) + ' of ' + SCENES.length;
+  $('dTitle').textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  const c = s.cap;
+  $('cap').innerHTML = '<p class="cap-tag">' + esc(c.tag) + '</p><p class="cap-line">' + esc(c.line) + '</p>' +
+    (c.sub ? '<p class="cap-sub">' + esc(c.sub) + '</p>' : '') + (c.list ? '<ol class="cap-list">' + c.list.map(x => '<li>' + esc(x) + '</li>').join('') + '</ol>' : '') + (c.box ? '<div class="cap-box"><p class="cap-tag" style="color:var(--brand)">' + esc(c.box[0]) + '</p><p class="cap-sub">' + esc(c.box[1]) + '</p></div>' : '');
+  $('dText').textContent = s.desc;
+  [...dots.children].forEach((d, k) => { d.className = k === i ? 'on' : k < i ? 'done' : ''; if (k === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  if (document.activeElement === backB && i === 0) nextB.focus();
+  if (document.activeElement === nextB && i === SCENES.length - 1) backB.focus();
+  backB.disabled = i === 0;
+  nextB.disabled = i === SCENES.length - 1;
+  if (mode === 'port') desc.scrollTop = 0;
+}
+function frameLoop(now) {
+  const t = sceneTime(now);
+  const fp = prev === null ? 1 : clamp01((now - fadeStart) / 1000 / FADE);
+  SCENES.forEach((s, k) => { s.root.style.display = (k === cur || (k === prev && fp < 1)) ? 'block' : 'none'; });
+  if (prev !== null && fp < 1) { const ps = SCENES[prev]; ps.root.style.opacity = 1 - fp; ps.root.style.zIndex = 1; ps.render(prevT + (now - fadeStart) / 1000); }
+  else prev = null;
+  const s = SCENES[cur];
+  s.root.style.opacity = fp; s.root.style.zIndex = 2;
+  s.render(Math.max(0, t));
+  nextB.classList.toggle('ready', (t >= s.dur || still) && cur < SCENES.length - 1);
+  requestAnimationFrame(frameLoop);
+}
+nextB.onclick = () => go(cur + 1);
+backB.onclick = () => go(cur - 1);
+$('replay').onclick = () => { prev = null; still = false; setPaused(false); start = performance.now(); };
+$('pause').onclick = () => setPaused(!paused);
+
+// full screen, hidden where the browser can't do it (such as Safari on iPhone)
+const app = $('app');
+const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(app.requestFullscreen || app.webkitRequestFullscreen);
+if (!fsOK) body.classList.add('no-fs');
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+$('full').onclick = () => {
+  try {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (app.requestFullscreen || app.webkitRequestFullscreen).call(app); if (r && r.catch) r.catch(() => {}); }
+  } catch (e) {}
+};
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { $('full').setAttribute('aria-label', fsEl() ? 'Exit full screen' : 'Full screen'); fit(); }));
+
+// keyboard
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const onButton = e.target.closest && e.target.closest('button, a');
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (k === ' ' || k === 'Spacebar') { if (!onButton) { e.preventDefault(); go(cur + 1); } }
+  else if (k === 'Home') { e.preventDefault(); go(0); }
+  else if (k === 'End') { e.preventDefault(); go(SCENES.length - 1); }
+  else if (k === 'r' || k === 'R') $('replay').click();
+  else if (k === 'p' || k === 'P') $('pause').click();
+  else if ((k === 'f' || k === 'F') && fsOK) $('full').click();
+  else if (k === 't' || k === 'T') setText(!textOn);
+  else if (k === 'Escape' && textOn && mode === 'land') { setText(false); textB.focus(); }
+});
+
+// touch: swipe left/right, tap the right side for next and the far left for back (mouse clicks ignored)
+let tp = null;
+frame.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; tp = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+frame.addEventListener('pointercancel', () => { tp = null; });
+frame.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch' || !tp) return;
+  const dx = e.clientX - tp.x, dy = e.clientY - tp.y, dt = performance.now() - tp.t; tp = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 800) { go(cur + (dx < 0 ? 1 : -1)); return; }
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) {
+    const r = frame.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+    if (fx > 0.5) go(cur + 1); else if (fx < 0.25) go(cur - 1);
+  }
+});
+
+// test hook: GAC.go(i), COR.seek(seconds) freezes the current scene at a moment
+window.GAC = { go, seek(t) { setPaused(false); start = performance.now() - t * 1000; prev = null; setPaused(true); }, scenes: SCENES.length };
+
+fit();
+go(0);
+requestAnimationFrame(frameLoop);
+})();
+</script>

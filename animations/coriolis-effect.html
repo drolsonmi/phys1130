@@ -1,0 +1,875 @@
+<title>The Coriolis Effect</title>
+<meta name="description" content="An animated, scene-by-scene explanation of the Coriolis effect, from a merry-go-round to winds swirling around a low.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #e9edf4; --bar: #ffffff; --ink: #25282b; --muted: #5d6470; --edge: #cfd6e2;
+  --brand: #1e376c; --accent: #f47920; --btn: #f1f4f9; --btn-ink: #1e376c; --focus: #c2410c;
+  color-scheme: light;
+  box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+    --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+  --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; background: var(--page); overflow-x: hidden; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100%; background: var(--page); color: var(--ink); font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 12px; top: -100px; z-index: 50; background: var(--bar); color: var(--brand); font-weight: 700; padding: 12px 16px; border-radius: 8px; border: 2px solid var(--brand); }
+.skip:focus { top: calc(12px + env(safe-area-inset-top, 0px)); outline: 3px solid var(--focus); outline-offset: 2px; }
+
+#app { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; min-height: 100vh; background: var(--page); }
+#main { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+#frame { width: min(100%, calc((100vh - 140px) * 16 / 9)); aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,.12); touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app:fullscreen #frame { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+#turn { display: none; }
+
+/* ---------- the animation (fixed light picture, like the other 1130 animations) ---------- */
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #ffffff;
+  --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; --stn:#c8322a; --slp:#1667c4;
+  color: var(--second); font-family: "Nunito Sans", system-ui, sans-serif; }
+.layer { position: absolute; inset: 0; display: none; }
+.ground { position: absolute; inset: 0; background: var(--ground); }
+.words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.words > * { margin: 0; }
+.line { font-family: "Zilla Slab", Georgia, serif; font-size: 84px; line-height: 1.04; font-weight: 700; color: var(--main); }
+.line .w { display: inline-block; white-space: pre; }
+.sub { font-size: 34px; line-height: 1.4; color: color-mix(in srgb, var(--second) 82%, var(--ground)); }
+.sub b.o { color: #d4610c; }
+.pov { display: block; width: fit-content; margin-bottom: 16px; padding: 6px 14px; border-radius: 8px; font-size: 24px; font-weight: 700; color: var(--main); background: color-mix(in srgb, var(--main) 9%, var(--ground)); }
+#stage.big .pov { font-size: var(--tag); } .sub b.b { color: var(--slp); }
+.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.rule { width: 96px; height: 4px; background: var(--accent); border-radius: 2px; }
+.art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.card { position: absolute; border-radius: 16px; background: color-mix(in srgb, var(--main) 6%, var(--ground)); border: 2px solid color-mix(in srgb, var(--main) 18%, var(--ground)); }
+#stage.big .sub { font-size: var(--sub); }
+#stage.big .tag { font-size: var(--tag); }
+#stage.big .rc { top: 400px !important; height: 580px !important; padding: 34px 26px !important; gap: 16px !important; }
+canvas.ri { width: 230px; height: 230px; flex: none; }
+#stage.big .ri { width: 200px; height: 200px; }
+/* upright phone: the picture shows the right part of the scene; its text is shown below */
+#stage.port .ground > .words { display: none; }
+#stage.port .rc { left: 830px !important; width: 1060px !important; height: 320px !important; flex-direction: row !important; text-align: left !important; padding: 0 40px !important; gap: 40px !important; }
+#stage.port .rc0 { top: 30px !important; } #stage.port .rc1 { top: 380px !important; } #stage.port .rc2 { top: 730px !important; }
+#stage.port .rc .words { align-items: flex-start !important; gap: 14px !important; }
+#stage.port .ri { width: 220px; height: 220px; }
+
+/* ---------- scene text ---------- */
+#desc { width: min(100%, calc((100vh - 140px) * 16 / 9)); background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 16px 20px 18px; }
+#desc:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+#dTitle { margin: 0 0 6px; font-size: 18px; line-height: 1.3; color: var(--brand); }
+#dText { margin: 0; font-size: 17px; line-height: 1.6; max-width: 72ch; }
+#closeText { display: none; }
+#cap { display: none; }
+.cap-tag { margin: 0 0 2px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.cap-line { margin: 0 0 6px; font-family: "Zilla Slab", Georgia, serif; font-size: 24px; line-height: 1.15; color: var(--brand); }
+.cap-sub { margin: 0 0 4px; font-size: 16px; line-height: 1.5; }
+.cap-box { margin: 10px 0 4px; padding: 10px 12px; border-radius: 8px; background: var(--bar); border: 1px solid var(--edge); }
+.cap-note { margin: 0; font-size: 14px; color: var(--muted); }
+
+/* ---------- controls ---------- */
+#bar { width: min(100%, calc((100vh - 140px) * 16 / 9)); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 6px 8px; }
+#app:fullscreen #bar, #app:fullscreen #desc { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+button { font: inherit; font-weight: 700; font-size: 15px; color: var(--btn-ink); background: var(--btn); border: 1px solid var(--edge);
+  border-radius: 8px; min-height: 44px; min-width: 44px; padding: 0 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+button:hover { border-color: var(--brand); }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#next { background: var(--brand); color: var(--bar); border-color: var(--brand); padding: 0 20px; }
+#next.ready { background: var(--accent); border-color: var(--accent); color: #25282b; }
+#where { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 0; padding: 0 4px; }
+#title { font-size: 15px; font-weight: 700; color: var(--ink); padding-left: 9px; }
+#dots { display: flex; flex-wrap: nowrap; }
+#wtop { display: flex; align-items: baseline; gap: 12px; padding-right: 4px; }
+#wtop .hint { margin-left: auto; }
+#dots button { min-height: 44px; height: 44px; width: 38px; min-width: 38px; padding: 0; border: 0; background: transparent; border-radius: 6px; }
+#dots button::before { content: ""; width: 24px; height: 8px; border-radius: 4px; background: var(--edge); }
+#dots button.on::before { background: var(--brand); }
+#dots button.done::before { background: color-mix(in srgb, var(--brand) 45%, var(--edge)); }
+#count { display: none; font-size: 14px; font-weight: 700; color: var(--ink); text-align: center; white-space: nowrap; }
+.hint { font-size: 13px; color: var(--muted); }
+#textB[aria-expanded="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.no-fs #full { display: none !important; }
+
+/* ---------- phone held sideways ---------- */
+body.land #app { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 6px max(6px, env(safe-area-inset-right, 0px)) 6px max(6px, env(safe-area-inset-left, 0px)); }
+body.land #main { flex: 1; min-width: 0; justify-content: center; }
+body.land #frame { width: min(100%, calc((100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9));
+  width: min(100%, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9)); border-radius: 8px; }
+body.land #bar { width: 76px; flex: none; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 6px; gap: 5px; overflow-y: auto; }
+body.land #bar .t, body.land #where, body.land .hint { display: none; }
+body.land #count { display: block; order: 0; padding: 4px 0; }
+body.land #replay { order: 1; } body.land #pause { order: 2; } body.land #full { order: 3; } body.land #textB { order: 4; }
+body.land #spacer { order: 5; flex: 1; min-height: 4px; }
+body.land #back { order: 6; } body.land #next { order: 7; min-height: 64px; padding: 0; }
+body.land #next svg { width: 28px; height: 28px; }
+body.land button { padding: 0; }
+body.land #desc { position: fixed; z-index: 20; width: auto; overflow-y: auto;
+  top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-height: calc(100% - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  left: calc(max(6px, env(safe-area-inset-left, 0px)) + 10px); right: calc(max(6px, env(safe-area-inset-right, 0px)) + 96px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); padding: 12px 16px; }
+body.land #closeText { display: inline-flex; flex: none; padding: 0 16px; }
+body.land #dText { font-size: 16px; line-height: 1.55; }
+
+/* ---------- phone held upright ---------- */
+body.port #app { justify-content: flex-start; align-items: stretch; gap: 0; padding: 0; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+body.port #main { flex: none; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); }
+body.port #frame { width: 100%; aspect-ratio: 1120 / 1080; border-radius: 0; box-shadow: none; }
+body.port #turn { display: block; margin: 0; width: 100%; padding: 6px 16px; font-size: 14px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--edge); }
+body.port #desc { width: auto; flex: 1; min-height: 0; overflow-y: auto; border: 0; border-radius: 0; background: var(--page); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+body.port #desc.sr-only { position: static !important; width: auto; height: auto; margin: 0; overflow-y: auto; clip: auto; white-space: normal; }
+body.port #cap { display: block; margin: 4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--edge); }
+body.port #dText { font-size: 16px; }
+body.port #bar { width: auto; flex: none; flex-wrap: nowrap; border: 0; border-top: 1px solid var(--edge); border-radius: 0; gap: 8px;
+  padding: 8px max(10px, env(safe-area-inset-right, 0px)) 8px max(10px, env(safe-area-inset-left, 0px)); }
+body.port #where, body.port .hint, body.port #textB { display: none; }
+body.port #replay, body.port #pause, body.port #full { padding: 0; }
+body.port #replay .t, body.port #pause .t { display: none; }
+body.port #back, body.port #next { flex: 1; min-height: 52px; font-size: 17px; }
+body.port #back { order: 0; } body.port #replay { order: 1; } body.port #pause { order: 2; } body.port #full { order: 3; } body.port #next { order: 4; }
+body.port #spacer { display: none; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<a class="skip" href="#desc" id="skip">Skip to scene text</a>
+<div id="app">
+  <div id="main">
+    <div id="frame" aria-hidden="true"><div id="stage"></div></div>
+    <p id="turn">Turn your phone sideways for a bigger picture.</p>
+  </div>
+  <section id="desc" tabindex="-1" aria-labelledby="dTitle" class="sr-only">
+    <div class="dhead">
+      <div id="live" aria-live="polite" aria-atomic="true"><h2 id="dTitle"></h2><div id="cap" aria-hidden="true"></div><p id="dText"></p></div>
+      <button id="closeText" aria-label="Close scene text">Close</button>
+    </div>
+  </section>
+  <nav id="bar" aria-label="Animation controls">
+    <button id="back" aria-label="Previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">Back</span></button>
+    <button id="replay" aria-label="Replay this scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" id="pauseIco"><path d="M8 5v14M16 5v14"/></svg><span class="t" id="pauseTxt">Pause</span></button>
+    <div id="where"><div id="wtop"><div id="title" aria-hidden="true"></div><span class="hint" aria-hidden="true">Arrow keys or Space</span></div><div id="dots" role="group" aria-label="Scenes"></div></div>
+    <div id="count" aria-hidden="true"></div>
+    <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="textB" aria-label="Show scene text" aria-controls="desc" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 10h14M5 14h10M5 18h7"/></svg><span class="t">Text</span></button>
+    <div id="spacer" aria-hidden="true"></div>
+    <button id="next" aria-label="Next scene"><span class="t">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </nav>
+</div>
+
+<script>
+(function () {
+document.documentElement.lang = 'en';
+// ---------- helpers ----------
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const TAU = Math.PI * 2, DEG = Math.PI / 180;
+function h(html) { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; }
+function fadeFromRight(el, t, t0) {
+  if (!el._w) {
+    const words = el.textContent.split(' ');
+    el.textContent = '';
+    el._w = words.map((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w + (i < words.length - 1 ? ' ' : ''); el.appendChild(s); return s; });
+  }
+  el._w.forEach((s, i) => { const p = eo(seg(t, t0 + i * .11, t0 + i * .11 + .5)); s.style.opacity = p; s.style.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)'; });
+}
+function subIn(st, t, a) { const p = eo(seg(t, a, a + .6)); st.opacity = p; st.transform = 'translateX(' + lerp(26, 0, p) + 'px)'; }
+const textBlock = (top, tag, line, sub) =>
+  '<div class="words" style="left:140px;top:' + top + 'px;width:640px">' +
+  '<p class="tag">' + tag + '</p><h2 class="line">' + line + '</h2>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div>';
+function textRefs(self, root) { self.tagS = root.querySelector('.words .tag').style; self.line = root.querySelector('.words .line'); const s = root.querySelector('.words .sub'); self.subS = s && s.style; }
+function textRender(self, t, subAt) { self.tagS.opacity = eo(seg(t, 0.2, 0.7)); fadeFromRight(self.line, t, 0.4); if (self.subS) subIn(self.subS, t, subAt); }
+let SCALE = 0.6;   // current stage scale, used for canvas text size
+const fpx = (target, lo, hi) => Math.min(hi, Math.max(lo, target / SCALE));
+
+// ---------- canvas drawing kit ----------
+const C = { navy: '#1e376c', ink: '#25282b', orange: '#f47920', orangeDk: '#d4610c', blue: '#1667c4', red: '#c8322a', grid: '#8fa7cc', sea: '#dbe8f6', grass: '#e4efd9', tree: '#a8cf94', treeEdge: '#5f8f4e', plate: '#f4f6fa', wedge: '#dfe6f2' };
+const P = (cx, cy, r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];   // math angle (counterclockwise) to screen
+function label(ctx, txt, x, y, color, size, align, weight) {
+  ctx.font = (weight || 700) + ' ' + size + 'px "Nunito Sans", system-ui, sans-serif';
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.26; ctx.strokeStyle = 'rgba(255,255,255,.95)';
+  ctx.strokeText(txt, x, y); ctx.fillStyle = color; ctx.fillText(txt, x, y);
+  return ctx.measureText(txt).width;
+}
+function disc(ctx, x, y, r, fill, stroke, lw) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 3; ctx.stroke(); } }
+function line(ctx, pts, color, w, dash) {
+  if (pts.length < 2) return;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]); ctx.stroke(); ctx.setLineDash([]);
+}
+function head(ctx, x, y, ang, size, color) {   // arrowhead at (x,y) pointing along screen angle ang
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x, y);
+  ctx.lineTo(x - size * Math.cos(ang - 0.45), y - size * Math.sin(ang - 0.45));
+  ctx.lineTo(x - size * Math.cos(ang + 0.45), y - size * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill();
+}
+function arrow(ctx, x1, y1, x2, y2, color, w) {
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 3) return;
+  const a = Math.atan2(y2 - y1, x2 - x1), hd = Math.min(w * 4, L * 0.7);
+  line(ctx, [[x1, y1], [x2 - Math.cos(a) * hd * 0.7, y2 - Math.sin(a) * hd * 0.7]], color, w);
+  head(ctx, x2, y2, a, hd, color);
+}
+function pathArrow(ctx, pts, color, w, dash) {   // a line with an arrowhead at its end
+  if (pts.length < 2) return;
+  const n = pts.length - 1; let k = n - 1;
+  while (k > 0 && Math.hypot(pts[n][0] - pts[k][0], pts[n][1] - pts[k][1]) < w * 3) k--;
+  const a = Math.atan2(pts[n][1] - pts[k][1], pts[n][0] - pts[k][0]), hd = w * 4;
+  line(ctx, pts.slice(0, n).concat([[pts[n][0] - Math.cos(a) * hd * 0.7, pts[n][1] - Math.sin(a) * hd * 0.7]]), color, w, dash);
+  head(ctx, pts[n][0], pts[n][1], a, hd, color);
+}
+function arcPts(cx, cy, r, a0, a1, n) { const o = []; for (let i = 0; i <= (n || 40); i++) o.push(P(cx, cy, r, lerp(a0, a1, i / (n || 40)))); return o; }
+function badge(ctx, x, y, letter, on, alpha) {
+  ctx.globalAlpha = alpha;
+  disc(ctx, x, y, 28, on ? C.orange : '#ffffff', on ? C.orange : C.navy, 4);
+  ctx.font = '700 32px "Nunito Sans", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = on ? '#ffffff' : C.navy; ctx.fillText(letter, x, y + 1);
+  ctx.globalAlpha = 1;
+}
+function clear(ctx) { ctx.clearRect(0, 0, 1920, 1080); }
+
+// ================= the merry-go-round =================
+const RD = { cx: 1370, cy: 560, R: 330, D: 55 * DEG, F: 3 };
+RD.w = RD.D / RD.F; RD.land = RD.R - 46;
+/* o: { rot: ride angle, world: angle of the park around the ride, you, friend, aim, opts, pick, ball:[x,y], trail:[[x,y]], trailDash, freeze } */
+function drawRide(ctx, o) {
+  const { cx, cy, R } = RD;
+  // the park around the ride (trees and lamps), turning only when seen from the ride
+  disc(ctx, cx, cy, R + 150, C.grass);
+  for (let k = 0; k < 12; k++) {
+    const [x, y] = P(cx, cy, R + 92, o.world + k * TAU / 12 + 0.26);
+    if (k % 2) disc(ctx, x, y, 30, C.tree, C.treeEdge, 3);
+    else { disc(ctx, x, y, 12, '#ffffff', C.navy, 3); }
+  }
+  // the turning plate, with stripes so the turning shows
+  disc(ctx, cx, cy, R, C.plate);
+  for (let k = 0; k < 8; k += 2) {
+    const a0 = o.rot + k * Math.PI / 4, a1 = a0 + Math.PI / 4;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, -a1, -a0); ctx.closePath(); ctx.fillStyle = C.wedge; ctx.fill();
+  }
+  disc(ctx, cx, cy, R, null, C.navy, 6);
+  for (let k = 0; k < 8; k++) { const [x, y] = P(cx, cy, R * 0.62, o.rot + (k + 0.5) * Math.PI / 4); disc(ctx, x, y, 9, '#ffffff', C.navy, 3); }
+  disc(ctx, cx, cy, 42, '#ffffff', C.navy, 3);
+  // spin direction
+  if (o.spin) { ctx.globalAlpha = o.spin; const pts = arcPts(cx, cy, R + 26, 20 * DEG, 70 * DEG); pathArrow(ctx, pts, C.navy, 6); label(ctx, 'The ride turns', P(cx, cy, R + 34, 45 * DEG)[0] + 18, P(cx, cy, R + 34, 45 * DEG)[1] - 30, C.navy, fpx(13, 26, 42), 'left'); label(ctx, 'counterclockwise', P(cx, cy, R + 34, 45 * DEG)[0] + 18, P(cx, cy, R + 34, 45 * DEG)[1] + fpx(13, 26, 42) * 0.2, C.navy, fpx(13, 26, 42), 'left', 400); ctx.globalAlpha = 1; }
+  const fp = P(cx, cy, RD.land, o.rot);
+  // aim line (dashed) from you to your friend
+  if (o.aim) { ctx.globalAlpha = o.aim; line(ctx, [[cx, cy], fp], C.navy, 3, [12, 10]); ctx.globalAlpha = 1; }
+  // answer choices, riding with the plate
+  if (o.opts) {
+    [['A', 0], ['B', -RD.D], ['C', RD.D]].forEach(([L, d], i) => {
+      const [x, y] = P(cx, cy, R + 40, o.rot + d);
+      badge(ctx, x, y, L, o.pick === L, o.opts * (o.optsEach ? o.optsEach(i) : 1));
+    });
+  }
+  // trail and ball
+  if (o.trail && o.trail.length > 1) line(ctx, o.trail, C.orange, 7, o.trailDash);
+  // friend
+  if (o.friend) {
+    ctx.globalAlpha = o.friend; disc(ctx, fp[0], fp[1], 24, C.blue, '#ffffff', 4);
+    const lp = P(cx, cy, RD.land - 66, o.rot); label(ctx, 'Friend', lp[0], lp[1], C.blue, fpx(13, 26, 42), 'center'); ctx.globalAlpha = 1;
+  }
+  if (o.you) { ctx.globalAlpha = o.you; disc(ctx, cx, cy, 24, C.navy, '#ffffff', 4); label(ctx, 'You', cx, cy + 62, C.navy, fpx(13, 26, 42), 'center'); ctx.globalAlpha = 1; }
+  if (o.ball) { disc(ctx, o.ball[0], o.ball[1], 15, C.orange, C.navy, 3); }
+}
+// ball position, seen from above (straight) or from the ride (curving)
+function ballAt(t, T0, rideView) {
+  const tau = Math.max(0, Math.min(t, T0 + RD.F) - T0), s = RD.land * tau / RD.F;
+  const a = rideView ? -RD.w * tau : 0;
+  return P(RD.cx, RD.cy, s, a);
+}
+function trailTo(t, T0, rideView) {
+  const end = Math.min(t, T0 + RD.F), out = [];
+  if (end <= T0) return out;
+  for (let k = 0; k <= 60; k++) out.push(ballAt(T0 + (end - T0) * k / 60, T0, rideView));
+  return out;
+}
+
+// ================= Earth seen from above a pole =================
+/* rot: Earth's turn angle; sign: +1 above the North Pole (counterclockwise), -1 above the South Pole (clockwise) */
+function drawPolar(ctx, cx, cy, R, rot, o) {
+  o = o || {}; const w = o.k || 1;
+  disc(ctx, cx, cy, R, C.sea);
+  ctx.setLineDash([10 * w, 8 * w]); [1 / 3, 2 / 3].forEach(f => disc(ctx, cx, cy, R * f, null, C.grid, 2.5 * w)); ctx.setLineDash([]);
+  for (let k = 0; k < 12; k++) { const e = P(cx, cy, R, rot + k * Math.PI / 6); line(ctx, [[cx, cy], e], k === 0 ? C.navy : C.grid, (k === 0 ? 4 : 2.5) * w); }
+  disc(ctx, cx, cy, R, null, C.navy, 5 * w);
+  disc(ctx, cx, cy, 8 * w, C.navy);
+  if (o.spin) {
+    const s = o.sign || 1, a0 = o.spinAt === undefined ? 40 * DEG : o.spinAt;
+    ctx.globalAlpha = o.spin; pathArrow(ctx, arcPts(cx, cy, R + 28 * w, a0 - s * 30 * DEG, a0 + s * 30 * DEG), C.navy, 6 * w);
+    if (o.spinLabel) { const q = P(cx, cy, R + 70, a0); label(ctx, o.spinLabel, q[0], q[1], C.navy, fpx(13, 26, 42), o.spinAlign || 'left'); }
+    ctx.globalAlpha = 1;
+  }
+}
+// the turning Earth with winds bending right (title scene, and again in the recap)
+function titleGlobe(ctx, cx, cy, R, t, k) {
+  const base = ctx.globalAlpha;
+  drawPolar(ctx, cx, cy, R, 0.25 * t, { spin: base, sign: 1, spinAt: 60 * DEG, k });
+  ctx.globalAlpha = base * eo(seg(t, 1.6, 2.4));
+  [-150, -30, 90].forEach((a0, i) => {
+    const pts = [], p = eo(seg(t, 1.6 + i * 0.3, 3.2 + i * 0.3));
+    for (let n = 0; n <= 40 * p; n++) { const u = n / 40; pts.push(P(cx, cy, R * (0.25 + 0.55 * u), a0 * DEG - 0.9 * u * u)); }
+    if (pts.length > 2) pathArrow(ctx, pts, C.orange, 9 * k);
+  });
+  ctx.globalAlpha = base;
+}
+/* a rocket launched from the pole; its path through space is straight, its track on the ground curves */
+function flight(ctx, cx, cy, R, t, o) {
+  const s = o.sign || 1, W = o.D / o.F, Rl = R * 0.8;
+  const te = Math.min(t, o.T0 + o.F), rot = s * W * (te - o.T0) + (o.rot0 || 0);
+  drawPolar(ctx, cx, cy, R, rot, { spin: o.spin, sign: s, spinLabel: o.spinLabel, spinAt: o.spinAt, spinAlign: o.spinAlign });
+  const tgt = P(cx, cy, Rl, o.aim + rot - (o.rot0 || 0));
+  const tau = Math.max(0, te - o.T0);
+  // target city, carried around by Earth
+  ctx.globalAlpha = o.city === undefined ? 1 : o.city;
+  ctx.fillStyle = C.navy; ctx.fillRect(tgt[0] - 13, tgt[1] - 13, 26, 26); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.strokeRect(tgt[0] - 13, tgt[1] - 13, 26, 26);
+  if (o.cityLabel) label(ctx, 'Target', tgt[0] + (o.cityLabelDx || 24), tgt[1] + (o.cityLabelDy || 0), C.navy, fpx(13, 26, 42), (o.cityLabelDx || 24) > 0 ? 'left' : 'right');
+  ctx.globalAlpha = 1;
+  if (t < o.T0) {   // before launch: aim at the target
+    ctx.globalAlpha = o.aimA === undefined ? 1 : o.aimA; line(ctx, [[cx, cy], tgt], C.navy, 3, [12, 10]); ctx.globalAlpha = 1;
+    return;
+  }
+  // straight path through space
+  const end = P(cx, cy, Rl, o.aim);
+  ctx.globalAlpha = o.space === undefined ? 1 : o.space; line(ctx, [[cx, cy], P(cx, cy, Rl * tau / o.F, o.aim)], C.navy, 3, [12, 10]); ctx.globalAlpha = 1;
+  // track on the ground
+  const tr = [];
+  for (let k = 0; k <= 60; k++) { const u = tau * k / 60; tr.push(P(cx, cy, Rl * u / o.F, o.aim + s * W * (tau - u))); }
+  if (tau >= o.F - 1e-6) pathArrow(ctx, tr, C.orange, 7); else line(ctx, tr, C.orange, 7);
+  // rocket
+  if (tau < o.F) { const r = P(cx, cy, Rl * tau / o.F, o.aim); disc(ctx, r[0], r[1], 14, C.orange, C.navy, 3); }
+  return { end, tgt, tr };
+}
+
+// ---------- scenes ----------
+const SCENES = [];
+function scene(id, name, dur, def) { SCENES.push(Object.assign({ id, name, dur }, def)); }
+// a scene whose picture is drawn on a canvas, with text on the left
+function cscene(id, name, dur, text, render, extra) {
+  scene(id, name, dur, {
+    init(root) {
+      const tb = h(textBlock(text[0], text[1], text[2], text[3]));
+      if (extra) tb.append(h(extra));
+      root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas></div>'));
+      root.firstChild.append(tb);
+      this.ctx = root.querySelector('canvas').getContext('2d');
+      this.cn = root.querySelector('.cn');
+      textRefs(this, root);
+    },
+    render(t) { textRender(this, t, 1.2); if (this.cn) subIn(this.cn.style, t, 2.6); clear(this.ctx); render.call(this, t, this.ctx); },
+  });
+}
+
+scene('title', 'The Coriolis effect', 5, {
+  init(root) {
+    root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas>' +
+      '<div class="words" style="left:140px;top:300px;width:720px">' +
+      '<p class="tag">Introduction to meteorology</p><h1 class="line" style="font-size:104px">The Coriolis effect</h1>' +
+      '<div class="rule"></div><p class="sub">Why moving things curve on a spinning Earth</p></div></div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style; this.subS = root.querySelector('.sub').style;
+    this.ctx = root.querySelector('canvas').getContext('2d');
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.1);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.9, 1.4)) + ')';
+    subIn(this.subS, t, 1.2);
+    const ctx = this.ctx; clear(ctx);
+    ctx.globalAlpha = eo(seg(t, 0.3, 1.5));
+    titleGlobe(ctx, 1420, 560, 360, t, 1);
+    ctx.globalAlpha = 1;
+  },
+});
+
+const T_RIDE = 0;
+cscene('ride', 'The merry-go-round', 7, [300, 'A spinning ride', 'The merry-go-round', 'You stand in the center. Your friend stands at the edge. The ride turns <b class="o">counterclockwise</b>.'], function (t, ctx) {
+  const a = eo(seg(t, 0.2, 1));
+  ctx.globalAlpha = a;
+  drawRide(ctx, { rot: RD.w * t - 0.6, world: 0, you: eo(seg(t, 1.2, 1.7)), friend: eo(seg(t, 1.8, 2.3)), spin: eo(seg(t, 3, 3.6)) });
+  ctx.globalAlpha = 1;
+});
+
+const T_PRED = 0;
+cscene('predict', 'Make a prediction', 7, [250, 'Make a prediction', 'Where will the ball land?', 'You throw the ball straight at your friend while the ride turns. Will it land at <b class="o">A</b>, <b class="o">B</b> or <b class="o">C</b>? Decide, then press Next.'], function (t, ctx) {
+  // the ride turns, then holds still at the moment of the throw
+  const te = Math.min(t, 3.4);
+  drawRide(ctx, { rot: RD.w * (te - 3.4), world: 0, you: 1, friend: 1, aim: eo(seg(t, 0.8, 1.4)), opts: 1, optsEach: i => eo(seg(t, 1.6 + i * 0.4, 2.1 + i * 0.4)), ball: [RD.cx, RD.cy] });
+  const fs = fpx(14, 28, 44);
+  ctx.globalAlpha = eo(seg(t, 3.6, 4.2));
+  label(ctx, 'A: at your friend', 900, 960, C.navy, fs, 'left');
+  label(ctx, 'B: behind your friend', 900, 960 + fs * 1.3, C.navy, fs, 'left');
+  label(ctx, 'C: ahead of your friend', 900, 960 + fs * 2.6, C.navy, fs, 'left');
+  ctx.globalAlpha = 1;
+});
+
+const T0R = 1.6;   // throw time in the two reveal scenes
+cscene('above', 'Seen from above', 8.5, [250, 'Seen from above', 'The ball flies straight', 'While the ball is in the air, the ride turns and carries your friend away. The ball lands at <b class="o">B</b>.'], function (t, ctx) {
+  const te = Math.min(t, T0R + RD.F), done = t >= T0R + RD.F;
+  drawRide(ctx, { rot: RD.w * (te - T0R), world: 0, you: 1, friend: 1, aim: t < T0R ? 1 : 0, opts: 1, pick: done ? 'B' : null,
+    trail: trailTo(t, T0R, false), ball: ballAt(t, T0R, false) });
+  const fs = fpx(14, 28, 44);
+  ctx.globalAlpha = eo(seg(t, T0R + RD.F + 0.3, T0R + RD.F + 0.9));
+  label(ctx, 'A straight path', RD.cx + 70, RD.cy + 44, C.orangeDk, fs, 'left');
+  ctx.globalAlpha = 1;
+});
+
+cscene('rider', 'Seen from the ride', 9, [190, 'Seen from the ride', 'The ball seems to curve', '<span class="pov">Note: this is your friend\'s view from the ride</span>The ride looks still, and the park seems to turn the other way. The ball curves to the <b class="o">right</b>. Nothing pushed it. The ride turned beneath it. This is the <b class="o">Coriolis effect</b>.'], function (t, ctx) {
+  const te = Math.min(t, T0R + RD.F), done = t >= T0R + RD.F;
+  // the camera turns with the ride, so the park appears to turn the other way
+  drawRide(ctx, { rot: 0, world: -RD.w * (te - T0R), you: 1, friend: 1, aim: t < T0R ? 1 : 0.5, opts: 1, pick: done ? 'B' : null,
+    trail: trailTo(t, T0R, true), ball: ballAt(t, T0R, true) });
+  const fs = fpx(14, 28, 44);
+  ctx.globalAlpha = eo(seg(t, T0R + RD.F + 0.3, T0R + RD.F + 0.9));
+  label(ctx, 'It seems to curve right', RD.cx + 30, RD.cy + 175, C.orangeDk, fs, 'right');
+  ctx.globalAlpha = 1;
+});
+
+const EF = { T0: 2.2, F: 3.4, D: 50 * DEG, aim: -60 * DEG };
+cscene('earth', 'Earth turns beneath us', 10, [210, 'Earth is a spinning ride', 'Earth turns beneath us', 'Seen from above the North Pole, Earth turns <b class="o">counterclockwise</b>, like the ride. A rocket flies straight, but its <b class="o">track on the ground</b> curves to the right.'], function (t, ctx) {
+  const cx = 1380, cy = 545, R = 380, fs = fpx(13, 26, 42);
+  ctx.globalAlpha = eo(seg(t, 0.2, 1));
+  flight(ctx, cx, cy, R, t, Object.assign({ spin: 1, spinLabel: 'Earth turns', spinAt: 50 * DEG, cityLabel: true, city: eo(seg(t, 0.8, 1.3)), aimA: eo(seg(t, 1.2, 1.7)) }, EF));
+  ctx.globalAlpha = eo(seg(t, 0.6, 1.2));
+  label(ctx, 'North Pole', cx - 20, cy - 34, C.navy, fs, 'right');
+  label(ctx, 'Equator', cx - R + 10, cy + R + 40, C.navy, fs, 'left');
+  const tEnd = EF.T0 + EF.F;
+  ctx.globalAlpha = eo(seg(t, tEnd + 0.3, tEnd + 0.9));
+  const sp = P(cx, cy, R * 0.8, EF.aim);
+  label(ctx, 'Path through space', sp[0] + 20, sp[1] + 40, C.navy, fs, 'left');
+  const gp = P(cx, cy, R * 0.55, EF.aim + EF.D * 0.55);
+  label(ctx, 'Track on the ground', gp[0] - 60, gp[1] + 10, C.orangeDk, fs, 'right');
+  ctx.globalAlpha = 1;
+});
+
+// ---------- why the effect changes with latitude: how much the ground spins ----------
+cscene('globe', 'Strongest at the poles', 11, [130, 'Where you are matters', 'Strongest at the poles', 'Compare two nearby spots on the ground. Near the pole they move in opposite directions, so there is a lot of spin. At middle latitudes the southern spot moves faster, so there is some spin. At the equator they move together, so there is no spin.'], function (t, ctx) {
+  const gx = 1120, gy = 590, GR = 300, fs = fpx(13, 26, 42), sm = fpx(12, 24, 38), V = 230;
+  const yAt = l => gy - GR * Math.sin(l * DEG);
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  disc(ctx, gx, gy, GR, C.sea);
+  for (let k = 0; k < 12; k++) {   // meridians, turning with Earth
+    const lam = k * TAU / 12 + 0.25 * t; if (Math.cos(lam) < 0) continue;
+    const pts = []; for (let j = 0; j <= 36; j++) { const la = -Math.PI / 2 + Math.PI * j / 36; pts.push([gx + GR * Math.cos(la) * Math.sin(lam), gy - GR * Math.sin(la)]); }
+    line(ctx, pts, C.grid, 2.5);
+  }
+  [45, -45].forEach(l => { const w = GR * Math.cos(l * DEG); line(ctx, [[gx - w, yAt(l)], [gx + w, yAt(l)]], C.grid, 2.5, [10, 8]); });
+  line(ctx, [[gx - GR, gy], [gx + GR, gy]], C.navy, 3.5);
+  disc(ctx, gx, gy, GR, null, C.navy, 5);
+  line(ctx, [[gx, gy - GR - 50], [gx, gy + GR + 30]], C.navy, 3, [8, 8]);
+  label(ctx, 'North Pole', gx, gy - GR - 76, C.navy, fs, 'center');
+  label(ctx, 'Equator', gx - GR + 16, gy - 24, C.navy, sm, 'left');
+  const ac = gy + GR + 50;
+  pathArrow(ctx, arcPts(gx, ac, 56, 200 * DEG, 340 * DEG).map(p => [p[0], ac + (p[1] - ac) * 0.3]), C.navy, 5);
+  label(ctx, 'Earth turns', gx + 76, ac + 6, C.navy, sm, 'left');
+  // a small spin symbol: size and sweep show how much spin
+  const curl = (x, y, r, sweep) => pathArrow(ctx, arcPts(x, y, r, 110 * DEG, 110 * DEG + sweep), C.orange, 5);
+  const lx = gx + GR + 60;
+  // 1. near the pole: opposite directions, short arrows
+  let a = eo(seg(t, 1.6, 2.2));
+  if (a) {
+    ctx.globalAlpha = a;
+    const py = yAt(75), pr = GR * Math.cos(75 * DEG), L = V * Math.cos(75 * DEG) * a;
+    ctx.beginPath(); ctx.ellipse(gx, py, pr, pr * 0.35, 0, 0, TAU); ctx.strokeStyle = C.navy; ctx.lineWidth = 3; ctx.setLineDash([8, 7]); ctx.stroke(); ctx.setLineDash([]);
+    arrow(ctx, gx - pr, py - 30, gx - pr, py - 30 + L, C.orange, 7);
+    arrow(ctx, gx + pr, py + 30, gx + pr, py + 30 - L, C.orange, 7);
+    label(ctx, 'toward you', gx - pr - 16, py + 4, C.orangeDk, sm, 'right');
+    label(ctx, 'away from you', gx + pr + 16, py - 4, C.orangeDk, sm, 'left');
+    ctx.globalAlpha = a * eo(seg(t, 2.4, 3));
+    curl(lx + 30, py - 70, 26, 300 * DEG);
+    label(ctx, 'Opposite directions', lx + 76, py - 88, C.navy, sm, 'left');
+    label(ctx, 'High spin', lx + 76, py - 52, C.orangeDk, fs, 'left');
+  }
+  // 2. middle latitudes: both east, the southern spot faster
+  a = eo(seg(t, 3.6, 4.2));
+  if (a) {
+    ctx.globalAlpha = a;
+    [53, 37].forEach(l => { const L = V * Math.cos(l * DEG) * a, y = yAt(l); arrow(ctx, gx - 110, y, gx - 110 + L, y, C.orange, 7); });
+    ctx.globalAlpha = a * eo(seg(t, 4.4, 5));
+    const y = (yAt(53) + yAt(37)) / 2;
+    curl(lx + 30, y + 6, 18, 180 * DEG);
+    label(ctx, 'South side faster', lx + 76, y - 12, C.navy, sm, 'left');
+    label(ctx, 'Some spin', lx + 76, y + 24, C.orangeDk, fs, 'left');
+  }
+  // 3. equator: both east, the same speed
+  a = eo(seg(t, 5.6, 6.2));
+  if (a) {
+    ctx.globalAlpha = a;
+    [8, -8].forEach(l => { const L = V * Math.cos(l * DEG) * a, y = yAt(l); arrow(ctx, gx - 110, y, gx - 110 + L, y, C.orange, 7); });
+    ctx.globalAlpha = a * eo(seg(t, 6.4, 7));
+    label(ctx, 'Same speed', lx + 76, gy - 18, C.navy, sm, 'left');
+    label(ctx, 'No spin', lx + 76, gy + 18, C.orangeDk, fs, 'left');
+  }
+  ctx.globalAlpha = eo(seg(t, 7.8, 8.4));
+  label(ctx, 'More spin, stronger Coriolis effect', gx + 120, 1030, C.navy, fs, 'center');
+  ctx.globalAlpha = 1;
+});
+
+// ---------- where hurricanes form (schematic) ----------
+function storm(ctx, x, y, r, ang, south) {
+  const s = south ? -1 : 1;
+  for (let k = 0; k < 3; k++) { const pts = []; for (let n = 0; n <= 24; n++) { const u = n / 24; pts.push(P(x, y, lerp(r, r * 0.2, u), ang + k * TAU / 3 + s * u * 2.6)); } line(ctx, pts, '#ffffff', 9); line(ctx, pts, C.navy, 2.5); }
+  disc(ctx, x, y, r * 0.18, '#ffffff', C.navy, 2);
+}
+const STORMS = [[12, 1000], [18, 1130], [9, 1260], [22, 1390], [15, 1520], [11, 1660], [20, 1790], [27, 1070], [8, 1460], [-12, 1050], [-17, 1310], [-10, 1570], [-21, 1720], [-14, 1180], [-25, 1450]];
+cscene('storms', 'No hurricanes at the equator', 10, [200, 'Why it matters', 'No hurricanes at the equator', 'A hurricane needs the Coriolis effect to start spinning. Near the equator the effect is almost zero, so hurricanes almost never form there.'], function (t, ctx) {
+  const x0 = 880, x1 = 1880, yl = l => 540 - l * 10, fs = fpx(13, 26, 42), sm = fpx(12, 24, 38);
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  ctx.fillStyle = C.sea; ctx.fillRect(x0, yl(40), x1 - x0, 800);
+  [20, -20].forEach(l => line(ctx, [[x0, yl(l)], [x1, yl(l)]], C.grid, 2.5, [10, 8]));
+  ctx.strokeStyle = C.navy; ctx.lineWidth = 4; ctx.strokeRect(x0, yl(40), x1 - x0, 800);
+  [[40, '40°N'], [20, '20°N'], [-20, '20°S'], [-40, '40°S']].forEach(([l, s]) => label(ctx, s, x0 + 12, yl(l) + (l > 0 ? 22 : -22), C.navy, sm, 'left'));
+  ctx.globalAlpha = eo(seg(t, 1.0, 1.6));
+  ctx.fillStyle = 'rgba(244,121,32,.22)'; ctx.fillRect(x0, yl(5), x1 - x0, yl(-5) - yl(5));
+  line(ctx, [[x0, yl(0)], [x1, yl(0)]], C.navy, 4);
+  label(ctx, 'Equator', x0 + 12, yl(0) - 26, C.navy, sm, 'left');
+  STORMS.forEach(([l, x], i) => {
+    const a = eo(seg(t, 1.8 + i * 0.22, 2.3 + i * 0.22)); if (!a) return;
+    ctx.globalAlpha = a; storm(ctx, x, yl(l), 30, (l > 0 ? 1 : -1) * 1.2 * t + i, l < 0);
+  });
+  ctx.globalAlpha = eo(seg(t, 5.6, 6.2));
+  label(ctx, 'Almost no hurricanes form here', 1380, yl(0) + 28, C.orangeDk, fs, 'center');
+  ctx.globalAlpha = eo(seg(t, 0.6, 1.2));
+  label(ctx, 'Schematic map of where hurricanes form', 1380, 985, C.navy, sm, 'center', 400);
+  ctx.globalAlpha = 1;
+});
+
+// ---------- wind between high and low pressure ----------
+const ISO = { y: [270, 410, 550, 690, 830], v: [1000, 1004, 1008, 1012, 1016], x0: 880, x1: 1880 };
+const WIND = (function () {   // the air turns right until it moves exactly parallel to the isobars, then keeps going
+  const U = 90, TT = 7, dt = 1 / 120, out = [];
+  let x = 960, y = 0;
+  for (let i = 0; i <= 120 * 11; i++) {
+    const u = Math.min(1, i * dt / TT), sp = U * (1 - Math.pow(1 - u, 2)), th = Math.PI / 2 * (1 - eio(u));
+    out.push([x, y, sp / U, th]);
+    x += sp * Math.cos(th) * dt; y -= sp * Math.sin(th) * dt;
+  }
+  const dy = 620 - out[out.length - 1][1]; out.forEach(p => { p[1] += dy; });
+  out.TT = TT;
+  return out;
+})();
+cscene('wind', 'Wind parallel to the isobars', 13, [180, 'Steering the wind', 'Wind parallel to the isobars', 'The pressure gradient force pushes air toward <b class="o">low pressure</b>. The Coriolis force turns it to the right until it blows <b class="o">parallel to the isobars</b>. Then the two forces balance.'], function (t, ctx) {
+  const fs = fpx(13, 26, 42);
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  ISO.y.forEach((y, i) => { line(ctx, [[ISO.x0, y], [ISO.x1, y]], C.blue, 4); label(ctx, ISO.v[i] + ' mb', ISO.x1 - 10, y - 22, C.blue, fpx(12, 24, 38), 'right'); });
+  label(ctx, 'L', 1380, 175, C.red, fpx(34, 76, 110), 'center'); label(ctx, 'Low pressure', 1450, 180, C.red, fs, 'left');
+  label(ctx, 'H', 1380, 935, C.blue, fpx(34, 76, 110), 'center'); label(ctx, 'High pressure', 1450, 940, C.blue, fs, 'left');
+  ctx.globalAlpha = 1;
+  const T0 = 2, tt = Math.max(0, Math.min(t - T0, 10.4)), n = Math.round(tt * 120);
+  const pts = WIND.slice(0, n + 1).filter((p, i) => i % 4 === 0 || i === n);
+  if (pts.length > 2) line(ctx, pts, C.navy, 5, [2, 12]);
+  const p = WIND[n], L = 110;
+  ctx.globalAlpha = eo(seg(t, 1.0, 1.6));
+  // pressure gradient force (always toward low) and Coriolis force (to the right of the motion, growing with speed)
+  arrow(ctx, p[0], p[1], p[0], p[1] - L, C.red, 7);
+  if (p[2] > 0.01) arrow(ctx, p[0], p[1], p[0] + Math.sin(p[3]) * L * p[2], p[1] + Math.cos(p[3]) * L * p[2], C.orange, 7);
+  disc(ctx, p[0], p[1], 20, '#ffffff', C.navy, 4);
+  const lf = p[0] < 1300, lx = p[0] + (lf ? 24 : -24), la = lf ? 'left' : 'right';
+  label(ctx, 'Pressure Gradient Force', lx, p[1] - 80, C.red, fs, la);
+  ctx.globalAlpha = eo(seg(t, T0 + 0.8, T0 + 1.4));
+  label(ctx, 'Coriolis Force', lf ? p[0] - 24 : lx, p[1] + 72, C.orangeDk, fs, lf ? 'right' : la);
+  const e = T0 + WIND.TT;
+  ctx.globalAlpha = eo(seg(t, e, e + 0.6));
+  label(ctx, 'Balanced: the wind blows parallel to the isobars', 1380, 1015, C.navy, fs, 'center');
+  ctx.globalAlpha = 1;
+});
+
+// ---------- air spiraling around lows and highs ----------
+function spiralSet(out) {
+  const f = 1, Pg = out ? 70 : 90, k = out ? 0.42 : 0.6, dt = 1 / 60, res = [];
+  for (let j = 0; j < 8; j++) {
+    const a = j * TAU / 8 + (out ? TAU / 16 : 0), r0 = out ? 40 : 320, d = out ? 1 : -1;
+    let x = r0 * Math.cos(a), y = -r0 * Math.sin(a), vx = 0, vy = 0; const pts = [];
+    for (let i = 0; i <= 60 * 10; i++) {
+      const r = Math.hypot(x, y); pts.push([x, y]); if (out ? r > 330 : r < 45) break;
+      const ax = d * Pg * x / r + f * (-vy) - k * vx, ay = d * Pg * y / r + f * vx - k * vy; vx += ax * dt; vy += ay * dt; x += vx * dt; y += vy * dt;
+    }
+    res.push(pts);
+  }
+  return res;
+}
+const SPIRALS = { L: spiralSet(false), H: spiralSet(true) };
+function pressPanel(ctx, cx, cy, sc, mirror, t, T0, kind) {
+  const low = kind === 'L';
+  [80, 160, 240, 320].forEach((r, i) => { disc(ctx, cx, cy, r * sc, null, C.blue, 4 * Math.max(sc, 0.7)); if (sc >= 0.65) label(ctx, (low ? 1000 + i * 4 : 1020 - i * 4) + ' mb', cx, cy - r * sc, C.blue, fpx(11, 22, 36), 'center'); });
+  label(ctx, kind, cx, cy, low ? C.red : C.blue, fpx(28, 64, 96) * Math.max(sc, 0.75), 'center');
+  const n = Math.round(Math.max(0, t - T0) * 60), lend = Math.max(...SPIRALS.L.map(q => q.length)) - 1, fade = 1 - seg(n, lend, lend + 40);
+  SPIRALS[kind].forEach(sp => {
+    const m = Math.min(n, sp.length - 1); if (m < 2) return;
+    const pts = sp.slice(0, m + 1).map(q => [cx + (mirror ? -q[0] : q[0]) * sc, cy + q[1] * sc]);
+    ctx.save(); ctx.globalAlpha *= Math.max(0.35, fade); pathArrow(ctx, pts, C.orange, 6 * Math.max(sc, 0.7)); ctx.restore();
+  });
+}
+cscene('low', 'Swirling around a low', 12, [170, 'Around a low', 'Swirling around a low', 'In the Northern Hemisphere, air flowing in toward a low turns right, so it swirls <b class="o">counterclockwise</b> around the low.'], function (t, ctx) {
+  const fs = fpx(13, 26, 42);
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  pressPanel(ctx, 1380, 520, 1, false, t, 1.6, 'L');
+  label(ctx, 'Northern Hemisphere', 1380, 925, C.navy, fs, 'center');
+  label(ctx, 'Counterclockwise, spiraling in', 1380, 970, C.orangeDk, fs, 'center');
+  ctx.globalAlpha = 1;
+}, '<div class="card cn" style="position:static;padding:22px 26px;display:flex;flex-direction:column;gap:8px"><p class="tag" style="color:var(--main)">Why does it spiral in?</p><p class="sub" style="font-size:28px">Friction with the ground slows the wind. Slower wind means a weaker Coriolis force, so the pressure gradient force wins a little and pulls the air in toward the low.</p></div>');
+
+function pairScene(id, name, text, south) {
+  cscene(id, name, 12.5, text, function (t, ctx) {
+    const fs = fpx(13, 26, 42), sc = 0.7, cy = 480;
+    ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+    pressPanel(ctx, 1110, cy, sc, south, t, 1.4, 'L');
+    pressPanel(ctx, 1640, cy, sc, south, t, 1.4, 'H');
+    const y = cy + 320 * sc + 60;
+    label(ctx, 'Low', 1110, y, C.red, fs, 'center');
+    label(ctx, (south ? 'Clockwise' : 'Counterclockwise') + ', spiraling in', 1110, y + 44, C.orangeDk, fs, 'center');
+    label(ctx, 'High', 1640, y, C.blue, fs, 'center');
+    label(ctx, (south ? 'Counterclockwise' : 'Clockwise') + ', spiraling out', 1640, y + 44, C.orangeDk, fs, 'center');
+    label(ctx, south ? 'Southern Hemisphere' : 'Northern Hemisphere', 1375, 1010, C.navy, fs, 'center');
+    ctx.globalAlpha = 1;
+  });
+}
+pairScene('highlow', 'Highs and lows', [200, 'Highs and lows', 'Into lows, out of highs', 'Air spirals in toward a low and out of a high. It turns right both times, so lows spin <b class="o">counterclockwise</b> and highs spin <b class="o">clockwise</b>.'], false);
+
+cscene('hemis', 'Two hemispheres', 9, [200, 'Two hemispheres', 'Right in the North, left in the South', 'Seen from above the South Pole, Earth turns <b class="o">clockwise</b>. So in the Southern Hemisphere, moving things curve to the <b class="o">left</b>.'], function (t, ctx) {
+  const R = 235, cy = 520, fs = fpx(14, 28, 44);
+  const base = { T0: 1.6, F: 3.2, D: 55 * DEG, aim: -90 * DEG, spin: 1, aimA: 1, spinAt: 90 * DEG };
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  flight(ctx, 1120, cy, R, t, Object.assign({}, base, { sign: 1 }));
+  label(ctx, 'Above the North Pole', 1120, cy - R - 80, C.navy, fs, 'center');
+  ctx.globalAlpha = eo(seg(t, 0.6, 1.3));
+  flight(ctx, 1660, cy, R, t, Object.assign({}, base, { sign: -1 }));
+  label(ctx, 'Above the South Pole', 1660, cy - R - 80, C.navy, fs, 'center');
+  ctx.globalAlpha = eo(seg(t, 0.4, 1.0));
+  label(ctx, 'Turns counterclockwise', 1120, cy + R + 50, C.navy, fpx(12, 24, 40), 'center', 400);
+  label(ctx, 'Turns clockwise', 1660, cy + R + 50, C.navy, fpx(12, 24, 40), 'center', 400);
+  const done = base.T0 + base.F;
+  ctx.globalAlpha = eo(seg(t, done + 0.2, done + 0.8));
+  label(ctx, 'Curves to the right', 1120, cy + R + 110, C.orangeDk, fpx(16, 34, 52), 'center');
+  label(ctx, 'Curves to the left', 1660, cy + R + 110, C.orangeDk, fpx(16, 34, 52), 'center');
+  ctx.globalAlpha = 1;
+});
+
+pairScene('south', 'Southern Hemisphere', [200, 'Southern Hemisphere', 'Flipped in the South', 'In the Southern Hemisphere, air turns to the <b class="o">left</b>. So lows spin <b class="o">clockwise</b> and highs spin <b class="o">counterclockwise</b>.'], true);
+
+scene('recap', 'Recap', 7, {
+  init(root) {
+    const icoA = null, icoA_old = '<circle r="92" fill="#f4f6fa" stroke="#1e376c" stroke-width="5"/><path d="M0 0 Q 60 10 70 70" fill="none" stroke="#f47920" stroke-width="9" stroke-linecap="round"/><path d="M0 0 L 90 0" fill="none" stroke="#1e376c" stroke-width="3" stroke-dasharray="9 8"/><circle r="13" fill="#1e376c"/><path d="M58 -100 A 115 115 0 0 1 108 -40" fill="none" stroke="#1e376c" stroke-width="6"/><path d="M114 -26 L 92 -48 L 120 -54 Z" fill="#1e376c"/>';
+    const icoB = '<circle r="92" fill="#dbe8f6" stroke="#1e376c" stroke-width="5"/><line x1="-92" x2="92" y1="0" y2="0" stroke="#1e376c" stroke-width="4"/><path d="M-50 -60 Q 0 -60 20 -30" fill="none" stroke="#f47920" stroke-width="8" stroke-linecap="round"/><path d="M-50 60 Q 0 60 20 30" fill="none" stroke="#f47920" stroke-width="8" stroke-linecap="round"/><text x="-60" y="-14" text-anchor="middle" fill="#1e376c" style="font:700 22px Nunito Sans,sans-serif">N</text><text x="-60" y="32" text-anchor="middle" fill="#1e376c" style="font:700 22px Nunito Sans,sans-serif">S</text>';
+    const icoC = '<circle r="40" fill="none" stroke="#1667c4" stroke-width="4"/><circle r="80" fill="none" stroke="#1667c4" stroke-width="4"/><path d="M95 0 Q 80 -70 0 -62 Q -55 -50 -45 0" fill="none" stroke="#f47920" stroke-width="8" stroke-linecap="round"/><path d="M-95 0 Q -80 70 0 62 Q 55 50 45 0" fill="none" stroke="#f47920" stroke-width="8" stroke-linecap="round"/><text x="0" y="12" text-anchor="middle" fill="#c8322a" style="font:700 36px Nunito Sans,sans-serif">L</text>';
+    let ci = 0;
+    const card = (x, ico, hd, sub) => '<div class="card rc rc' + (ci++) + '" style="left:' + x + 'px;top:420px;width:520px;height:520px;display:flex;flex-direction:column;align-items:center;gap:20px;padding:40px 36px;text-align:center">' +
+      (ico ? '<svg class="ri" width="230" height="230" viewBox="-115 -115 230 230" style="flex:none;overflow:visible">' + ico + '</svg>' : '<canvas class="ri rcv" width="460" height="460"></canvas>') +
+      '<div class="words" style="position:static;align-items:center;gap:12px"><p class="line" style="font-size:48px">' + hd + '</p><p class="sub" style="font-size:28px">' + sub + '</p></div></div>';
+    root.append(h('<div class="ground"><div class="words" style="left:140px;top:110px;width:1500px"><p class="tag">Recap</p><h2 class="line">The Coriolis effect</h2><div class="rule"></div></div>' +
+      card(140, icoA, 'An apparent curve', 'Nothing pushes. Earth turns beneath moving things.') +
+      card(700, icoB, 'Right in the North', 'Left in the South. Strongest near the poles, none at the equator.') +
+      card(1260, icoC, 'It steers the wind', 'Wind blows parallel to isobars and spirals around highs and lows.') + '</div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style;
+    this.cards = [...root.querySelectorAll('.card')];
+    this.rctx = root.querySelector('.rcv').getContext('2d');
+  },
+  render(t) {
+    this.rctx.clearRect(0, 0, 460, 460); titleGlobe(this.rctx, 230, 230, 168, Math.max(0, t - 1.4), 1.3);
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.2);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.8, 1.3)) + ')';
+    this.cards.forEach((c, i) => { const p = eo(seg(t, 1.4 + i * 0.6, 2.1 + i * 0.6)); c.style.opacity = p; c.style.transform = 'translateY(' + lerp(30, 0, p) + 'px)'; });
+  },
+});
+
+// ---------- scene text (shown on screen and read by screen readers) ----------
+const META = {
+  title: { still: 5, cap: { tag: 'Introduction to meteorology', line: 'The Coriolis effect', sub: 'Why moving things curve on a spinning Earth' },
+    desc: 'This animation explains the Coriolis effect: why things moving across a spinning surface seem to curve. It starts on a merry-go-round, moves to the spinning Earth, and ends with how the Coriolis effect steers the wind around highs and lows. The picture shows Earth seen from above the North Pole, turning, with arrows of wind that bend to the right.' },
+  ride: { still: 7, cap: { tag: 'A spinning ride', line: 'The merry-go-round', sub: 'You stand in the center. Your friend stands at the edge. The ride turns counterclockwise.' },
+    desc: 'A merry-go-round seen from straight above, turning counterclockwise in a small park with trees around it. You stand at the center. Your friend stands at the edge and is carried around as the ride turns.' },
+  predict: { still: 7, cap: { tag: 'Make a prediction', line: 'Where will the ball land?', sub: 'You throw the ball straight at your friend while the ride turns. Will it land at A, B or C? Decide, then press Next.' },
+    desc: 'You hold the ball at the center of the ride and are about to throw it along a dashed line straight at your friend. Three spots are marked at the edge of the ride: A is at your friend, B is behind your friend (to the right as you face them), and C is ahead of your friend (to the left). Decide where the ball will land before going on.' },
+  above: { still: 8.5, cap: { tag: 'Seen from above', line: 'The ball flies straight', sub: 'While the ball is in the air, the ride turns and carries your friend away. The ball lands at B.' },
+    desc: 'Seen from above, not riding along, the ball flies in a perfectly straight line from the center. While it is in the air, the ride keeps turning counterclockwise and carries your friend away. The ball reaches the edge at spot B, behind where your friend now stands. The answer is B.' },
+  rider: { still: 9, cap: { tag: 'Seen from the ride', line: 'The ball seems to curve', sub: 'Note: this is your friend\'s view from the ride. The ride looks still, and the park seems to turn the other way. The ball curves to the right. Nothing pushed it. The ride turned beneath it. This is the Coriolis effect.' },
+    desc: 'Note: this scene shows the throw from your friend\'s point of view, riding along. The ride looks still, and the park around it seems to turn the other way. The ball\'s path bends to the right and lands at B. No force pushed the ball sideways. The ride turned beneath it. This apparent curve is the Coriolis effect.' },
+  earth: { still: 10, cap: { tag: 'Earth is a spinning ride', line: 'Earth turns beneath us', sub: 'Seen from above the North Pole, Earth turns counterclockwise, like the ride. A rocket flies straight, but its track on the ground curves to the right.' },
+    desc: 'Earth seen from above the North Pole, with the pole in the center and the equator at the edge. Earth turns counterclockwise, just like the ride. A rocket is launched from the North Pole straight at a target city. Through space, the rocket flies straight. But Earth turns beneath it, so the target is carried away, and the rocket\'s track on the ground curves to the right. It comes down to the right of the target.' },
+  globe: { still: 11, cap: { tag: 'Where you are matters', line: 'Strongest at the poles', sub: 'Compare two nearby spots on the ground. Near the pole they move in opposite directions, so there is a lot of spin. At middle latitudes the southern spot moves faster, so there is some spin. At the equator they move together, so there is no spin.' },
+    desc: 'Earth seen from the side, turning so that its near side moves to the right. Arrows compare how two nearby spots on the ground move. Near the North Pole, the ground circles the pole: the spot to the left of the pole moves toward you and the spot to the right moves away from you. The arrows are short, because near the pole the ground covers little distance, but they point in opposite directions, so the ground there spins a lot. At the middle latitudes, both spots move to the right, but the southern spot has a bigger circle to travel and moves faster, so its arrow is longer. That difference makes a moderate spin. At the equator, the two spots on either side move to the right at the same speed, so there is no spin. More spin means a stronger Coriolis effect: strongest at the poles, zero at the equator.' },
+  storms: { still: 10, cap: { tag: 'Why it matters', line: 'No hurricanes at the equator', sub: 'A hurricane needs the Coriolis effect to start spinning. Near the equator the effect is almost zero, so hurricanes almost never form there.' },
+    desc: 'A schematic map from 40°N to 40°S. Spinning hurricane symbols appear in both hemispheres, mostly between about 8° and 25° from the equator. A shaded band from 5°N to 5°S along the equator stays empty and is labeled "Almost no hurricanes form here." A hurricane needs the Coriolis effect to start spinning, and near the equator the effect is almost zero.' },
+  wind: { still: 13, cap: { tag: 'Steering the wind', line: 'Wind parallel to the isobars', sub: 'The pressure gradient force pushes air toward low pressure. The Coriolis force turns it to the right until it blows parallel to the isobars. Then the two forces balance.' },
+    desc: 'Straight, parallel isobars run across the map, with low pressure at the top (1000 mb) and high pressure at the bottom (1016 mb). An air parcel starts at rest. A red arrow, the pressure gradient force, always points toward the low, so the air starts moving toward it. As soon as the air moves, the Coriolis force turns it to the right, shown by an orange arrow that grows as the air speeds up. The air keeps turning until it moves exactly parallel to the isobars, with low pressure on its left. At that moment the Coriolis force points straight opposite the pressure gradient force and is just as strong, so the two are balanced, and the wind blows parallel to the isobars.' },
+  low: { still: 12, cap: { tag: 'Around a low', line: 'Swirling around a low', sub: 'In the Northern Hemisphere, air flowing in toward a low turns right, so it swirls counterclockwise around the low.', box: ['Why does it spiral in?', 'Friction with the ground slows the wind. Slower wind means a weaker Coriolis force, so the pressure gradient force wins a little and pulls the air in toward the low.'] },
+    desc: 'Circular isobars surround a low pressure center in the Northern Hemisphere. Air starts moving in toward the low from all sides. Each stream turns to the right, and together they swirl counterclockwise as they spiral into the low. They spiral inward instead of circling forever because friction with the ground slows the wind. Slower wind means a weaker Coriolis force, so the pressure gradient force wins a little and pulls the air in toward the low.' },
+  highlow: { still: 11, cap: { tag: 'Highs and lows', line: 'Into lows, out of highs', sub: 'Air spirals in toward a low and out of a high. It turns right both times, so lows spin counterclockwise and highs spin clockwise.' },
+    desc: 'A low and a high side by side in the Northern Hemisphere. Around the low, air spirals inward and turns right, swirling counterclockwise. Around the high, air spirals outward and also turns right, swirling clockwise.' },
+  hemis: { still: 9, cap: { tag: 'Two hemispheres', line: 'Right in the North, left in the South', sub: 'Seen from above the South Pole, Earth turns clockwise. So in the Southern Hemisphere, moving things curve to the left.' },
+    desc: 'Two views of Earth side by side. On the left, seen from above the North Pole, Earth turns counterclockwise, and a rocket\'s track on the ground curves to the right. On the right, seen from above the South Pole, Earth turns clockwise, and the track curves to the left. In the Northern Hemisphere moving things curve right. In the Southern Hemisphere they curve left.' },
+  south: { still: 11, cap: { tag: 'Southern Hemisphere', line: 'Flipped in the South', sub: 'In the Southern Hemisphere, air turns to the left. So lows spin clockwise and highs spin counterclockwise.' },
+    desc: 'The same low and high, now in the Southern Hemisphere. Air turns to the left instead of the right. Around the low, air spirals inward and swirls clockwise. Around the high, air spirals outward and swirls counterclockwise. Everything is the mirror image of the Northern Hemisphere.' },
+  recap: { still: 7, cap: { tag: 'Recap', line: 'The Coriolis effect' },
+    desc: 'Recap. The Coriolis effect is an apparent curve: nothing pushes, Earth turns beneath moving things. Moving things curve right in the Northern Hemisphere and left in the Southern Hemisphere, strongest near the poles and not at all at the equator. It steers the wind, so wind blows parallel to isobars and spirals around highs and lows.' },
+};
+SCENES.forEach(s => Object.assign(s, META[s.id]));
+
+// ---------- player ----------
+const $ = id => document.getElementById(id);
+const stage = $('stage'), frame = $('frame'), body = document.body;
+SCENES.forEach(s => { s.root = document.createElement('div'); s.root.className = 'layer'; stage.appendChild(s.root); s.init(s.root); });
+
+const mqPort = matchMedia('(orientation: portrait) and (max-width: 640px)');
+const mqLand = matchMedia('(orientation: landscape) and (max-height: 560px)');
+const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
+let mode = 'desk';
+function fit() {
+  const m = mqPort.matches ? 'port' : mqLand.matches ? 'land' : 'desk';
+  if (m !== mode) { body.classList.remove('desk', 'land', 'port'); mode = m; }
+  body.classList.add(mode);
+  const port = mode === 'port';
+  const s = frame.clientWidth / (port ? 1120 : 1920);
+  if (!s) return;
+  SCALE = s;
+  stage.style.transform = 'scale(' + s + ')' + (port ? ' translateX(-800px)' : '');
+  stage.classList.toggle('port', port);
+  stage.classList.toggle('big', s < 0.55);
+  const px = (target, lo, hi) => Math.min(hi, Math.max(lo, target / s)).toFixed(1) + 'px';
+  stage.style.setProperty('--sub', px(15, 34, 46));
+  stage.style.setProperty('--tag', px(13, 24, 42));
+  applyText();
+}
+new ResizeObserver(fit).observe(frame);
+[mqPort, mqLand].forEach(q => q.addEventListener ? q.addEventListener('change', fit) : q.addListener(fit));
+addEventListener('resize', fit);
+addEventListener('orientationchange', () => setTimeout(fit, 250));
+
+// scene text panel
+let textOn = false;
+try { textOn = localStorage.getItem('cor-text') === '1'; } catch (e) {}
+const desc = $('desc'), textB = $('textB');
+function applyText() {
+  const shown = mode === 'port' || textOn;
+  desc.classList.toggle('sr-only', !shown);
+  textB.setAttribute('aria-expanded', textOn ? 'true' : 'false');
+  textB.setAttribute('aria-label', textOn ? 'Hide scene text' : 'Show scene text');
+}
+function setText(on) { textOn = on; try { localStorage.setItem('cor-text', on ? '1' : '0'); } catch (e) {} applyText(); }
+textB.onclick = () => setText(!textOn);
+$('closeText').onclick = () => { setText(false); textB.focus(); };
+$('skip').addEventListener('click', e => { e.preventDefault(); if (mode !== 'port') setText(true); desc.focus(); });
+
+// scene navigation
+const dots = $('dots'), title = $('title'), count = $('count'), nextB = $('next'), backB = $('back');
+SCENES.forEach((s, i) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ': ' + s.name); b.onclick = () => go(i); dots.appendChild(b); });
+const esc = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+let cur = -1, start = performance.now(), prev = null, prevT = 0, fadeStart = 0, paused = false, pausedAt = 0, still = false;
+const FADE = 0.4;
+function sceneTime(now) { return ((paused ? pausedAt : now) - start) / 1000; }
+function setPaused(p) {
+  const now = performance.now();
+  if (p === paused) return;
+  if (paused) { start += now - pausedAt; paused = false; } else { pausedAt = now; paused = true; }
+  $('pauseTxt').textContent = paused ? 'Play' : 'Pause';
+  $('pause').setAttribute('aria-label', paused ? 'Play' : 'Pause');
+  $('pauseIco').innerHTML = paused ? '<path d="M7 5l12 7-12 7z"/>' : '<path d="M8 5v14M16 5v14"/>';
+}
+function go(i) {
+  if (i < 0 || i >= SCENES.length) return;
+  const now = performance.now();
+  const reduce = mqReduce.matches;
+  if (i !== cur && cur >= 0 && !reduce) { prev = cur; prevT = sceneTime(now); fadeStart = now; } else prev = null;
+  cur = i;
+  const s = SCENES[i];
+  if (reduce) { setPaused(false); start = now - s.still * 1000; setPaused(true); still = true; }
+  else { start = now; if (paused) pausedAt = now; still = false; }
+  title.textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  count.textContent = (i + 1) + ' of ' + SCENES.length;
+  $('dTitle').textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  const c = s.cap;
+  $('cap').innerHTML = '<p class="cap-tag">' + esc(c.tag) + '</p><p class="cap-line">' + esc(c.line) + '</p>' +
+    (c.sub ? '<p class="cap-sub">' + esc(c.sub) + '</p>' : '') + (c.box ? '<div class="cap-box"><p class="cap-tag" style="color:var(--brand)">' + esc(c.box[0]) + '</p><p class="cap-sub">' + esc(c.box[1]) + '</p></div>' : '');
+  $('dText').textContent = s.desc;
+  [...dots.children].forEach((d, k) => { d.className = k === i ? 'on' : k < i ? 'done' : ''; if (k === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  if (document.activeElement === backB && i === 0) nextB.focus();
+  if (document.activeElement === nextB && i === SCENES.length - 1) backB.focus();
+  backB.disabled = i === 0;
+  nextB.disabled = i === SCENES.length - 1;
+  if (mode === 'port') desc.scrollTop = 0;
+}
+function frameLoop(now) {
+  const t = sceneTime(now);
+  const fp = prev === null ? 1 : clamp01((now - fadeStart) / 1000 / FADE);
+  SCENES.forEach((s, k) => { s.root.style.display = (k === cur || (k === prev && fp < 1)) ? 'block' : 'none'; });
+  if (prev !== null && fp < 1) { const ps = SCENES[prev]; ps.root.style.opacity = 1 - fp; ps.root.style.zIndex = 1; ps.render(prevT + (now - fadeStart) / 1000); }
+  else prev = null;
+  const s = SCENES[cur];
+  s.root.style.opacity = fp; s.root.style.zIndex = 2;
+  s.render(Math.max(0, t));
+  nextB.classList.toggle('ready', (t >= s.dur || still) && cur < SCENES.length - 1);
+  requestAnimationFrame(frameLoop);
+}
+nextB.onclick = () => go(cur + 1);
+backB.onclick = () => go(cur - 1);
+$('replay').onclick = () => { prev = null; still = false; setPaused(false); start = performance.now(); };
+$('pause').onclick = () => setPaused(!paused);
+
+// full screen, hidden where the browser can't do it (such as Safari on iPhone)
+const app = $('app');
+const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(app.requestFullscreen || app.webkitRequestFullscreen);
+if (!fsOK) body.classList.add('no-fs');
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+$('full').onclick = () => {
+  try {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (app.requestFullscreen || app.webkitRequestFullscreen).call(app); if (r && r.catch) r.catch(() => {}); }
+  } catch (e) {}
+};
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { $('full').setAttribute('aria-label', fsEl() ? 'Exit full screen' : 'Full screen'); fit(); }));
+
+// keyboard
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const onButton = e.target.closest && e.target.closest('button, a');
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (k === ' ' || k === 'Spacebar') { if (!onButton) { e.preventDefault(); go(cur + 1); } }
+  else if (k === 'Home') { e.preventDefault(); go(0); }
+  else if (k === 'End') { e.preventDefault(); go(SCENES.length - 1); }
+  else if (k === 'r' || k === 'R') $('replay').click();
+  else if (k === 'p' || k === 'P') $('pause').click();
+  else if ((k === 'f' || k === 'F') && fsOK) $('full').click();
+  else if (k === 't' || k === 'T') setText(!textOn);
+  else if (k === 'Escape' && textOn && mode === 'land') { setText(false); textB.focus(); }
+});
+
+// touch: swipe left/right, tap the right side for next and the far left for back (mouse clicks ignored)
+let tp = null;
+frame.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; tp = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+frame.addEventListener('pointercancel', () => { tp = null; });
+frame.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch' || !tp) return;
+  const dx = e.clientX - tp.x, dy = e.clientY - tp.y, dt = performance.now() - tp.t; tp = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 800) { go(cur + (dx < 0 ? 1 : -1)); return; }
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) {
+    const r = frame.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+    if (fx > 0.5) go(cur + 1); else if (fx < 0.25) go(cur - 1);
+  }
+});
+
+// test hook: COR.go(i), COR.seek(seconds) freezes the current scene at a moment
+window.COR = { go, seek(t) { setPaused(false); start = performance.now() - t * 1000; prev = null; setPaused(true); }, scenes: SCENES.length };
+
+fit();
+go(0);
+requestAnimationFrame(frameLoop);
+})();
+</script>
