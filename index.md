@@ -181,6 +181,9 @@ Wind
 * [Coriolis Effect](./animations/coriolis-effect.html)
 * [Global Circulations](./animations/globalcirculations.html)
 
+Airmasses and Fronts
+* [Weather with Fronts](./animations/)
+
 Tropical
 * [Upwelling](./animations/upwelling-mobile.html)
 * [ENSO](./animations/enso-mobile.html)

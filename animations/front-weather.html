@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weather Fronts Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: map and side view are the page. Readouts and narration sit under them, controls for the current mode below. */
+:root{
+  --bg:#eef2f5; --panel:#ffffff; --fg:#13202b; --muted:#56656f; --line:#d3dce3;
+  --accent:#1a6782; --accent-ink:#ffffff; --chip:#e3eaef;
+  --temp:#c4332c;
+  --m-warm:#f7d6c9; --m-cold:#b9d0ef; --m-cool:#dde9f6;
+  --f-cold:#2257b8; --f-warm:#c4332c; --f-occ:#7a3aa8;
+  --cloud:#ffffff; --cloud-edge:#8995a1; --ns:#bec7cf; --as:#dfe4e9; --cs:#f4f7f9; --cb:#f2f4f6;
+  --rain:#2a63a3; --ground:#b5a07a; --ground-edge:#8a7655; --iso:#6b7a86;
+  --halo:rgba(255,255,255,.88); --ink:#13202b; --flow:#13202b;
+  --frz:#0a7f86; --snow:#2c4f7c; --sleet:#ffffff; --dew:#127a3e;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161d; --panel:#16212b; --fg:#e4ecf2; --muted:#a3b3c0; --line:#2a3946;
+  --accent:#5bbbdc; --accent-ink:#06141c; --chip:#1f2d39; --temp:#ff7a70;
+  --m-warm:#4b2b25; --m-cold:#1b3459; --m-cool:#2c4258;
+  --f-cold:#74a8ff; --f-warm:#ff7a70; --f-occ:#cf9ff5;
+  --cloud:#e7ebee; --cloud-edge:#6f7d89; --ns:#98a3ad; --as:#bfc7cf; --cs:#dce2e7; --cb:#d9dfe4;
+  --rain:#86bdff; --ground:#5b4b34; --ground-edge:#7d6847; --iso:#93a4b1;
+  --halo:rgba(22,33,43,.85); --ink:#e4ecf2; --flow:#e4ecf2;
+  --frz:#5fe0d8; --snow:#ffffff; --sleet:#e7ebee; --dew:#5fd68f;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f161d; --panel:#16212b; --fg:#e4ecf2; --muted:#a3b3c0; --line:#2a3946;
+  --accent:#5bbbdc; --accent-ink:#06141c; --chip:#1f2d39; --temp:#ff7a70;
+  --m-warm:#4b2b25; --m-cold:#1b3459; --m-cool:#2c4258;
+  --f-cold:#74a8ff; --f-warm:#ff7a70; --f-occ:#cf9ff5;
+  --cloud:#e7ebee; --cloud-edge:#6f7d89; --ns:#98a3ad; --as:#bfc7cf; --cs:#dce2e7; --cb:#d9dfe4;
+  --rain:#86bdff; --ground:#5b4b34; --ground-edge:#7d6847; --iso:#93a4b1;
+  --halo:rgba(22,33,43,.85); --ink:#e4ecf2; --flow:#e4ecf2;
+  --frz:#5fe0d8; --snow:#ffffff; --sleet:#e7ebee; --dew:#5fd68f;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header h1{font-family:var(--f-display);font-weight:600;font-size:clamp(24px,4vw,34px);line-height:1.1;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:80ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;background:var(--chip);padding:5px;border-radius:10px;align-self:flex-start;max-width:100%}
+.tab{appearance:none;font:inherit;font-weight:600;font-size:15px;border:0;border-radius:7px;min-height:42px;padding:8px 16px;cursor:pointer;background:transparent;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+
+.views{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.views.storm{grid-template-columns:1.15fr .85fr}
+@media (max-width:900px){.views,.views.storm{grid-template-columns:1fr}}
+figure{margin:0;min-width:0}
+figcaption{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;margin:0 0 6px}
+.vt{font-family:var(--f-display);font-weight:600;font-size:17px}
+.vs{font-size:13px;color:var(--muted)}
+svg.view{width:100%;height:auto;display:block;border-radius:8px;overflow:hidden;background:var(--m-cool)}
+svg text{font-family:var(--f-body)}
+
+/* SVG classes */
+.m-warm{fill:var(--m-warm)} .m-cold{fill:var(--m-cold)} .m-cool{fill:var(--m-cool)}
+.iso{fill:none;stroke:var(--iso);stroke-width:1.6;stroke-opacity:.55}
+.isol{font-family:var(--f-mono)!important;font-size:17px;fill:var(--iso)}
+.fl-cold{fill:none;stroke:var(--f-cold);stroke-width:5;stroke-linejoin:round;stroke-linecap:round}
+.fl-warm{fill:none;stroke:var(--f-warm);stroke-width:5;stroke-linejoin:round;stroke-linecap:round}
+.fl-occ{fill:none;stroke:var(--f-occ);stroke-width:5;stroke-linejoin:round;stroke-linecap:round}
+.fs-cold{fill:var(--f-cold)} .fs-warm{fill:var(--f-warm)} .fs-occ{fill:var(--f-occ)}
+.lab{font-size:24px;font-weight:700;fill:var(--ink);stroke:var(--halo);stroke-width:5px;paint-order:stroke;stroke-linejoin:round}
+.lab.sm{font-size:19px;font-weight:600}
+.clab{font-size:17px;font-weight:600;fill:var(--ink);stroke:var(--halo);stroke-width:4px;paint-order:stroke;stroke-linejoin:round;font-style:italic}
+.flab-cold{fill:var(--f-cold)} .flab-warm{fill:var(--f-warm)} .flab-occ{fill:var(--f-occ)}
+.lowL{font-family:var(--f-display)!important;font-size:54px;font-weight:600;fill:var(--f-warm);stroke:var(--halo);stroke-width:5px;paint-order:stroke}
+.secline{stroke:var(--ink);stroke-width:2.5;stroke-dasharray:10 8}
+.handle{fill:var(--panel);stroke:var(--ink);stroke-width:2.5;cursor:ns-resize;touch-action:none}
+.hl{font-family:var(--f-display)!important;font-size:22px;font-weight:600;fill:var(--ink);pointer-events:none}
+.stn{fill:var(--panel);stroke:var(--ink);stroke-width:3}
+.c-out{fill:var(--cloud-edge);stroke:var(--cloud-edge);stroke-width:4;stroke-linejoin:round}
+.c-ns{fill:var(--ns)} .c-as{fill:var(--as)} .c-cs{fill:var(--cs);fill-opacity:.9} .c-cb{fill:var(--cb)} .c-cu{fill:var(--cloud)}
+.c-ci{fill:none;stroke:var(--cloud);stroke-width:3.2;stroke-linecap:round}
+.c-ci-o{fill:none;stroke:var(--cloud-edge);stroke-width:5.6;stroke-linecap:round}
+.rain{stroke:var(--rain);stroke-width:2.2;stroke-linecap:round}
+.rain.frz{stroke:var(--frz);stroke-width:2.6}
+.glaze{stroke:var(--frz);stroke-width:5;stroke-linecap:round}
+.snow{stroke:var(--snow);stroke-width:1.8;stroke-linecap:round;fill:none}
+.sleet{fill:var(--sleet);stroke:var(--rain);stroke-width:1.5}
+.plab{font-size:16px;font-weight:700;fill:var(--ink);stroke:var(--halo);stroke-width:4px;paint-order:stroke;stroke-linejoin:round}
+.barb{stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;fill:none}
+.barbf{fill:var(--ink)}
+.edge{fill:none;stroke-width:3.5;stroke-linejoin:round;stroke-linecap:round}
+.edge-cold{stroke:var(--f-cold)} .edge-warm{stroke:var(--f-warm)} .edge-occ{stroke:var(--f-occ)}
+.stm{font-family:var(--f-mono)!important;font-size:30px;font-weight:600;fill:var(--ink);stroke:var(--halo);stroke-width:5px;paint-order:stroke}
+.stm.t{fill:var(--temp)} .stm.td{fill:var(--dew)}
+.wx{fill:none;stroke:var(--ink);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.wxf{fill:var(--ink)}
+.trip{fill:var(--f-occ);stroke:var(--halo);stroke-width:3}
+.barbs{fill:none;stroke:var(--ink);stroke-width:2}
+.flow{fill:none;stroke:var(--flow);stroke-opacity:.38;stroke-width:2;stroke-dasharray:6 7}
+.flowhead{fill:var(--flow);fill-opacity:.55}
+.dot{fill:var(--flow);fill-opacity:.8}
+.dot.w{fill:var(--f-warm);fill-opacity:1} .dot.c{fill:var(--f-cold);fill-opacity:1}
+.gnd{fill:var(--ground)} .gnd-line{stroke:var(--ground-edge);stroke-width:2}
+.axis{font-family:var(--f-mono)!important;font-size:16px;fill:var(--muted)}
+.axl{stroke:var(--ink);stroke-opacity:.18;stroke-width:1.2;stroke-dasharray:3 7}
+.glab{font-size:17px;font-weight:700;stroke:var(--ground);stroke-width:4px;paint-order:stroke}
+.wsym{fill:none;stroke:var(--ink);stroke-width:2.5}
+.wsymd{fill:var(--ink)}
+.triple{fill:var(--f-occ);stroke:var(--halo);stroke-width:3}
+
+.status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.ro{border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:0}
+.ro .k{font-family:var(--f-display);font-size:13px;color:var(--muted);font-weight:600}
+.ro .v{font-family:var(--f-mono);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3;white-space:nowrap}
+.ro .s{font-size:13px;color:var(--muted);font-family:var(--f-mono)}
+#vT{color:var(--temp)}
+#vSky{font-family:var(--f-body);font-size:17px;white-space:normal;line-height:1.25;padding:3px 0}
+.windrow{display:flex;gap:10px;align-items:center}
+.windrow svg{width:40px;height:40px;flex:none}
+#vWind{font-family:var(--f-body);font-size:16px;white-space:normal;line-height:1.2}
+@media (max-width:640px){.status{grid-template-columns:repeat(2,minmax(0,1fr))}.ro .v{font-size:19px}}
+
+.say{margin:12px 0 0;font-size:17px;max-width:80ch;min-height:3.2em}
+.about{margin:6px 0 0;font-size:14px;color:var(--muted);max-width:80ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:14px;border-radius:3px;border:1px solid var(--line);display:inline-block}
+.legend svg{width:34px;height:16px}
+
+.controls{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:flex-end}
+.fronts{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}
+.fbtn{appearance:none;font:inherit;font-weight:600;font-size:14px;border-radius:8px;min-height:44px;padding:8px 14px;cursor:pointer;border:1px solid var(--line);background:var(--chip);color:var(--fg);display:inline-flex;align-items:center;gap:8px}
+.fbtn svg{width:30px;height:16px}
+.fbtn[aria-pressed="true"]{background:var(--fg);color:var(--panel);border-color:var(--fg)}
+.fbtn[aria-pressed="true"] svg .knock{fill:var(--panel)}
+.slider{display:flex;flex-direction:column;gap:2px;flex:1 1 260px;min-width:0}
+.slider .row{display:flex;justify-content:space-between;gap:8px}
+.slider label{font-weight:600}
+.slider output{font-family:var(--f-mono);font-weight:600}
+.slider input{width:100%;height:44px;margin:0;accent-color:var(--accent)}
+#tw{accent-color:var(--f-cold)}
+.btns{display:flex;gap:8px}
+.btn{appearance:none;font:inherit;font-weight:600;font-size:15px;border-radius:8px;min-height:44px;padding:9px 22px;cursor:pointer;border:1px solid var(--line);background:var(--chip);color:var(--fg)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);min-width:110px}
+.fixed{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;color:var(--muted);flex:1 1 100%}
+.fixed b{font-family:var(--f-mono);color:var(--fg)}
+.verdict{font-family:var(--f-display);font-size:22px;font-weight:600;margin:0;flex:1 1 100%}
+button:focus-visible,input:focus-visible,svg:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.check{display:flex;gap:10px;align-items:center;font-size:14px;min-height:44px;margin-top:6px;cursor:pointer}
+.check input{width:22px;height:22px;margin:0;accent-color:var(--accent)}
+.hit{fill:transparent;cursor:ns-resize;touch-action:none}
+.skip{position:absolute;left:-999px;top:8px;background:var(--panel);color:var(--fg);padding:10px 14px;border-radius:8px;border:2px solid var(--accent);z-index:30}
+.skip:focus{left:16px}
+
+/* phones: bigger text inside the pictures */
+@media (max-width:700px){
+  body{padding-block:14px 30px}
+  header p{font-size:14px}
+  .panel{padding:10px}
+  .lab{font-size:38px;stroke-width:7px} .lab.sm{font-size:31px}
+  .clab{font-size:29px;stroke-width:6px}
+  .plab{font-size:26px;stroke-width:6px}
+  .stm{font-size:42px;stroke-width:8px}
+  .isol{font-size:26px} .axis{font-size:26px} .glab{font-size:27px} .hl{font-size:32px}
+  .lowL{font-size:72px}
+  .say{font-size:16px;min-height:0}
+  .tab{flex:1 1 0;padding:8px 6px;font-size:14px;line-height:1.2;white-space:normal;text-align:center}
+  .tabs{align-self:stretch;flex-wrap:nowrap}
+  /* caption right under the pictures, so it can be read at each pause */
+  #stagePanel{display:flex;flex-direction:column}
+  #views{order:1} #say{order:2} #gauges{order:3} #about{order:4} #legend{order:5} #stillWrap{order:6}
+  .status{margin-top:10px}
+  /* playback buttons stay within reach at the bottom of the screen */
+  body{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+  .btns{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--panel);border-top:1px solid var(--line);
+    box-shadow:0 -4px 14px rgba(0,0,0,.14);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));
+    padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .btns .btn{flex:1 1 0}
+  .legend{font-size:14px}
+  .fbtn{flex:1 1 calc(50% - 6px);justify-content:flex-start}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#controlsStart">Skip to the controls</a>
+<main class="wrap">
+  <header>
+    <h1>Weather Fronts Lab</h1>
+    <p>Where two air masses meet, the warmer, lighter air is forced to rise, and that rising air builds clouds and rain. Explore five kinds of fronts, follow a storm through its life, and test what decides how a front occludes.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Lab mode">
+    <button class="tab" role="tab" id="tab-explore" data-mode="explore" aria-controls="stagePanel" aria-selected="true">Explore the fronts</button>
+    <button class="tab" role="tab" id="tab-storm" data-mode="storm" aria-controls="stagePanel" aria-selected="false" tabindex="-1">Life of a storm</button>
+    <button class="tab" role="tab" id="tab-occl" data-mode="occl" aria-controls="stagePanel" aria-selected="false" tabindex="-1">Occlusion lab</button>
+  </div>
+
+  <section class="panel" role="tabpanel" aria-labelledby="tab-explore" id="stagePanel">
+    <div class="views" id="views">
+      <figure>
+        <figcaption><span class="vt">Weather map</span><span class="vs" id="mapSub">Seen from above</span></figcaption>
+        <svg id="map" class="view" viewBox="0 0 1000 520" role="img" aria-label="Weather map"></svg>
+      </figure>
+      <figure>
+        <figcaption><span class="vt">Side view along line A–B</span><span class="vs" id="secSub">Heights are stretched about 50 times so the slopes show.</span></figcaption>
+        <svg id="sec" class="view" viewBox="0 0 1000 450" role="img" aria-label="Side view"></svg>
+      </figure>
+    </div>
+
+    <div class="status" id="gauges">
+      <div class="ro"><div class="k">Temperature</div><div class="v" id="vT">--</div><div class="s" id="sT"></div></div>
+      <div class="ro"><div class="k">Pressure</div><div class="v" id="vP">--</div><div class="s" id="sP"></div></div>
+      <div class="ro"><div class="k">Wind</div>
+        <div class="windrow">
+          <svg viewBox="-22 -22 44 44" aria-hidden="true"><circle r="19" fill="none" stroke="var(--line)" stroke-width="2"/><text y="-11" text-anchor="middle" font-size="8" fill="var(--muted)" font-weight="700">N</text><g id="wArrow"><path d="M0,13 L0,-9" stroke="var(--fg)" stroke-width="3" stroke-linecap="round"/><path d="M-6,-5 L0,-14 L6,-5 Z" fill="var(--fg)"/></g></svg>
+          <div><div class="v" id="vWind">--</div><div class="s" id="sWind"></div></div>
+        </div>
+      </div>
+      <div class="ro"><div class="k">Weather</div><div class="v" id="vSky">--</div><div class="s" id="sSky"></div></div>
+    </div>
+
+    <p class="say" id="say" aria-live="polite"></p>
+    <p class="about" id="about"></p>
+    <div class="legend" id="legend" role="group" aria-label="Key"></div>
+    <div id="stillWrap"><label class="check"><input type="checkbox" id="still"> Stop the moving rain and air arrows</label></div>
+    <div id="sr" class="sr-only" aria-live="polite"></div>
+  </section>
+  <div id="controlsStart" tabindex="-1"></div>
+
+  <section class="panel" id="ctl-explore" aria-label="Explore controls">
+    <div class="controls">
+      <div class="fronts" role="group" aria-label="Choose a front">
+        <button type="button" class="fbtn" data-front="cold" aria-pressed="true"><svg viewBox="0 0 30 16" aria-hidden="true"><path d="M1,13H29" stroke="var(--f-cold)" stroke-width="3"/><path d="M4,13 L9,4 L14,13Z M16,13 L21,4 L26,13Z" fill="var(--f-cold)"/></svg>Cold</button>
+        <button type="button" class="fbtn" data-front="warm" aria-pressed="false"><svg viewBox="0 0 30 16" aria-hidden="true"><path d="M1,13H29" stroke="var(--f-warm)" stroke-width="3"/><path d="M3,13 A5,5 0 0 1 13,13Z M17,13 A5,5 0 0 1 27,13Z" fill="var(--f-warm)"/></svg>Warm</button>
+        <button type="button" class="fbtn" data-front="stat" aria-pressed="false"><svg viewBox="0 0 30 16" aria-hidden="true"><path d="M1,8H15" stroke="var(--f-cold)" stroke-width="3"/><path d="M15,8H29" stroke="var(--f-warm)" stroke-width="3"/><path d="M3,8 L8,15 L13,8Z" fill="var(--f-cold)"/><path d="M17,8 A5,5 0 0 1 27,8Z" fill="var(--f-warm)"/></svg>Stationary</button>
+        <button type="button" class="fbtn" data-front="cocc" aria-pressed="false"><svg viewBox="0 0 30 16" aria-hidden="true"><path d="M1,13H29" stroke="var(--f-occ)" stroke-width="3"/><path d="M3,13 L8,4 L13,13Z M17,13 A5,5 0 0 1 27,13Z" fill="var(--f-occ)"/></svg>Cold-occluded</button>
+        <button type="button" class="fbtn" data-front="wocc" aria-pressed="false"><svg viewBox="0 0 30 16" aria-hidden="true"><path d="M1,13H29" stroke="var(--f-occ)" stroke-width="3"/><path d="M3,13 L8,4 L13,13Z M17,13 A5,5 0 0 1 27,13Z" fill="var(--f-occ)"/></svg>Warm-occluded</button>
+      </div>
+      <div class="slider">
+        <div class="row"><label for="tExp">Time</label><output id="tExpOut" for="tExp"></output></div>
+        <input type="range" id="tExp" min="0" max="1000" value="0">
+      </div>
+      <div class="btns"><button type="button" class="btn primary" id="playExp">Play</button><button type="button" class="btn" id="resetExp">Reset</button></div>
+    </div>
+  </section>
+
+  <section class="panel" id="ctl-storm" aria-label="Storm controls" hidden>
+    <div class="controls">
+      <div class="slider">
+        <div class="row"><label for="tStorm">Storm’s life</label><output id="tStormOut" for="tStorm"></output></div>
+        <input type="range" id="tStorm" min="0" max="1000" value="0">
+      </div>
+      <div class="slider">
+        <div class="row"><label for="ySec">Line A–B</label><output id="ySecOut" for="ySec"></output></div>
+        <input type="range" id="ySec" min="40" max="490" value="330">
+      </div>
+      <div class="btns"><button type="button" class="btn primary" id="playStorm">Play</button><button type="button" class="btn" id="resetStorm">Reset</button></div>
+    </div>
+    <p class="note">Drag the round handles on the map, or tap anywhere on the map, to move line A–B.</p>
+  </section>
+
+  <section class="panel" id="ctl-occl" aria-label="Occlusion controls" hidden>
+    <div class="controls">
+      <p class="verdict" id="verdict"></p>
+      <div class="slider">
+        <div class="row"><label for="tw">Air behind the cold front</label><output id="twOut" for="tw"></output></div>
+        <input type="range" id="tw" min="-12" max="14" step="1" value="-6">
+      </div>
+      <div class="fixed"><span>Air ahead of the warm front: <b>2 °C</b></span><span>Warm air, lifted off the ground: <b>14 °C</b></span></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const sm=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
+const RM=matchMedia('(prefers-reduced-motion: reduce)'),MOB=matchMedia('(max-width:700px)');
+
+/* ---------- side-view geometry: x in map units (0–1000, west to east), z in km ---------- */
+const G=410, KM=37.4, ZTOP=10.8;
+const zy=z=>G-z*KM;
+const KC=14, KW=62, KS=48;          // horizontal reach per km of height: cold (steep), warm (gentle), stationary
+const bump=z=>z<=0?0:(z/0.7)*Math.exp(1-z/0.7);
+const f1=v=>v.toFixed(1);
+const P=(p)=>f1(p[0])+','+f1(zy(p[1]));
+
+function surfPts(x0,z0,dir,k,nose){const p=[];for(let z=z0;z<=ZTOP+0.01;z+=0.2){let x=x0+dir*k*(z-z0);if(nose)x-=dir*nose*bump(z-z0);p.push([x,z]);}return p;}
+function newSpec(bg){return{bg,polys:[],clouds:[],rains:[],flows:[],labels:[],fronts:[],winds:[],plabs:[],edges:[],triple:null};}
+function addLabel(sp,x,z,text,m){const hw=Math.min(300,text.length*11+20);sp.labels.push({x:clamp(x,hw,1000-hw),z,text,m});}
+
+function band(sp,kind,x0,dir,ua,ub,bot,top,amp,lab){
+  const tp=[],bp=[];
+  const us=[];for(let u=ua;u<ub;u+=8)us.push(u);us.push(ub);
+  for(const u of us){
+    const e=Math.min(u-ua,ub-u),f=sm(e/34);
+    const b=bot(u),t=top(u);
+    const x=x0+dir*u;
+    tp.push([x,b+(t-b)*(0.3+0.7*f)+amp*Math.abs(Math.sin(u/10))*f]);
+    bp.push([x,b+(1-f)*0.18]);
+  }
+  const xs=tp.map(p=>p[0]);
+  sp.clouds.push({kind,shapes:[{t:'poly',pts:tp.concat(bp.reverse())}],xa:Math.min(...xs),xb:Math.max(...xs),
+    lab:lab?{x:x0+dir*(ua+ub)/2,z:(bot((ua+ub)/2)+top((ua+ub)/2))/2,text:lab}:null});
+}
+function layered(sp,x0,z0,dir,k,rain,ci,bands){
+  const zs=u=>z0+Math.max(u,0)/k;
+  const nsB=u=>Math.max(zs(u)+0.25,0.6), nsT=u=>Math.min(zs(u)+2.6+0.5*sm((u+30)/120),6.6);
+  const e1=bands?285:205,e2=bands?420:390,e3=bands?540:520;   // the warm front's wider precipitation shield
+  band(sp,'ns',x0,dir,-30,e1,nsB,nsT,0.16,'Nimbostratus');
+  if(zs(e1)+0.3<9.2) band(sp,'as',x0,dir,e1,e2,u=>zs(u)+0.3,u=>Math.min(zs(u)+1.7,8.7),0.08,'Altostratus');
+  if(zs(e2)+0.35<9.3) band(sp,'cs',x0,dir,e2,e3,u=>zs(u)+0.35,u=>Math.min(zs(u)+1.0,9.7),0.03,'Cirrostratus');
+  if(ci){
+    const strokes=[];let xa=1e9,xb=-1e9,zl=9;
+    for(let u=e3-5;u<=e3+140;u+=29){
+      const z=Math.min(zs(u)+0.5,9.5)+((u/32)%2?0.25:0); const x=x0+dir*u;
+      strokes.push({t:'stroke',pts:[[x,z],[x+dir*12,z+0.16],[x+dir*26,z+0.12],[x+dir*34,z-0.08]]});
+      xa=Math.min(xa,x,x+dir*34);xb=Math.max(xb,x,x+dir*34);zl=z;
+    }
+    sp.clouds.push({kind:'ci',shapes:strokes,xa,xb,lab:{x:x0+dir*(e3+75),z:zl-0.55,text:'Cirrus'}});
+  }
+  if(rain>0&&bands){
+    // far ahead the warm layer aloft is thin (snow); nearer, drops melt then refreeze (sleet),
+    // then the cold layer is too shallow to refreeze them (freezing rain); at the front, rain
+    [[190,270,'snow',1.6,'Snow'],[130,190,'sleet',1.8,'Sleet'],[65,130,'frz',2,'Freezing rain'],[-15,65,'rain',2,'Rain']].forEach(([ua,ub,pt,i,lab],j)=>{
+      const a=x0+dir*ua,b=x0+dir*ub;
+      sp.rains.push({xa:Math.min(a,b),xb:Math.max(a,b),int:i*rain/2,ptype:pt,top:x=>nsB(dir*(x-x0))});
+      sp.plabs.push({x:x0+dir*(ua+ub)/2,z:j%2?1.05:0.32,text:lab});});
+  }else if(rain>0){const a=x0+dir*(-15),b=x0+dir*185;
+    sp.rains.push({xa:Math.min(a,b),xb:Math.max(a,b),int:rain,top:x=>nsB(dir*(x-x0))});}
+}
+function cb(sp,xc,zb,zt,adir,rain){
+  zt=Math.min(zt,9.7);const H=zt-zb;
+  const aL=adir<0?150:30,aR=adir>0?150:30;
+  const shapes=[
+    {t:'poly',pts:[[xc-36,zt-2.0],[xc-36-aL,zt-0.35],[xc-42-aL,zt],[xc+42+aR,zt],[xc+36+aR,zt-0.35],[xc+36,zt-2.0]]},
+    {t:'poly',pts:[[xc-40,zb],[xc-48,zb+H*0.3],[xc-46,zt-1.6],[xc+46,zt-1.6],[xc+48,zb+H*0.3],[xc+40,zb]]},
+  ];
+  [[-44,0.14,22],[44,0.16,22],[-48,0.32,26],[48,0.34,26],[-46,0.52,27],[47,0.54,27],[-42,0.7,26],[43,0.71,25],[-30,0.83,28],[2,0.9,33],[34,0.84,28]].forEach(([dx,fz,r])=>shapes.push({t:'circ',x:xc+dx,z:zb+H*fz,r}));
+  shapes.push({t:'poly',cls:'ns',pts:[[xc-40,zb],[xc-46,zb+0.45],[xc+46,zb+0.45],[xc+40,zb]]});
+  sp.clouds.push({kind:'cb',shapes,xa:xc-48,xb:xc+48,lab:{x:xc,z:zt+0.45,text:'Cumulonimbus'}});
+  sp.clouds.push({kind:'anvil',shapes:[],xa:xc-42-aL,xb:xc+42+aR,lab:null});
+  if(rain>0)sp.rains.push({xa:xc-38,xb:xc+38,int:rain,top:()=>zb});
+}
+function cu(sp,x,z,lab){
+  const shapes=[{t:'poly',pts:[[x-30,z],[x-30,z+0.22],[x+32,z+0.22],[x+32,z]]},
+    {t:'circ',x:x-14,z:z+0.42,r:14},{t:'circ',x:x+4,z:z+0.62,r:18},{t:'circ',x:x+21,z:z+0.38,r:12}];
+  sp.clouds.push({kind:'cu',shapes,xa:x-30,xb:x+32,lab:lab?{x,z:z+1.35,text:'Cumulus'}:null});
+}
+function flow(sp,pts,cls){sp.flows.push({pts,cls:cls||''});}
+
+function single(sp,xf,type,dirCold,mCold,o){
+  o=o||{};const str=o.str??1;
+  const k=type==='cold'?KC:type==='warm'?KW:KS;
+  const far=dirCold<0?-60:1060, dw=-dirCold;
+  let s;
+  if(type==='cold'){s=[];for(let z=0;z<=ZTOP+0.01;z+=(z<1?0.1:0.25))s.push([xf+dirCold*4.5*z*z,z]);}
+  else s=surfPts(xf,0,dirCold,k,0);
+  sp.polys.push({m:mCold,pts:[...s,[far,ZTOP],[far,0]]});
+  sp.fronts.push({x:xf,type});
+  if(type==='cold'){
+    cb(sp,xf+dw*30,0.8,9.6,dw,3*str);
+    cu(sp,xf+dirCold*250,1.2,true); cu(sp,xf+dirCold*370,1.5,false);
+    flow(sp,[[xf+dw*250,0.35],[xf+dw*70,0.45],[xf+dw*30,1.4],[xf+dw*14,3.2],[xf+dirCold*18,5.4],[xf+dirCold*90,7.4],[xf+dirCold*190,8.8],[xf+dirCold*300,9.6]],'w');
+    flow(sp,[[xf+dirCold*290,0.32],[xf+dirCold*48,0.32]],'c');
+    addLabel(sp,xf+dirCold*190,5.4,o.lab||'Cold air',mCold);
+    if(!o.noWarmLabel)addLabel(sp,xf+dw*210,5.4,'Warm air','warm');
+  }else{
+    layered(sp,xf,0,dirCold,k,(type==='stationary'?1.2:2)*str,type!=='stationary',type==='warm'&&!o.noBands);
+    flow(sp,[[xf+dw*240,0.35],[xf+dw*30,0.5],...[110,240,380,520].map(u=>[xf+dirCold*u,u/k+0.55])],'w');
+    if(type==='warm'){
+      flow(sp,[[xf+dirCold*120,0.3],[xf+dirCold*250,0.3]],'c');
+      addLabel(sp,xf+dirCold*310,1.6,o.lab||'Cold air',mCold);
+      if(!o.noWarmLabel)addLabel(sp,xf+dw*210,3.4,'Warm air','warm');
+    }else{
+      addLabel(sp,xf+dirCold*330,1.5,'Cold air',mCold);
+      addLabel(sp,xf+dw*230,3.4,'Warm air','warm');
+      sp.winds.push({x:clamp(xf+dirCold*330,70,930),z:3.0,into:false});
+      sp.winds.push({x:clamp(xf+dw*230,70,930),z:1.6,into:true});
+    }
+  }
+}
+function twoFront(sp,xc,xw,typeC,typeW,str){
+  single(sp,xc,typeC,-1,'W',{str,noWarmLabel:true});
+  single(sp,xw,typeW,+1,'E',{str,noWarmLabel:true});
+  if(xw-xc>150)addLabel(sp,(xc+xw)/2,typeW==='warm'?6.2:3.2,'Warm air','warm');
+}
+function occl(sp,xo,h,s,str,labW,labE){
+  // cold-front surfaces use the same rounded dome as the cold front: x = 4.5 z² (like y = sqrt(-3x))
+  const Px=xo+(s<0?4.5*h*h*s:KW*h*s);
+  const low=[];if(s<0){for(let z=0;z<h;z+=0.1)low.push([xo+(Px-xo)*(z/h)*(z/h),z]);}else low.push([xo,0]);
+  low.push([Px,h]);
+  const c=s<0?-s:0,up=[];
+  for(let z=h+0.1;z<=ZTOP+0.01;z+=0.2){const q=z-h+h*c;up.push([Px-4.5*(q*q-h*h*c*c),z]);}
+  sp.polys.push({m:'W',pts:[...low,...up,[-60,ZTOP],[-60,0]]});
+  sp.polys.push({m:'E',pts:[...low,...surfPts(Px,h,+1,KW,0).slice(1),[1060,ZTOP],[1060,0]]});
+  sp.fronts.push({x:xo,type:'occluded'});
+  sp.triple={x:Px,z:h};
+  const c0=sp.clouds.length;
+  sp.edges.push({pts:low,cls:'occ'},{pts:[[Px,h],...up],cls:'cold'},{pts:[[Px,h],...surfPts(Px,h,+1,KW,0).slice(1)],cls:'warm'});
+  const warmAloft=[[Px+24,h+0.75],...[150,300,450].map(u=>[Px+u,h+u/KW+0.55])];
+  if(s<=-0.3){
+    layered(sp,Px,h,+1,KW,1.5*str,true);
+    cb(sp,xo+18,0.8,7.6,1,2.5*str);
+    flow(sp,[[xo-290,0.32],[xo-46,0.32]],'c');
+    flow(sp,[[xo+250,0.35],[xo+40,0.42],[lerp(xo,Px,0.5)+12,h*0.5],[Px+16,h+0.3]],'');
+    flow(sp,warmAloft,'w');
+  }else if(s>=0.3){
+    layered(sp,xo,0,+1,KW,2*str,true);
+    cb(sp,Px-12,h+0.2,Math.min(h+6.2,9.6),1,2.5*str);
+    const span=Px-xo;
+    flow(sp,[[xo-270,0.35],[xo-24,0.45],...[span*0.35,span*0.7,span-18].map(u=>[xo+u,u/KW+0.42])],'c');
+    flow(sp,warmAloft,'w');
+  }else{
+    layered(sp,Px,h,+1,KW,1.5*str,true);
+    cb(sp,xo+10,0.8,7.4,1,2*str);
+    flow(sp,[[xo-290,0.32],[xo-46,0.32]],'c');
+    flow(sp,warmAloft,'w');
+  }
+  for(let i=c0;i<sp.clouds.length;i++)sp.clouds[i].ghost=true;   // see-through, so the frontal surfaces show
+  cu(sp,xo-250,1.2,true); cu(sp,xo-370,1.5,false);                 // fair-weather cumulus behind the front stay solid
+  addLabel(sp,xo-190,5.4,labW,'W');
+  addLabel(sp,xo+320,1.5,labE,'E');
+  addLabel(sp,Px+205,9.45,'Warm air (lifted)','warm');
+}
+
+/* ---------- map geometry ---------- */
+function crSample(c,n){const out=[],m=c.length-1;
+  for(let i=0;i<=n;i++){const u=i/n*m;const k=Math.min(Math.floor(u),m-1),t=u-k,t2=t*t,t3=t2*t;
+    const p0=c[Math.max(k-1,0)],p1=c[k],p2=c[k+1],p3=c[Math.min(k+2,m)];
+    const f=(a,b,cc,d)=>0.5*(2*b+(-a+cc)*t+(2*a-5*b+4*cc-d)*t2+(-a+3*b-3*cc+d)*t3);
+    out.push([f(p0[0],p1[0],p2[0],p3[0]),f(p0[1],p1[1],p2[1],p3[1])]);}
+  return out;}
+function pip(pt,poly){let ins=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
+  if(((yi>pt[1])!==(yj>pt[1]))&&(pt[0]<(xj-xi)*(pt[1]-yi)/(yj-yi)+xi))ins=!ins;}return ins;}
+function crossY(pts,y){const out=[];let acc=0;
+  for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];const sl=Math.hypot(b[0]-a[0],b[1]-a[1]);
+    if((a[1]-y)*(b[1]-y)<=0&&a[1]!==b[1]){const f=(y-a[1])/(b[1]-a[1]);out.push({x:a[0]+f*(b[0]-a[0]),s:acc+f*sl});}
+    acc+=sl;}
+  return {list:out,len:acc};}
+
+const RR=[0,90,190,300,430,640];
+const WAVE_C=[[0,0],[-40,85],[-110,175],[-200,255],[-310,330],[-480,440]];
+const WAVE_W=[[0,0],[95,40],[200,95],[300,160],[400,235],[560,360]];
+function stormGeo(t){
+  const a=sm(t/0.38),o=sm((t-0.48)/0.4),d=sm((t-0.86)/0.14);
+  const L=[330+260*t-40*o,265-50*t-25*o];
+  const cC=RR.map((r,i)=>[lerp(-0.86*r,WAVE_C[i][0],a),lerp(0.51*r,WAVE_C[i][1],a)]);
+  const cW=RR.map((r,i)=>[lerp(0.86*r,WAVE_W[i][0],a),lerp(-0.51*r,WAVE_W[i][1],a)]);
+  const N=80;
+  const C=crSample(cC,N).map(p=>[p[0]+L[0],p[1]+L[1]]);
+  const Wa=crSample(cW,N).map(p=>[p[0]+L[0],p[1]+L[1]]);
+  const i0=Math.round(0.55*o*N);
+  const Z=[];for(let i=0;i<=i0;i++)Z.push([lerp(C[i][0],Wa[i][0],0.68),lerp(C[i][1],Wa[i][1],0.68)]);
+  const T=Z[i0];
+  const Cp=[],Wp=[];
+  for(let i=i0;i<=N;i++){const w=i0===N?0:Math.pow((N-i)/(N-i0),1.5);
+    Cp.push([C[i][0]+(T[0]-C[i0][0])*w,C[i][1]+(T[1]-C[i0][1])*w]);
+    Wp.push([Wa[i][0]+(T[0]-Wa[i0][0])*w,Wa[i][1]+(T[1]-Wa[i0][1])*w]);}
+  const cE=Cp[Cp.length-1],wE=Wp[Wp.length-1];
+  const warmPoly=[...Cp.slice().reverse(),...Wp.slice(1),[3000,wE[1]],[3000,3000],[-3000,3000],[-3000,cE[1]]];
+  const westPoly=[...Cp.slice().reverse(),...Z.slice().reverse().slice(1),[L[0],-3000],[-3000,-3000],[-3000,cE[1]]];
+  const M=(x,y)=>pip([x,y],warmPoly)?'warm':pip([x,y],westPoly)?'W':'E';
+  const pc=1010-18*a-7*o+20*d;
+  return{t,a,o,d,L,Cp,Wp,Z,T,warmPoly,westPoly,M,pc,stat:a<0.15};
+}
+function exploreCurve(xf){const out=[];for(let y=-40;y<=560;y+=20)out.push([xf+26*(Math.sin(y/150)-Math.sin(250/150)),y]);return out;}
+
+/* ---------- front scenarios for Explore ---------- */
+const FR={
+  cold:{name:'Cold front',hours:30,x0:60,x1:920,Tb:7,Ta:21,wa:215,wb:300,sa:4,sb:11,
+    about:'How it forms: a dense, cold air mass advances and wedges under warmer air. Friction slows the air touching the ground, so the front gets a steep, blunt nose.',
+    say:[[90,'Warm, humid air covers the station, with winds from the southwest. The cold front is approaching from the west.'],
+         [-40,'The front’s steep nose shoves the warm air almost straight up. A towering cumulonimbus brings a burst of heavy rain, gusty winds and a sudden wind shift.'],
+         [-1e9,'Cold, dry air has arrived. The temperature has dropped, winds blow from the northwest, the pressure is rising, and the sky clears to scattered cumulus.']]},
+  warm:{name:'Warm front',hours:66,x0:-270,x1:820,Tb:12,Ta:-3,wa:120,wb:210,sa:3,sb:3,
+    about:'How it forms: warm air advances and slides up over a retreating wedge of cold air. The slope is very gentle, so the clouds spread out hundreds of kilometers ahead of the front.',
+    say:[[712,'Clear skies. Cold, below-freezing air covers the station, and the warm front is still far to the west.'],
+         [540,'The first sign: thin, wispy cirrus, made where the warm air has climbed highest, far ahead of the front.'],
+         [420,'Cirrostratus turns the sky milky, and a halo may circle the sun. The pressure is falling.'],
+         [285,'Gray altostratus thickens and lowers until the sun is hidden.'],
+         [190,'Thick nimbostratus arrives and snow begins. The warm air aloft is still thin, so the snowflakes reach the ground without melting.'],
+         [130,'Sleet. The snow melts in the warm layer aloft, then refreezes into ice pellets in the deep cold air near the ground.'],
+         [65,'Freezing rain. The cold layer near the ground is now too shallow to refreeze the drops, so they freeze on contact with roads, trees and power lines.'],
+         [-15,'Rain. The air at the ground has warmed above freezing, so the drops stay liquid.'],
+         [-1e9,'The warm front has passed. Warm, humid air has arrived with winds from the southwest. The rain has ended and the pressure has leveled off.']]},
+  stat:{name:'Stationary front',hours:72,Tb:10,Ta:10,wa:185,wb:5,sa:4,sb:4,
+    about:'How it forms: two air masses meet, but neither is strong enough to push the other away. Winds on both sides blow along the front instead of across it, so the front barely moves.',
+    say:[[0.55,'The front has stalled just east of the station. Warm air keeps gliding up over the cold air, so the clouds and rain stay in the same place.'],
+         [-1,'Day after day, the same clouds rain on the same place. Long-lasting rain from stalled fronts is a common cause of flooding.']]},
+  cocc:{name:'Cold-occluded front',hours:40,Tb:4,Ta:9,wa:140,wb:290,sa:4,sb:9,
+    about:'How it forms: a fast cold front catches up with a warm front. The air behind the cold front is the coldest, so it pushes under the cool air ahead and lifts it, along with the warm air.',
+    occSay:['A fast cold front is chasing a slower warm front. Between them, warm air still touches the ground in the warm sector.',
+      'The cold front moves about twice as fast as the warm front. It is closing in, squeezing the warm sector smaller and smaller.',
+      'Occlusion! The cold front has caught the warm front. The coldest air behind it digs under the cool air ahead, lifting both the cool air and the warm air off the ground.',
+      'The occluded front reaches the station. The weather is like a cold front’s: a band of showers and gusty winds.',
+      'The coldest air has arrived. The sky clears and the temperature drops a few degrees.']},
+  wocc:{name:'Warm-occluded front',hours:50,Tb:9,Ta:3,wa:120,wb:255,sa:3,sb:6,
+    about:'How it forms: a fast cold front catches up with a warm front. The air ahead of the warm front is the coldest, so the incoming, milder air rides up over it and lifts the warm air.',
+    occSay:['A fast cold front is chasing a slower warm front. Between them, warm air still touches the ground in the warm sector.',
+      'The cold front moves about twice as fast as the warm front. It is closing in, squeezing the warm sector smaller and smaller.',
+      'Occlusion! The cold front has caught the warm front. The air behind it is milder than the very cold air ahead, so it rides up over that cold air and lifts the warm air off the ground. Steady rain falls ahead of the front.',
+      'Milder air reaches the ground. The rain ends and the temperature rises a few degrees.']},
+};
+const OCC={W0:200,W1:740,G0:200,tm:0.4};   // warm front at line A–B moves W0→W1; the cold front starts G0 behind and catches it at t = tm
+const isOcc=f=>f==='cocc'||f==='wocc';
+const gapS=t=>Math.max(0,OCC.G0*(1-t/OCC.tm));
+function exploreXf(f,t){return f==='stat'?560+22*Math.sin(t*Math.PI*3):isOcc(f)?lerp(OCC.W0,OCC.W1,t):lerp(FR[f].x0,FR[f].x1,t);}
+function exploreSpec(f,t){
+  const xf=exploreXf(f,t);let sp;
+  if(f==='cold'){sp=newSpec('warm');single(sp,xf,'cold',-1,'W');}
+  else if(f==='warm'){sp=newSpec('warm');single(sp,xf,'warm',+1,'E');}
+  else if(f==='stat'){sp=newSpec('warm');single(sp,xf,'stationary',-1,'W');}
+  else{
+    const G=gapS(t),lw=f==='cocc'?'Coldest air':'Cool air',le=f==='cocc'?'Cool air':'Coldest air';
+    sp=newSpec('warm');
+    if(G>0.5){
+      single(sp,xf-G,'cold',-1,'W',{noWarmLabel:true,lab:lw});
+      single(sp,xf,'warm',+1,'E',{noWarmLabel:true,noBands:true,lab:le});
+      if(G>110)addLabel(sp,xf-G/2,1.2,'Warm air','warm');
+    }else{
+      const h=0.3+2.2*sm((t-OCC.tm)/0.22);
+      occl(sp,xf,h,f==='cocc'?-1:1,1,lw,le);
+    }
+  }
+  sp.xf=xf;return sp;
+}
+const exploreCls=f=>f==='cocc'?{warm:'m-warm',W:'m-cold',E:'m-cool'}:f==='wocc'?{warm:'m-warm',W:'m-cool',E:'m-cold'}:{warm:'m-warm',W:'m-cold',E:'m-cold'};
+function precipAt(sp,x){let r=0,t='';for(const z of sp.rains)if(x>=z.xa&&x<=z.xb&&z.int>r){r=z.int;t=z.ptype||'rain';}return{int:r,type:t};}
+const rainAt=(sp,x)=>precipAt(sp,x).int;
+const mmh=r=>r>=2.5?(r>=3?10:6):r*1.5;
+function skyAt(sp,x){
+  const ord=['cb','ns','as','cs','anvil','ci','cu'];let best=null;
+  for(const c of sp.clouds)if(x>=c.xa&&x<=c.xb){if(best===null||ord.indexOf(c.kind)<ord.indexOf(best))best=c.kind;}
+  return best;}
+function weatherText(sp,x){
+  const q=precipAt(sp,x),r=q.int,k=skyAt(sp,x);
+  if(q.type==='snow')return'Snow';
+  if(q.type==='sleet')return'Sleet (ice pellets)';
+  if(q.type==='frz')return'Freezing rain';
+  if(r>=3)return'Thunderstorm, heavy rain';
+  if(r>=2.5)return'Showers, gusty';
+  if(r>=1.8)return'Steady rain';
+  if(r>0)return'Light rain';
+  return {cb:'Towering storm clouds',ns:'Dark overcast',as:'Gray sky, sun hidden',cs:'Milky sky, halo around the sun',anvil:'High anvil cloud spreading over',ci:'Thin, wispy cirrus',cu:'Puffy cumulus'}[k]||'Clear sky';
+}
+function stationState(f,t){
+  const F=FR[f],xf=exploreXf(f,t),d=500-xf;
+  const bl=sm((d+15)/30);       // 0 behind the front, 1 ahead
+  let T=lerp(F.Tb,F.Ta,bl);
+  if(f==='warm')T=d>=130?-1.5-2*sm((d-130)/450):d>=65?lerp(-0.4,-1.5,(d-65)/65):d>=-15?lerp(3,0.6,(d+15)/80):lerp(F.Tb,3,sm((d+60)/45));
+  let p;
+  if(f==='cold')p=d>0?1004+0.012*d:Math.min(1004+0.035*(-d),1022);
+  else if(f==='warm')p=d>0?1003+0.012*d:1003-0.002*(-d);
+  else if(f==='stat')p=1009.5+0.6*Math.sin(t*Math.PI*3);
+  else if(f==='cocc')p=d>0?1000+0.01*d:1000+0.025*(-d);
+  else p=d>0?1000+0.01*d:1000+0.012*(-d);
+  const w=windExplore(f,d);
+  return{T,p,wdir:w.dir,spd:w.spd,d,xf};
+}
+function dewPoint(f,t,sp,st){
+  const F=FR[f],bl=sm((st.d+15)/30);let spread=lerp(F.sb,F.sa,bl);
+  const q=precipAt(sp,500),k=skyAt(sp,500);
+  if(q.int>0)spread=Math.min(spread,0.7);else if(k==='ns'||k==='as'||k==='cb')spread=Math.min(spread,2);
+  return st.T-spread;}
+const toF=c=>Math.round(c*9/5+32);
+function stationModel(){
+  const f=S.front,t=S.t,sp=exploreSpec(f,t),st=stationState(f,t),H=FR[f].hours;
+  const x=500,y=250,k=MOB.matches?1.9:1.35,R=13;
+  const td=dewPoint(f,t,sp,st);
+  // 3-hour pressure tendency, in tenths of a millibar, with a two-part trace
+  const d3=3/H,p0=stationState(f,Math.max(0,t-d3)).p,pm=stationState(f,Math.max(0,t-d3/2)).p;
+  const dp=Math.round((st.p-p0)*10),sg=v=>Math.abs(v)<0.05?0:Math.sign(v);
+  const s1=sg(pm-p0),s2=sg(st.p-pm);
+  const pc=String(Math.round(st.p*10)%1000).padStart(3,'0');
+  // sky cover and present weather
+  const q=precipAt(sp,x),sky=skyAt(sp,x);
+  const cover=q.int>0?1:({ci:0.25,cs:0.75,anvil:0.75,as:1,ns:1,cb:1,cu:0.5}[sky]||0);
+  let o='';
+  const w=windExplore(f,st.d);o+=barb(x,y,w.dir,w.spd,true);
+  o+=`<circle cx="${x}" cy="${y}" r="${R}" class="stn"/>`;
+  if(cover>=1)o+=`<circle cx="${x}" cy="${y}" r="${R}" class="wxf"/>`;
+  else if(cover>0){const a=cover*2*Math.PI,ex=x+R*Math.sin(a),ey=y-R*Math.cos(a);
+    o+=`<path d="M${x},${y}V${y-R}A${R},${R} 0 ${cover>0.5?1:0} 1 ${f1(ex)},${f1(ey)}Z" class="wxf"/>`;}
+  const tx=(dx,dy,txt,c,anc)=>`<text x="${f1(x+dx*k)}" y="${f1(y+dy*k)}" text-anchor="${anc}" class="stm ${c}">${txt}</text>`;
+  o+=tx(-20,-12,toF(st.T),'t','end');
+  o+=tx(-20,32,toF(td),'td','end');
+  o+=tx(20,-12,pc,'','start');
+  o+=tx(20,22,(dp>=0?'+':'−')+String(Math.abs(dp)).padStart(2,'0'),'','start');
+  const gx=x+70*k,gy=y+14*k;
+  o+=`<path d="M${f1(gx)},${f1(gy)}l${f1(9*k)},${f1(-7*k*s1)}l${f1(9*k)},${f1(-7*k*s2)}" class="wx"/>`;
+  // present weather symbol (only when something is falling), with visibility to its left
+  const wx=x-34*k,wy=y+8*k,u=k;let sym='',vis='10';
+  const dot=(dx,dy)=>`<circle cx="${f1(wx+dx*u)}" cy="${f1(wy+dy*u)}" r="${f1(3.4*u)}" class="wxf"/>`;
+  const star=(dx,dy)=>{const cx=wx+dx*u,cy=wy+dy*u,r=5*u;return `<path d="M${f1(cx-r)},${f1(cy)}h${f1(2*r)}M${f1(cx-r*0.6)},${f1(cy-r*0.8)}l${f1(r*1.2)},${f1(r*1.6)}M${f1(cx+r*0.6)},${f1(cy-r*0.8)}l${f1(-r*1.2)},${f1(r*1.6)}" class="wx"/>`;};
+  if(q.type==='snow'){sym=star(-7,0)+star(7,0);vis='½';}
+  else if(q.type==='sleet'){sym=`<path d="M${f1(wx-7*u)},${f1(wy+6*u)}h${f1(14*u)}l${f1(-7*u)},${f1(-13*u)}Z" class="wx"/>`+dot(0,1.5);vis='2';}
+  else if(q.type==='frz'){sym=`<path d="M${f1(wx-11*u)},${f1(wy)}c${f1(5*u)},${f1(-8*u)} ${f1(8*u)},${f1(8*u)} ${f1(11*u)},0s${f1(6*u)},${f1(-8*u)} ${f1(11*u)},0" class="wx"/>`+dot(-6,-6)+dot(6,-6);vis='2';}
+  else if(q.int>=3){sym=`<path d="M${f1(wx-7*u)},${f1(wy+9*u)}V${f1(wy-9*u)}H${f1(wx+5*u)}L${f1(wx)},${f1(wy)}H${f1(wx+7*u)}L${f1(wx+2*u)},${f1(wy+9*u)}" class="wx"/><path d="M${f1(wx+2*u)},${f1(wy+11*u)}l${f1(-4*u)},${f1(-5*u)}h${f1(6*u)}Z" class="wxf"/>`;vis='1';}
+  else if(q.int>=2.5){sym=`<path d="M${f1(wx-6*u)},${f1(wy-2*u)}h${f1(12*u)}l${f1(-6*u)},${f1(11*u)}Z" class="wx"/>`+dot(0,-8);vis='2';}
+  else if(q.int>=1.8){sym=dot(-6,0)+dot(6,0);vis='3';}
+  else if(q.int>0){sym=dot(0,0);vis='5';}
+  else if(sky==='ns')vis='7';
+  o+=sym;
+  S.stmDesc=`Station reading: temperature ${toF(st.T)} °F, dew point ${toF(td)} °F, pressure ${st.p.toFixed(1)} millibars, ${dp===0?'unchanged':(dp>0?'up ':'down ')+Math.abs(dp/10).toFixed(1)} over the past 3 hours, wind from the ${dirName(w.dir)} at ${Math.round(w.spd/1.852/5)*5} knots, ${weatherText(sp,500).toLowerCase()}.`;
+  return o;
+}
+function windExplore(f,d){ // d = distance ahead of the front (positive = front not here yet)
+  const F=FR[f],wb=sm((d+20)/40);const a1=F.wb,a2=F.wa;const dd=((a2-a1+540)%360)-180;
+  const dir=(a1+dd*wb+360)%360;
+  const spd=f==='stat'?14:18+(f==='cold'?26*Math.exp(-Math.pow((d-20)/30,2)):8*Math.exp(-Math.pow(d/40,2)));
+  return{dir,spd};
+}
+function windStorm(g,x,y){
+  const dx=x-g.L[0],dy=y-g.L[1],r=Math.hypot(dx,dy)+1;
+  const depth=Math.max(0,1012-g.pc);
+  const vc=depth*2.1*(r/150)*Math.exp(1-r/150);
+  let vx=(dy/r)*vc-(dx/r)*vc*0.35+6, vy=(-dx/r)*vc-(dy/r)*vc*0.35;
+  const along=16*Math.pow(1-g.a,2)*(g.M(x,y)==='warm'?1:-1);   // winds blow along a stationary front
+  vx+=0.86*along;vy+=-0.51*along;
+  const to=Math.atan2(vx,-vy)*180/Math.PI;
+  return{dir:(to+180+360)%360,spd:Math.hypot(vx,vy)};
+}
+/* wind barb: the staff points toward where the wind comes from; long line = 10 knots, short = 5, flag = 50 */
+function barb(x,y,dir,kmh,station){
+  const kt=Math.round(kmh/1.852/5)*5;const r=station?13:4.5;
+  let o=station?'':`<circle cx="${f1(x)}" cy="${f1(y)}" r="${r}" class="barbs"/>`;
+  if(kt<5)return o+`<circle cx="${f1(x)}" cy="${f1(y)}" r="${r+5}" class="barbs"/>`;
+  const a=dir*Math.PI/180,sx=Math.sin(a),sy=-Math.cos(a),fx=-sy,fy=sx,Ls=50;
+  const p0=[x+sx*r,y+sy*r],p1=[x+sx*(r+Ls),y+sy*(r+Ls)];
+  o+=`<path d="M${f1(p0[0])},${f1(p0[1])}L${f1(p1[0])},${f1(p1[1])}" class="barb"/>`;
+  let left=kt,pos=0;const at=k=>[p1[0]-sx*k,p1[1]-sy*k];
+  while(left>=50){const a1=at(pos),a2=at(pos+10);o+=`<path d="M${f1(a1[0])},${f1(a1[1])}L${f1(a1[0]+fx*18)},${f1(a1[1]+fy*18)}L${f1(a2[0])},${f1(a2[1])}Z" class="barbf"/>`;left-=50;pos+=13;}
+  while(left>=10){const q=at(pos);o+=`<path d="M${f1(q[0])},${f1(q[1])}l${f1(fx*19+sx*7)},${f1(fy*19+sy*7)}" class="barb"/>`;left-=10;pos+=8;}
+  if(left>=5){if(pos===0)pos=8;const q=at(pos);o+=`<path d="M${f1(q[0])},${f1(q[1])}l${f1(fx*10+sx*4)},${f1(fy*10+sy*4)}" class="barb"/>`;}
+  return o;
+}
+const DIRS=['north','northeast','east','southeast','south','southwest','west','northwest'];
+const dirName=a=>DIRS[Math.round(((a%360)+360)%360/45)%8];
+
+/* ---------- rendering helpers ---------- */
+const polyD=(pts,map)=>'M'+pts.map(p=>map?f1(p[0])+','+f1(p[1]):P(p)).join('L')+'Z';
+const lineD=(pts,map)=>'M'+pts.map(p=>map?f1(p[0])+','+f1(p[1]):P(p)).join('L');
+function smoothD(pts){ // through-points smooth path in side-view coords
+  let d='M'+P(pts[0]);for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];const mx=[(a[0]+b[0])/2,(a[1]+b[1])/2];d+='Q'+P(a)+' '+P(mx);}d+='L'+P(pts[pts.length-1]);return d;}
+function arcLen(pts){const s=[0];for(let i=1;i<pts.length;i++)s.push(s[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));return s;}
+function along(pts,cum,s){let i=1;while(i<cum.length-1&&cum[i]<s)i++;const f=(s-cum[i-1])/((cum[i]-cum[i-1])||1);
+  return[lerp(pts[i-1][0],pts[i][0],f),lerp(pts[i-1][1],pts[i][1],f),pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]];}
+
+function renderSection(sp,cls,amb,opts){
+  opts=opts||{};let o=`<defs><clipPath id="secclip"><rect x="0" y="0" width="1000" height="${G}"/></clipPath></defs>`;
+  o+=`<rect x="0" y="0" width="1000" height="${G}" class="${cls[sp.bg]}"/>`;
+  o+=`<g clip-path="url(#secclip)">`;
+  for(const p of sp.polys)o+=`<path d="${polyD(p.pts)}" class="${cls[p.m]}"/>`;
+  for(let z=2;z<=10;z+=2)o+=`<line x1="0" x2="1000" y1="${f1(zy(z))}" y2="${f1(zy(z))}" class="axl"/>`;
+  // clouds: outline pass then fill pass
+  let out='',fill='',ghost='';
+  for(const c of sp.clouds){
+    let o1='',f1s='';
+    const out0=out,fill0=fill;out='';fill='';
+    for(const s of c.shapes){
+      if(s.t==='poly'){out+=`<path d="${polyD(s.pts)}" class="c-out"/>`;fill+=`<path d="${polyD(s.pts)}" class="c-${s.cls||c.kind}"/>`;}
+      else if(s.t==='circ'){out+=`<circle cx="${f1(s.x)}" cy="${f1(zy(s.z))}" r="${s.r+2}" class="c-out"/>`;fill+=`<circle cx="${f1(s.x)}" cy="${f1(zy(s.z))}" r="${s.r}" class="c-${c.kind}"/>`;}
+      else if(s.t==='stroke'){out+=`<path d="${smoothD(s.pts)}" class="c-ci-o"/>`;fill+=`<path d="${smoothD(s.pts)}" class="c-ci"/>`;}
+    }
+    if(c.ghost){ghost+=`<g opacity="${c.kind==='cb'?0.28:0.45}">${out}${fill}</g>`;out=out0;fill=fill0;}
+    else{out=out0+out;fill=fill0+fill;}
+  }
+  // rain
+  let rain='';
+  for(const z of sp.rains){
+    const pt=z.ptype||'rain';
+    if(pt==='frz')rain+=`<line x1="${f1(z.xa+4)}" x2="${f1(z.xb-4)}" y1="${G-2}" y2="${G-2}" class="glaze"/>`;
+    const sp1=z.int>=3?8:z.int>=2?12:z.int>=1.4?16:22;
+    const n=Math.max(1,Math.floor((z.xb-z.xa)/sp1));
+    for(let i=0;i<n;i++){
+      const x=z.xa+(i+0.5)*(z.xb-z.xa)/n+((i*37)%7-3);
+      const y0=zy(z.top(x))+6,span=G-y0-14;if(span<8)continue;
+      const spd=pt==='snow'?0.45:pt==='sleet'?1.0:(z.int>=3?1.9:1.3);
+      const ph=((amb*spd+(i*0.618)%1)%1);
+      const y=y0+ph*span;
+      if(pt==='snow'){const xx=x+5*Math.sin(amb*4+i);
+        rain+=`<path d="M${f1(xx-5)},${f1(y)}h10M${f1(xx)},${f1(y-5)}v10M${f1(xx-3.5)},${f1(y-3.5)}l7,7M${f1(xx+3.5)},${f1(y-3.5)}l-7,7" class="snow"/>`;}
+      else if(pt==='sleet')rain+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="3.2" class="sleet"/>`;
+      else rain+=`<line x1="${f1(x)}" y1="${f1(y)}" x2="${f1(x-3)}" y2="${f1(Math.min(y+14,G-2))}" class="rain${pt==='frz'?' frz':''}"/>`;
+    }
+  }
+  o+=rain+out+fill+ghost;
+  for(const e of sp.edges)o+=`<path d="${lineD(e.pts)}" class="edge edge-${e.cls}"/>`;
+  // air flow
+  for(const fl of sp.flows){
+    const pts=fl.pts.map(p=>[p[0],zy(p[1])]),cum=arcLen(pts),Lt=cum[cum.length-1];
+    o+=`<path d="${lineD(pts,true)}" class="flow"/>`;
+    const e=along(pts,cum,Lt-0.01),ang=Math.atan2(e[3],e[2])*180/Math.PI;
+    o+=`<path d="M0,0 L-14,-7 L-14,7Z" class="flowhead" transform="translate(${f1(e[0])},${f1(e[1])}) rotate(${f1(ang)})"/>`;
+    const nd=Math.max(2,Math.round(Lt/120));
+    for(let i=0;i<nd;i++){const q=along(pts,cum,((amb*0.35+i/nd)%1)*Lt);o+=`<circle cx="${f1(q[0])}" cy="${f1(q[1])}" r="6" class="dot ${fl.cls}"/>`;}
+  }
+  // winds along a stationary front
+  for(const w of sp.winds){const x=w.x,y=zy(w.z);
+    o+=`<circle cx="${f1(x)}" cy="${f1(y)}" r="13" class="wsym"/>`+(w.into?`<path d="M${f1(x-8)},${f1(y-8)}L${f1(x+8)},${f1(y+8)}M${f1(x+8)},${f1(y-8)}L${f1(x-8)},${f1(y+8)}" class="wsym"/>`:`<circle cx="${f1(x)}" cy="${f1(y)}" r="4.5" class="wsymd"/>`);
+    const lft=x>640;o+=`<text x="${f1(lft?x-20:x+20)}" y="${f1(y+6)}" text-anchor="${lft?'end':'start'}" class="lab sm">${w.into?'wind into page':'wind out of page'}</text>`;}
+  if(sp.triple&&sp.triple.x>0&&sp.triple.x<1000)o+=`<circle cx="${f1(sp.triple.x)}" cy="${f1(zy(sp.triple.z))}" r="7" class="triple"/>`;
+  // simple label layout: mass labels try a few heights, cloud labels that still collide are dropped
+  const k=MOB.matches?1.6:1;
+  const box=(x,z,text,big)=>({x0:x-text.length*(big?6.8:5)*k,x1:x+text.length*(big?6.8:5)*k,z0:z-(big?0.4:0.32)*k,z1:z+(big?0.4:0.32)*k});
+  const hit=(a,b)=>a.x0<b.x1&&b.x0<a.x1&&a.z0<b.z1&&b.z0<a.z1;
+  let cl=sp.clouds.filter(c=>c.lab&&c.lab.x>60&&c.lab.x<940).map(c=>({...c.lab,b:box(c.lab.x,c.lab.z,c.lab.text,false)}));
+  const kept=[];for(const c of cl)if(!kept.some(q=>hit(q.b,c.b)))kept.push(c);cl=kept;
+  const placed=[];
+  for(const l of sp.labels){let best=null;
+    for(const dz of [0,1.3,-0.9,2.4]){const z=clamp(l.z+dz,0.6,9.6),b=box(l.x,z,l.text,true);
+      if(!cl.some(c=>hit(c.b,b))&&!placed.some(q=>hit(q.b,b))){best={...l,z,b};break;}}
+    if(!best){best={...l,b:box(l.x,l.z,l.text,true)};cl=cl.filter(c=>!hit(c.b,best.b));}
+    placed.push(best);}
+  for(const q of sp.plabs)if(q.x>50&&q.x<950)o+=`<text x="${f1(q.x)}" y="${f1(zy(q.z))}" text-anchor="middle" class="plab">${q.text}</text>`;
+  for(const c of cl)o+=`<text x="${f1(c.x)}" y="${f1(zy(c.z)+6)}" text-anchor="middle" class="clab">${c.text}</text>`;
+  for(const l of placed)o+=`<text x="${f1(l.x)}" y="${f1(zy(l.z)+8)}" text-anchor="middle" class="lab">${l.text}</text>`;
+  o+=`</g>`;
+  // ground
+  o+=`<rect x="0" y="${G}" width="1000" height="40" class="gnd"/><line x1="0" x2="1000" y1="${G}" y2="${G}" class="gnd-line"/>`;
+  const frs=sp.fronts.filter(fr=>fr.x>=10&&fr.x<=990).sort((a,b)=>a.x-b.x);
+  const close=frs.length===2&&frs[1].x-frs[0].x<260;
+  frs.forEach((fr,i)=>{
+    const c=fr.type==='warm'?'warm':fr.type==='occluded'?'occ':'cold';
+    const nm={cold:'Cold front',warm:'Warm front',occluded:'Occluded front',stationary:'Stationary front'}[fr.type];
+    const x=fr.x;
+    if(fr.type==='warm')o+=`<path d="M${f1(x-10)},${G}A10,10 0 0 1 ${f1(x+10)},${G}Z" class="fs-warm"/>`;
+    else if(fr.type==='stationary')o+=`<path d="M${f1(x-20)},${G} l9,-13 l9,13Z" class="fs-cold"/><path d="M${f1(x+2)},${G}A9,9 0 0 1 ${f1(x+20)},${G}Z" class="fs-warm"/>`;
+    else o+=`<path d="M${f1(x-10)},${G} l10,-14 l10,14Z" class="fs-${c}"/>`;
+    let anc=x<140?'start':x>860?'end':'middle',lx=x;
+    if(close){anc=i===0?'end':'start';lx=i===0?x+8:x-8;}
+    o+=`<text x="${f1(lx)}" y="${G+29}" text-anchor="${anc}" class="glab flab-${c}">${nm}</text>`;});
+  o+=`<text x="10" y="${f1(zy(10)+6)}" class="axis">10 km</text><text x="10" y="${f1(zy(5)+6)}" class="axis">5 km</text>`;
+  o+=`<text x="14" y="${G-10}" class="hl">A</text><text x="986" y="${G-10}" text-anchor="end" class="hl">B</text>`;
+  if(opts.station){const x=500;o+=`<path d="M${x},${G} V${G-34} M${x},${G-34} h16 M${x},${G-28} h10" stroke="var(--ink)" stroke-width="3" fill="none"/><circle cx="${x}" cy="${G-34}" r="4" fill="var(--ink)"/>`;}
+  return o;
+}
+function symbolsAlong(pts,step,start,make){let o='';const cum=arcLen(pts),Lt=cum[cum.length-1];let k=0;
+  for(let s=start;s<Lt-6;s+=step,k++){const q=along(pts,cum,s);const len=Math.hypot(q[2],q[3])||1;const tx=q[2]/len,ty=q[3]/len;
+    if(q[0]<-20||q[0]>1020||q[1]<-20||q[1]>540)continue;o+=make([q[0],q[1]],[tx,ty],[-ty,tx],k);}return o;}
+function tri(p,t,d,c){return `<path d="M${f1(p[0]-t[0]*9)},${f1(p[1]-t[1]*9)}L${f1(p[0]+d[0]*15)},${f1(p[1]+d[1]*15)}L${f1(p[0]+t[0]*9)},${f1(p[1]+t[1]*9)}Z" class="fs-${c}"/>`;}
+function semi(p,t,d,c){const sw=(d[0]*t[1]-d[1]*t[0])>0?1:0;
+  return `<path d="M${f1(p[0]-t[0]*9)},${f1(p[1]-t[1]*9)}A9,9 0 0 ${sw} ${f1(p[0]+t[0]*9)},${f1(p[1]+t[1]*9)}Z" class="fs-${c}"/>`;}
+function sideTo(M,want,p,n){const a=M(p[0]+n[0]*16,p[1]+n[1]*16);const ok=typeof want==='function'?want(a):a===want;return ok?n:[-n[0],-n[1]];}
+function drawFront(pts,type,M){
+  let o='';
+  if(type==='stationary'){
+    o+=`<path d="${lineD(pts,true)}" class="fl-cold"/><path d="${lineD(pts,true)}" class="fl-warm" stroke-dasharray="40 40"/>`;
+    o+=symbolsAlong(pts,40,20,(p,t,n,k)=>k%2===0?semi(p,t,sideTo(M,m=>m!=='warm',p,n),'warm'):tri(p,t,sideTo(M,'warm',p,n),'cold'));
+  }else if(type==='cold'){o+=`<path d="${lineD(pts,true)}" class="fl-cold"/>`+symbolsAlong(pts,46,20,(p,t,n)=>tri(p,t,sideTo(M,'warm',p,n),'cold'));}
+  else if(type==='warm'){o+=`<path d="${lineD(pts,true)}" class="fl-warm"/>`+symbolsAlong(pts,46,20,(p,t,n)=>semi(p,t,sideTo(M,m=>m!=='warm',p,n),'warm'));}
+  else{o+=`<path d="${lineD(pts,true)}" class="fl-occ"/>`+symbolsAlong(pts,38,16,(p,t,n,k)=>{const d=sideTo(M,'E',p,n);return k%2?semi(p,t,d,'occ'):tri(p,t,d,'occ');});}
+  return o;
+}
+const mapLab=(x,y,t,cls,anc)=>`<text x="${f1(x)}" y="${f1(y)}" text-anchor="${anc||'middle'}" class="${cls||'lab'}">${t}</text>`;
+
+/* ---------- state ---------- */
+const S={mode:'explore',front:'cold',t:0,playExp:false,stormT:0,playStorm:false,ys:330,tw:-6,amb:0,shown:0,lastSay:'',expIdx:0,stIdx:0};
+function occIdx(f,t){const G=gapS(t),d=500-exploreXf(f,t);
+  if(G>110)return 0;if(G>0)return 1;
+  if(f==='cocc')return d>40?2:d>-40?3:4;
+  return d>-20?2:3;}
+function sayFor(f,t){
+  if(f==='stat'){const i=t<0.55?0:1;return[i,FR.stat.say[i][1]];}
+  if(isOcc(f)){const i=occIdx(f,t);return[i,FR[f].occSay[i]];}
+  const d=500-exploreXf(f,t),i=FR[f].say.findIndex(s=>d>s[0]);return[i,FR[f].say[i][1]];}
+function expIdx(f,t){return sayFor(f,t)[0];}
+const stIdx=t=>STAGES.findIndex(s=>t<s[0]);
+function setBtn(id,state){$(id).textContent=state;}
+
+function renderOccMap(sp){
+  const f=S.front,cls=exploreCls(f),t=S.t;
+  const off=y=>26*(Math.sin(y/150)-Math.sin(250/150));
+  const gap=y=>Math.max(0,OCC.G0*(1-t/OCC.tm)+0.8*(y-250));
+  const xw=y=>sp.xf+off(y),xc=y=>xw(y)-gap(y);
+  const M=(x,y)=>x<xc(y)?'W':x>xw(y)?'E':'warm';
+  const ys=[];for(let y=-40;y<=560;y+=10)ys.push(y);
+  const Wl=ys.map(y=>[xw(y),y]),Cl=ys.map(y=>[xc(y),y]);
+  let o=`<rect x="0" y="0" width="1000" height="520" class="${cls.warm}"/>`;
+  o+=`<path d="${polyD([...Cl,[-60,560],[-60,-40]],true)}" class="${cls.W}"/>`;
+  o+=`<path d="${polyD([...Wl,[1060,560],[1060,-40]],true)}" class="${cls.E}"/>`;
+  const ym=250-OCC.G0*(1-t/OCC.tm)/0.8;   // north of ym the fronts have merged
+  if(ym>-40){const pts=ys.filter(y=>y<Math.min(ym,560)).map(y=>[xw(y),y]);pts.push([xw(Math.min(ym,560)),Math.min(ym,560)]);if(pts.length>1)o+=drawFront(pts,'occ',M);}
+  if(ym<560){const y0=Math.max(ym,-40),yy=[y0,...ys.filter(y=>y>y0)];
+    o+=drawFront(yy.map(y=>[xc(y),y]),'cold',M)+drawFront(yy.map(y=>[xw(y),y]),'warm',M);
+    if(ym>10&&ym<510){o+=`<circle cx="${f1(xw(ym))}" cy="${f1(ym)}" r="8" class="trip"/>`+mapLab(xw(ym)+16,ym+7,'Triple point','lab sm','start');}}
+  const nm={W:f==='cocc'?'Coldest air':'Cool air',E:f==='cocc'?'Cool air':'Coldest air'};
+  const xl=xc(90)-210,xr=xw(90)+210;
+  if(xl>90)o+=mapLab(xl,90,nm.W);
+  if(xr<910)o+=mapLab(xr,90,nm.E);
+  if(gap(455)>150)o+=mapLab((xc(455)+xw(455))/2,462,'Warm air');
+  if(ym>335){const x=xw(335)+(f==='cocc'?150:-150);if(x>120&&x<880)o+=mapLab(x,335,'Warm air overhead','lab sm');}
+  const fy=490;
+  if(gap(fy)>0){const a=xc(fy),b=xw(fy);
+    if(a>130)o+=mapLab(a-18,fy,'Cold front','lab sm flab-cold','end');
+    if(b<870)o+=mapLab(b+18,fy,'Warm front','lab sm flab-warm','start');}
+  else{const fx=xw(fy);if(fx>-40&&fx<1040){const right=fx<700;o+=mapLab(fx+(right?22:-22),fy,FR[f].name,'lab sm flab-occ',right?'start':'end');}}
+  o+=secAndStation();
+  for(const y of [165,420])for(const x of [100,260,420,580,740,900]){
+    const m=M(x,y);if(Math.abs(x-xc(y))<16||Math.abs(x-xw(y))<16)continue;
+    const w=m==='warm'?{dir:215,spd:22}:windExplore(f,x-xw(y));o+=barb(x,y,w.dir,w.spd);}
+  return o+stationModel();
+}
+function secAndStation(){return `<line x1="40" x2="370" y1="250" y2="250" class="secline"/><line x1="640" x2="960" y1="250" y2="250" class="secline"/>`+mapLab(22,258,'A','hl')+mapLab(978,258,'B','hl');}
+function renderExploreMap(sp){
+  if(isOcc(S.front))return renderOccMap(sp);
+  const f=S.front,cls=exploreCls(f),pts=exploreCurve(sp.xf);
+  const ids={cold:['W','warm'],warm:['warm','E'],stat:['W','warm'],cocc:['W','E'],wocc:['W','E']}[f];
+  const M=(x,y)=>{let xc=sp.xf+26*(Math.sin(y/150)-Math.sin(250/150));return x<xc?ids[0]:ids[1];};
+  let o=`<path d="${polyD([...pts,[-60,560],[-60,-40]],true)}" class="${cls[ids[0]]}"/>`;
+  o+=`<path d="${polyD([...pts,[1060,560],[1060,-40]],true)}" class="${cls[ids[1]]}"/>`;
+  o+=drawFront(pts,{cold:'cold',warm:'warm',stat:'stationary',cocc:'occ',wocc:'occ'}[f],M);
+  const nm={W:f==='cocc'?'Coldest air':f==='wocc'?'Cool air':'Cold air',E:f==='wocc'?'Coldest air':f==='cocc'?'Cool air':'Cold air',warm:'Warm air'};
+  const xl=sp.xf-230,xr=sp.xf+230;
+  if(xl>90)o+=mapLab(xl,90,nm[ids[0]]);
+  if(xr<910)o+=mapLab(xr,90,nm[ids[1]]);
+  const fy=490,fx=sp.xf+26*(Math.sin(fy/150)-Math.sin(250/150));
+  if(fx>-40&&fx<1040){const right=fx<700;o+=mapLab(fx+(right?22:-22),fy,FR[f].name,'lab sm flab-'+({cold:'cold',warm:'warm',stat:'cold'}[f]||'occ'),right?'start':'end');}
+  o+=secAndStation();
+  for(const y of [165,420])for(const x of [100,260,420,580,740,900]){
+    const xc=sp.xf+26*(Math.sin(y/150)-Math.sin(250/150));if(Math.abs(x-xc)<16)continue;
+    const w=windExplore(f,x-xc);o+=barb(x,y,w.dir,w.spd);}
+  return o+stationModel();
+}
+function arrowMap(x,y,dx,dy){const L=120;const x2=x+dx*L,y2=y+dy*L;
+  return `<path d="M${x},${y}L${x2},${y2}" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/><path d="M${x2},${y2} l${-dy*10-dx*16},${dx*10-dy*16} l${dy*20},${-dx*20}Z" fill="var(--ink)"/>`+mapLab(x+14,y+dy*L/2+8,'wind','lab sm','start');}
+
+function stormMap(g,cls,opts){
+  opts=opts||{};let o='';
+  o+=`<rect x="0" y="0" width="1000" height="520" class="${cls.E}"/>`;
+  o+=`<path d="${polyD(g.westPoly,true)}" class="${cls.W}"/>`;
+  o+=`<path d="${polyD(g.warmPoly,true)}" class="${cls.warm}"/>`;
+  // isobars from a simple low-pressure field
+  const depth=1012-g.pc;
+  if(depth>2){for(let p=1008;p>g.pc+0.5;p-=4){const r=210*Math.sqrt(Math.log(depth/(1012-p)));if(!isFinite(r)||r<8)continue;
+    o+=`<ellipse cx="${f1(g.L[0]+20)}" cy="${f1(g.L[1]+14)}" rx="${f1(r*1.25)}" ry="${f1(r*0.9)}" class="iso"/>`;
+    o+=`<text x="${f1(g.L[0]+20)}" y="${f1(g.L[1]+14-r*0.9-6)}" text-anchor="middle" class="isol">${p}</text>`;}}
+  const fade=1-0.75*g.d;
+  o+=`<g opacity="${f1(fade)}">`;
+  if(g.stat){o+=drawFront([...g.Cp.slice().reverse(),...g.Wp.slice(1)],'stationary',g.M);}
+  else{o+=drawFront(g.Cp,'cold',g.M)+drawFront(g.Wp,'warm',g.M);if(g.Z.length>1)o+=drawFront(g.Z,'occ',g.M);}
+  o+=`</g>`;
+  // labels
+  if(!opts.noFrontLabels){
+    if(g.stat){const q=g.Wp[22];o+=mapLab(q[0]+18,q[1]+34,'Stationary front','lab sm flab-cold','start');}
+    else{const qc=g.Cp[Math.min(30,g.Cp.length-1)];o+=mapLab(qc[0]-24,qc[1],'Cold front','lab sm flab-cold','end');
+      const qw=g.Wp[Math.min(26,g.Wp.length-1)];const wr=qw[0]>760;o+=mapLab(qw[0]+(wr?-20:20),qw[1]-14,'Warm front','lab sm flab-warm',wr?'end':'start');
+      if(g.Z.length>8){const qz=g.Z[Math.floor(g.Z.length*0.75)];o+=mapLab(qz[0]-22,qz[1]+8,'Occluded front','lab sm flab-occ','end');}}
+  }
+  const wl=[[g.L[0]+230,g.L[1]+235],[g.L[0]+150,g.L[1]+170],[g.L[0]+60,g.L[1]+120],[760,470]].find(p=>p[0]>80&&p[0]<920&&p[1]<500&&g.M(p[0],p[1])==='warm');
+  if(wl)o+=mapLab(wl[0],wl[1],opts.warmLab||'Warm air');
+  const cl=[[130,80],[150,200]].find(p=>g.M(p[0],p[1])!=='warm');if(cl)o+=mapLab(cl[0],cl[1],opts.wLab||'Cold air');
+  if(opts.eLab){const el=[[840,80],[880,160]].find(p=>g.M(p[0],p[1])==='E');if(el)o+=mapLab(el[0],el[1],opts.eLab);}
+  for(const y of [70,190,310,430])for(const x of [90,250,410,570,730,890]){
+    if(Math.hypot(x-g.L[0],y-g.L[1])<55)continue;const w=windStorm(g,x,y);o+=barb(x,y,w.dir,w.spd);}
+  if(g.a>0.12){o+=mapLab(g.L[0],g.L[1]+19,'L','lowL');o+=mapLab(g.L[0]-34,g.L[1]+4,Math.round(g.pc)+' hPa','isol','end');}
+  return o;
+}
+function stormSection(g,ys,sClass,temps){
+  const cz=crossY(g.Z,ys),cc=crossY(g.Cp,ys),cw=crossY(g.Wp,ys);
+  const inR=c=>c.x>-150&&c.x<1150;
+  const z=cz.list.filter(inR),c=cc.list.filter(inR),w=cw.list.filter(inR);
+  const str=1-0.75*g.d;let sp,desc;
+  if(z.length&&g.Z.length>1){
+    const h=clamp(0.5+(cz.len-z[0].s)*0.026,0.5,4.2);
+    sp=newSpec('warm');occl(sp,z[0].x,h,sClass,str,temps?temps.W:'Cold air',temps?temps.E:'Cool air');
+    desc='Line A–B crosses the occluded front. The warm air no longer touches the ground; it has been lifted about '+h.toFixed(1)+' km up.';
+  }else if(c.length&&w.length&&c[0].x<w[0].x){
+    sp=newSpec('warm');twoFront(sp,c[0].x,w[0].x,g.stat?'stationary':'cold',g.stat?'stationary':'warm',str);
+    desc='Line A–B crosses the cold front and the warm front, with the warm sector between them.';
+  }else if(c.length||w.length){
+    const x=(c[0]||w[0]).x;const coldWest=g.M(x-25,ys)!=='warm';
+    const type=g.stat?'stationary':(c.length?'cold':'warm');
+    sp=newSpec('warm');single(sp,x,type,coldWest?-1:1,coldWest?'W':'E',{str});
+    desc=g.stat?'Line A–B crosses the stationary front.':'Line A–B crosses only the '+(c.length?'cold':'warm')+' front here.';
+  }else{
+    const m=g.M(500,ys);sp=newSpec(m==='warm'?'warm':'W');
+    addLabel(sp,500,m==='warm'?4:2,m==='warm'?'Warm air':'Cold air',m==='warm'?'warm':'W');
+    desc=m==='warm'?'Line A–B lies entirely in warm air, south of the fronts.':'Line A–B lies north of the fronts, so cold air covers the ground all along it.';
+  }
+  return{sp,desc};
+}
+
+/* ---------- main render ---------- */
+const map=$('map'),sec=$('sec');
+function setSay(t){if(t!==S.lastSay){$('say').textContent=t;S.lastSay=t;}}
+function frame(){
+  if(S.mode==='explore'){
+    const f=S.front,sp=exploreSpec(f,S.t);
+    map.innerHTML=renderExploreMap(sp);
+    sec.innerHTML=renderSection(sp,exploreCls(f),S.amb,{station:true});
+    const st=stationState(f,S.t),st0=stationState(f,Math.max(0,S.t-0.02));
+    $('vT').textContent=Math.round(st.T)+' °C';$('sT').textContent=toF(st.T)+' °F, dew point '+Math.round(dewPoint(f,S.t,sp,st))+' °C';
+    $('vP').textContent=Math.round(st.p)+' hPa';
+    const dp=st.p-st0.p;$('sP').textContent=S.t<0.005?'':Math.abs(dp)<0.15?'steady':dp<0?'falling':'rising';
+    $('wArrow').setAttribute('transform',`rotate(${f1(st.wdir+180)})`);
+    $('vWind').textContent='From the '+dirName(st.wdir);$('sWind').textContent=Math.round(st.spd)+' km/h ('+Math.round(st.spd/1.852)+' knots)';
+    $('vSky').textContent=weatherText(sp,500);
+    S.shown=Math.max(S.shown,rainTo(f,S.t));$('sSky').textContent='Precipitation so far: '+Math.floor(S.shown)+' mm';
+    const hr='Hour '+Math.round(S.t*FR[f].hours)+' of '+FR[f].hours;$('tExpOut').textContent=hr;$('tExp').setAttribute('aria-valuetext',hr);
+    const F=FR[f];let txt;
+    txt=sayFor(f,S.t)[1];
+    setSay(txt);
+    map.setAttribute('aria-label',`Weather map with a ${F.name.toLowerCase()} and a weather station at the center. Line A–B runs west to east through the station. ${S.stmDesc||''}`);
+    sec.setAttribute('aria-label',`Side view along line A–B through the ${F.name.toLowerCase()}. ${txt}`);
+  }else if(S.mode==='storm'){
+    const g=stormGeo(S.stormT);const cls={warm:'m-warm',W:'m-cold',E:'m-cold'};
+    let o=stormMap(g,cls);
+    o+=`<line x1="40" x2="960" y1="${S.ys}" y2="${S.ys}" class="secline"/>`;
+    const hr=MOB.matches?34:20,hit=MOB.matches?70:40;
+    o+=`<circle cx="${hr+8}" cy="${S.ys}" r="${hr}" class="handle"/><circle cx="${992-hr}" cy="${S.ys}" r="${hr}" class="handle"/>`;
+    o+=`<circle cx="${hr+8}" cy="${S.ys}" r="${hit}" class="hit" data-h="1"/><circle cx="${992-hr}" cy="${S.ys}" r="${hit}" class="hit" data-h="1"/>`;
+    o+=mapLab(hr+8,S.ys+(MOB.matches?11:8),'A','hl')+mapLab(992-hr,S.ys+(MOB.matches?11:8),'B','hl');
+    map.innerHTML=o;
+    const r=stormSection(g,S.ys,-1);
+    sec.innerHTML=renderSection(r.sp,{warm:'m-warm',W:'m-cold',E:'m-cool'},S.amb);
+    $('secSub').textContent=r.desc;
+    const st=STAGES.find(s=>S.stormT<s[0]);
+    const sn='Stage '+(STAGES.indexOf(st)+1)+' of 6';$('tStormOut').textContent=sn;$('tStorm').setAttribute('aria-valuetext',sn);
+    setSay(st[1]);
+    map.setAttribute('aria-label','Weather map of a storm. '+st[1]);
+    sec.setAttribute('aria-label','Side view along line A–B. '+r.desc);
+  }else{
+    const g=OG;const tw=S.tw,te=2;
+    const s=clamp((tw-te)/4,-1,1);
+    const colderW=tw<te-0.5,colderE=tw>te+0.5;
+    const cls={warm:'m-warm',W:colderW?'m-cold':'m-cool',E:colderE?'m-cold':'m-cool'};
+    const ys=g.L[1]+0.35*(g.T[1]-g.L[1]);
+    let o=stormMap(g,cls,{noFrontLabels:false,wLab:tw+' °C',eLab:'2 °C',warmLab:'14 °C'});
+    o+=`<line x1="40" x2="960" y1="${f1(ys)}" y2="${f1(ys)}" class="secline"/>`+mapLab(22,ys+8,'A','hl')+mapLab(978,ys+8,'B','hl');
+    map.innerHTML=o;
+    const r=stormSection(g,ys,s,{W:(colderW?'Colder air, ':colderE?'Milder air, ':'')+tw+' °C',E:(colderE?'Colder air, ':colderW?'Cooler air, ':'')+'2 °C'});
+    sec.innerHTML=renderSection(r.sp,cls,S.amb);
+    $('twOut').textContent=tw+' °C';$('tw').setAttribute('aria-valuetext',tw+' degrees Celsius');
+    let v,txt;
+    if(colderW){v='Cold-type occlusion';txt=`The air behind the cold front (${tw} °C) is colder and denser than the air ahead (2 °C), so it slides under it and lifts it. The weather is like a cold front’s: a band of showers and storms, then clearing.`;}
+    else if(colderE){v='Warm-type occlusion';txt=`The air behind the cold front (${tw} °C) is milder and lighter than the air ahead (2 °C), so it rides up over it. The weather is like a warm front’s: widespread layered clouds and steady rain.`;}
+    else{v='Neutral occlusion';txt='Both cold air masses are about the same temperature, so neither slides under the other, and the boundary between them stands nearly upright. This is rare.';}
+    $('verdict').textContent=v;setSay(txt);
+    $('secSub').textContent='Line A–B crosses the occluded front. The purple dot marks where the warm air’s lowest point sits.';
+    sec.setAttribute('aria-label','Side view through an occluded front. '+v+'. '+txt);
+    map.setAttribute('aria-label','Weather map of an occluded storm, with line A–B across the occluded front.');
+  }
+}
+const STAGES=[
+  [0.12,'1. A stationary front. Cold air lies to the northwest and warm air to the southeast. Winds on each side blow along the front, in opposite directions.'],
+  [0.30,'2. A wave forms. A kink grows on the front, and the pressure starts to fall at its tip. Cold air begins pushing south and warm air pushes north.'],
+  [0.50,'3. An open wave. A low-pressure center spins counterclockwise. A cold front trails to the southwest and a warm front to the east, with the warm sector between them.'],
+  [0.70,'4. Occlusion begins. The cold front moves about twice as fast as the warm front and catches up to it near the low, closing like a zipper.'],
+  [0.88,'5. Fully occluded. The warm air has been lifted off the ground along a long occluded front. The storm is at its strongest.'],
+  [1.01,'6. The storm fades. Cut off from warm, moist air at the ground, the low fills in and the fronts weaken.'],
+];
+const OG=stormGeo(0.8);
+
+/* ---------- legend ---------- */
+function legend(){
+  const sw=(c,t)=>`<span><i class="sw" style="background:var(--${c})"></i>${t}</span>`;
+  const fs=(svg,t)=>`<span><svg viewBox="0 0 34 16" aria-hidden="true">${svg}</svg>${t}</span>`;
+  let h=sw('m-cold',S.mode==='storm'?'Cold air':'Colder air')+(S.mode!=='storm'?sw('m-cool','Cool air'):'')+sw('m-warm','Warm air');
+  h+=`<span><svg viewBox="0 0 34 16" aria-hidden="true"><line x1="10" y1="2" x2="7" y2="14" stroke="var(--rain)" stroke-width="2.2"/><line x1="22" y1="2" x2="19" y2="14" stroke="var(--rain)" stroke-width="2.2"/></svg>Rain</span>`;
+  h+=`<span><svg viewBox="0 0 34 16" aria-hidden="true"><circle cx="17" cy="8" r="5" fill="var(--fg)"/></svg>Moving air</span>`;
+  if(S.mode!=='occl')h+=`<span><svg viewBox="0 0 34 16" aria-hidden="true"><path d="M5,8h8M17,8h8M9,4v8M21,4v8M6,5l6,6M12,5l-6,6" stroke="var(--snow)" stroke-width="1.6"/></svg>Snow</span><span><svg viewBox="0 0 34 16" aria-hidden="true"><circle cx="10" cy="8" r="3.2" fill="var(--sleet)" stroke="var(--rain)" stroke-width="1.5"/><circle cx="22" cy="8" r="3.2" fill="var(--sleet)" stroke="var(--rain)" stroke-width="1.5"/></svg>Sleet</span><span><svg viewBox="0 0 34 16" aria-hidden="true"><line x1="10" y1="1" x2="8" y2="11" stroke="var(--frz)" stroke-width="2.4"/><line x1="22" y1="1" x2="20" y2="11" stroke="var(--frz)" stroke-width="2.4"/><line x1="3" y1="14" x2="31" y2="14" stroke="var(--frz)" stroke-width="3"/></svg>Freezing rain, icing the ground</span>`;
+  h+=`<span><svg viewBox="0 0 56 20" style="width:56px;height:20px" aria-hidden="true"><circle cx="6" cy="14" r="4" fill="none" stroke="var(--fg)" stroke-width="1.8"/><path d="M10,14H52M52,14l6,-12M44,14l4,-7" stroke="var(--fg)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>Wind barb: the staff points to where the wind comes from. Long line = 10 knots, short line = 5 knots.</span>`;
+  if(S.mode==='explore')h+=`<span>Station model: temperature (top left) and dew point (bottom left) in °F; a weather symbol on the left when rain, snow, sleet, freezing rain or a thunderstorm is happening; sea-level pressure (top right, in tenths of a millibar with the leading 10 or 9 left off) and its 3-hour change below it; the shaded circle shows cloud cover.</span>`;
+  $('legend').innerHTML=h;
+}
+
+/* ---------- rain total (for Explore) ---------- */
+const RAINTAB={};
+function rainTo(f,t){ // cumulative precipitation at the station up to time t
+  if(!RAINTAB[f]){const n=600,H=FR[f].hours,c=[0];
+    for(let i=0;i<n;i++)c.push(c[i]+mmh(rainAt(exploreSpec(f,(i+0.5)/n),500))*H/n);RAINTAB[f]=c;}
+  const c=RAINTAB[f],n=c.length-1,u=clamp(t,0,1)*n,i=Math.min(Math.floor(u),n-1);return lerp(c[i],c[i+1],u-i);}
+
+/* ---------- loop ---------- */
+let last=performance.now(),acc=0;
+function loop(now){
+  const dt=Math.min(0.1,(now-last)/1000);last=now;
+  if(!RM.matches&&!S.still)S.amb+=dt*0.35;
+  if(S.mode==='explore'&&S.playExp){
+    S.t=Math.min(1,S.t+dt/18);
+    $('tExp').value=Math.round(S.t*1000);
+    const ix=expIdx(S.front,S.t);
+    if(S.t>=1){S.playExp=false;setBtn('playExp','Play again');}
+    else if(ix!==S.expIdx){S.expIdx=ix;S.playExp=false;S.dirty=true;setBtn('playExp','Continue');announcePause();}
+  }
+  if(S.mode==='storm'&&S.playStorm){
+    S.stormT=Math.min(1,S.stormT+dt/26);$('tStorm').value=Math.round(S.stormT*1000);
+    const ix=stIdx(S.stormT);
+    if(S.stormT>=1){S.playStorm=false;setBtn('playStorm','Play again');}
+    else if(ix!==S.stIdx){S.stIdx=ix;S.playStorm=false;S.dirty=true;setBtn('playStorm','Continue');announcePause();}
+  }
+  acc+=dt;
+  if(acc>=1/30||S.dirty){acc=0;S.dirty=false;frame();}
+  requestAnimationFrame(loop);
+}
+
+/* ---------- UI ---------- */
+function announcePause(){const r=$('sr');r.textContent='';setTimeout(()=>{r.textContent='Paused. Choose Continue when you are ready.';},400);}
+function setMode(m){
+  S.mode=m;S.lastSay='';
+  document.querySelectorAll('.tab').forEach(b=>{const on=b.dataset.mode===m;b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;});
+  $('stagePanel').setAttribute('aria-labelledby','tab-'+m);
+  $('ctl-explore').hidden=m!=='explore';$('ctl-storm').hidden=m!=='storm';$('ctl-occl').hidden=m!=='occl';
+  $('gauges').hidden=m!=='explore';
+  $('views').classList.toggle('storm',m==='storm');
+  $('mapSub').textContent=m==='storm'?'Seen from above. Line A–B can move.':'Seen from above';
+  if(m==='explore'){$('secSub').textContent='Heights are stretched about 50 times so the slopes show.';$('about').textContent=FR[S.front].about;}
+  if(m==='storm')$('about').textContent='Follow a mid-latitude storm from start to finish. Move line A–B to see a side view through any part of the storm.';
+  if(m==='occl')$('about').textContent='An occluded front has two cold air masses. Change the temperature of the air behind the cold front to see which one ends up underneath.';
+  if(S.playExp){S.playExp=false;setBtn('playExp','Continue');}if(S.playStorm){S.playStorm=false;setBtn('playStorm','Continue');}
+  legend();S.dirty=true;
+}
+document.querySelectorAll('.tab').forEach(b=>{
+  b.addEventListener('click',()=>setMode(b.dataset.mode));
+  b.addEventListener('keydown',e=>{const tabs=[...document.querySelectorAll('.tab')],i=tabs.indexOf(b);let j;
+    if(e.key==='ArrowRight')j=(i+1)%tabs.length;else if(e.key==='ArrowLeft')j=(i+tabs.length-1)%tabs.length;
+    else if(e.key==='Home')j=0;else if(e.key==='End')j=tabs.length-1;else return;
+    e.preventDefault();tabs[j].focus();setMode(tabs[j].dataset.mode);});
+});
+document.querySelectorAll('.fbtn').forEach(b=>b.addEventListener('click',()=>{
+  S.front=b.dataset.front;document.querySelectorAll('.fbtn').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  S.t=0;S.shown=0;S.expIdx=expIdx(S.front,0);$('tExp').value=0;$('about').textContent=FR[S.front].about;S.lastSay='';
+  S.playExp=false;setBtn('playExp','Play');S.dirty=true;}));
+$('playExp').addEventListener('click',()=>{
+  if(S.t>=1){S.t=0;S.shown=0;S.expIdx=expIdx(S.front,0);}
+  S.playExp=!S.playExp;setBtn('playExp',S.playExp?'Pause':'Continue');});
+$('resetExp').addEventListener('click',()=>{S.playExp=false;S.t=0;S.shown=0;S.expIdx=expIdx(S.front,0);$('tExp').value=0;setBtn('playExp','Play');S.dirty=true;});
+$('tExp').addEventListener('input',e=>{S.playExp=false;S.t=e.target.value/1000;S.shown=rainTo(S.front,S.t);S.expIdx=expIdx(S.front,S.t);
+  setBtn('playExp',S.t>=1?'Play again':S.t>0?'Continue':'Play');S.dirty=true;});
+$('playStorm').addEventListener('click',()=>{
+  if(S.stormT>=1){S.stormT=0;S.stIdx=stIdx(0);}
+  S.playStorm=!S.playStorm;setBtn('playStorm',S.playStorm?'Pause':'Continue');});
+$('resetStorm').addEventListener('click',()=>{S.playStorm=false;S.stormT=0;S.stIdx=stIdx(0);$('tStorm').value=0;setBtn('playStorm','Play');S.dirty=true;});
+$('tStorm').addEventListener('input',e=>{S.playStorm=false;S.stormT=e.target.value/1000;S.stIdx=stIdx(S.stormT);
+  setBtn('playStorm',S.stormT>=1?'Play again':S.stormT>0?'Continue':'Play');S.dirty=true;});
+function setYs(y){S.ys=Math.round(clamp(y,40,490));$('ySec').value=S.ys;const w=S.ys<200?'north':S.ys>360?'south':'middle';$('ySecOut').textContent=w;$('ySec').setAttribute('aria-valuetext',w+' part of the map');S.dirty=true;}
+$('ySec').addEventListener('input',e=>setYs(+e.target.value));
+let drag=false;
+function svgY(e){const pt=map.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(map.getScreenCTM().inverse()).y;}
+map.addEventListener('pointerdown',e=>{if(S.mode!=='storm')return;setYs(svgY(e));
+  if(e.target.dataset&&e.target.dataset.h){drag=true;map.setPointerCapture(e.pointerId);e.preventDefault();}});
+map.addEventListener('pointermove',e=>{if(drag)setYs(svgY(e));});
+map.addEventListener('pointerup',()=>{drag=false;});map.addEventListener('pointercancel',()=>{drag=false;});
+$('tw').addEventListener('input',e=>{S.tw=+e.target.value;S.dirty=true;});
+
+$('still').checked=RM.matches;S.still=RM.matches;
+$('still').addEventListener('change',e=>{S.still=e.target.checked;S.dirty=true;});
+setYs(330);setMode('explore');
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
