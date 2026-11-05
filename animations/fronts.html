@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Weather Fronts Form</title>
+<meta name="description" content="An animated, scene-by-scene look at how cold, warm, stationary and occluded fronts form, seen from the side as the land passes beneath them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #e9edf4; --bar: #ffffff; --ink: #25282b; --muted: #5d6470; --edge: #cfd6e2;
+  --brand: #1e376c; --accent: #f47920; --btn: #f1f4f9; --btn-ink: #1e376c; --focus: #c2410c;
+  color-scheme: light;
+  box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+    --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+  --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; background: var(--page); overflow-x: hidden; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100%; background: var(--page); color: var(--ink); font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 12px; top: -100px; z-index: 50; background: var(--bar); color: var(--brand); font-weight: 700; padding: 12px 16px; border-radius: 8px; border: 2px solid var(--brand); }
+.skip:focus { top: calc(12px + env(safe-area-inset-top, 0px)); outline: 3px solid var(--focus); outline-offset: 2px; }
+
+#app { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; min-height: 100vh; background: var(--page); }
+#main { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+#frame { width: min(100%, calc((100vh - 140px) * 16 / 9)); aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,.12); touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app:fullscreen #frame { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+#turn { display: none; }
+
+/* ---------- the animation (fixed light picture, like the other 1130 animations) ---------- */
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #ffffff;
+  --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; --stn:#c8322a; --slp:#1667c4;
+  color: var(--second); font-family: "Nunito Sans", system-ui, sans-serif; }
+.layer { position: absolute; inset: 0; display: none; }
+.ground { position: absolute; inset: 0; background: var(--ground); }
+.words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.words > * { margin: 0; }
+.line { font-family: "Zilla Slab", Georgia, serif; font-size: 84px; line-height: 1.04; font-weight: 700; color: var(--main); }
+.line .w { display: inline-block; white-space: pre; }
+.sub { font-size: 34px; line-height: 1.4; color: color-mix(in srgb, var(--second) 82%, var(--ground)); }
+.sub b.o { color: #d4610c; }
+.pov { display: block; width: fit-content; margin-bottom: 16px; padding: 6px 14px; border-radius: 8px; font-size: 24px; font-weight: 700; color: var(--main); background: color-mix(in srgb, var(--main) 9%, var(--ground)); }
+#stage.big .pov { font-size: var(--tag); } .sub b.b { color: var(--slp); }
+.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.words.wide { gap: 10px; }
+.words.wide .line { font-size: 76px; }
+.words.wide .sub { font-size: 28px; line-height: 1.35; }
+#stage.big .words.wide .sub { font-size: min(var(--sub), 30px); }
+#stage.big .words.wide .tag { font-size: min(var(--tag), 24px); }
+body.port.wide #frame { aspect-ratio: 1840 / 680; }
+.rule { width: 96px; height: 4px; background: var(--accent); border-radius: 2px; }
+.art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.card { position: absolute; border-radius: 16px; background: color-mix(in srgb, var(--main) 6%, var(--ground)); border: 2px solid color-mix(in srgb, var(--main) 18%, var(--ground)); }
+#stage.big .sub { font-size: var(--sub); }
+#stage.big .tag { font-size: var(--tag); }
+#stage.big .rc { top: 400px !important; height: 580px !important; padding: 34px 26px !important; gap: 16px !important; }
+canvas.ri { width: 230px; height: 230px; flex: none; }
+#stage.big .ri { width: 200px; height: 200px; }
+/* upright phone: the picture shows the right part of the scene; its text is shown below */
+#stage.port .ground > .words { display: none; }
+#stage.port .rc { left: 830px !important; width: 1060px !important; height: 320px !important; flex-direction: row !important; text-align: left !important; padding: 0 40px !important; gap: 40px !important; }
+#stage.port .rc0 { top: 30px !important; } #stage.port .rc1 { top: 380px !important; } #stage.port .rc2 { top: 730px !important; }
+#stage.port .rc .words { align-items: flex-start !important; gap: 14px !important; }
+#stage.port .ri { width: 220px; height: 220px; }
+
+/* ---------- scene text ---------- */
+#desc { width: min(100%, calc((100vh - 140px) * 16 / 9)); background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 16px 20px 18px; }
+#desc:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+#dTitle { margin: 0 0 6px; font-size: 18px; line-height: 1.3; color: var(--brand); }
+#dText { margin: 0; font-size: 17px; line-height: 1.6; max-width: 72ch; }
+#closeText { display: none; }
+#cap { display: none; }
+.cap-tag { margin: 0 0 2px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #a8460a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .cap-tag { color: #ffb27a; } }
+:root[data-theme="dark"] .cap-tag { color: #ffb27a; }
+.cap-line { margin: 0 0 6px; font-family: "Zilla Slab", Georgia, serif; font-size: 24px; line-height: 1.15; color: var(--brand); }
+.cap-sub { margin: 0 0 4px; font-size: 16px; line-height: 1.5; }
+.cap-box { margin: 10px 0 4px; padding: 10px 12px; border-radius: 8px; background: var(--bar); border: 1px solid var(--edge); }
+.cap-note { margin: 0; font-size: 14px; color: var(--muted); }
+
+/* ---------- controls ---------- */
+#bar { width: min(100%, calc((100vh - 140px) * 16 / 9)); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 6px 8px; }
+#app:fullscreen #bar, #app:fullscreen #desc { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+button { font: inherit; font-weight: 700; font-size: 15px; color: var(--btn-ink); background: var(--btn); border: 1px solid var(--edge);
+  border-radius: 8px; min-height: 44px; min-width: 44px; padding: 0 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+button:hover { border-color: var(--brand); }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#next { background: var(--brand); color: var(--bar); border-color: var(--brand); padding: 0 20px; }
+#next.ready { background: var(--accent); border-color: var(--accent); color: #25282b; }
+#where { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 0; padding: 0 4px; }
+#title { font-size: 15px; font-weight: 700; color: var(--ink); padding-left: 9px; }
+#dots { display: flex; flex-wrap: nowrap; }
+#wtop { display: flex; align-items: baseline; gap: 12px; padding-right: 4px; }
+#wtop .hint { margin-left: auto; }
+#dots button { min-height: 44px; height: 44px; width: 38px; min-width: 38px; padding: 0; border: 0; background: transparent; border-radius: 6px; }
+#dots button::before { content: ""; width: 24px; height: 8px; border-radius: 4px; background: var(--edge); }
+#dots button.on::before { background: var(--brand); }
+#dots button.done::before { background: color-mix(in srgb, var(--brand) 45%, var(--edge)); }
+#count { display: none; font-size: 14px; font-weight: 700; color: var(--ink); text-align: center; white-space: nowrap; }
+.hint { font-size: 13px; color: var(--muted); }
+#textB[aria-expanded="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.no-fs #full { display: none !important; }
+
+/* ---------- phone held sideways ---------- */
+body.land #app { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 6px max(6px, env(safe-area-inset-right, 0px)) 6px max(6px, env(safe-area-inset-left, 0px)); }
+body.land #main { flex: 1; min-width: 0; justify-content: center; }
+body.land #frame { width: min(100%, calc((100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9));
+  width: min(100%, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9)); border-radius: 8px; }
+body.land #bar { width: 76px; flex: none; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 6px; gap: 5px; overflow-y: auto; }
+body.land #bar .t, body.land #where, body.land .hint { display: none; }
+body.land #count { display: block; order: 0; padding: 4px 0; }
+body.land #replay { order: 1; } body.land #pause { order: 2; } body.land #full { order: 3; } body.land #textB { order: 4; }
+body.land #spacer { order: 5; flex: 1; min-height: 4px; }
+body.land #back { order: 6; } body.land #next { order: 7; min-height: 64px; padding: 0; }
+body.land #next svg { width: 28px; height: 28px; }
+body.land button { padding: 0; }
+body.land #desc { position: fixed; z-index: 20; width: auto; overflow-y: auto;
+  top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-height: calc(100% - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  left: calc(max(6px, env(safe-area-inset-left, 0px)) + 10px); right: calc(max(6px, env(safe-area-inset-right, 0px)) + 96px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); padding: 12px 16px; }
+body.land #closeText { display: inline-flex; flex: none; padding: 0 16px; }
+body.land #dText { font-size: 16px; line-height: 1.55; }
+
+/* ---------- phone held upright ---------- */
+body.port #app { justify-content: flex-start; align-items: stretch; gap: 0; padding: 0; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+body.port #main { flex: none; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); }
+body.port #frame { width: 100%; aspect-ratio: 1120 / 1080; border-radius: 0; box-shadow: none; }
+body.port #turn { display: block; margin: 0; width: 100%; padding: 6px 16px; font-size: 14px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--edge); }
+body.port #desc { width: auto; flex: 1; min-height: 0; overflow-y: auto; border: 0; border-radius: 0; background: var(--page); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+body.port #desc.sr-only { position: static !important; width: auto; height: auto; margin: 0; overflow-y: auto; clip: auto; white-space: normal; }
+body.port #cap { display: block; margin: 4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--edge); }
+body.port #dText { font-size: 16px; }
+body.port #bar { width: auto; flex: none; flex-wrap: nowrap; border: 0; border-top: 1px solid var(--edge); border-radius: 0; gap: 8px;
+  padding: 8px max(10px, env(safe-area-inset-right, 0px)) 8px max(10px, env(safe-area-inset-left, 0px)); }
+body.port #where, body.port .hint, body.port #textB { display: none; }
+body.port #replay, body.port #pause, body.port #full { padding: 0; }
+body.port #replay .t, body.port #pause .t { display: none; }
+body.port #back, body.port #next { flex: 1; min-height: 52px; font-size: 17px; }
+body.port #back { order: 0; } body.port #replay { order: 1; } body.port #pause { order: 2; } body.port #full { order: 3; } body.port #next { order: 4; }
+body.port #spacer { display: none; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#desc" id="skip">Skip to scene text</a>
+<main id="app">
+  <h1 class="sr-only">How weather fronts form</h1>
+  <div id="main">
+    <div id="frame" aria-hidden="true"><div id="stage"></div></div>
+    <p id="turn">Turn your phone sideways for a bigger picture.</p>
+  </div>
+  <section id="desc" tabindex="0" aria-labelledby="dTitle" class="sr-only">
+    <div class="dhead">
+      <div id="live" aria-live="polite" aria-atomic="true"><h2 id="dTitle"></h2><div id="cap" aria-hidden="true"></div><p id="dText"></p></div>
+      <button id="closeText" aria-label="Close scene text">Close</button>
+    </div>
+  </section>
+  <nav id="bar" aria-label="Animation controls">
+    <button id="back" aria-label="Previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">Back</span></button>
+    <button id="replay" aria-label="Replay this scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" id="pauseIco"><path d="M8 5v14M16 5v14"/></svg><span class="t" id="pauseTxt">Pause</span></button>
+    <div id="where"><div id="wtop"><div id="title" aria-hidden="true"></div><span class="hint" aria-hidden="true">Arrow keys or Space</span></div><div id="dots" role="group" aria-label="Scenes"></div></div>
+    <div id="count" aria-hidden="true"></div>
+    <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="textB" aria-label="Show scene text" aria-controls="desc" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 10h14M5 14h10M5 18h7"/></svg><span class="t">Text</span></button>
+    <div id="spacer" aria-hidden="true"></div>
+    <button id="next" aria-label="Next scene"><span class="t">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </nav>
+</main>
+<script>
+(function () {
+document.documentElement.lang = 'en';
+// ---------- helpers ----------
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const TAU = Math.PI * 2, DEG = Math.PI / 180;
+function h(html) { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; }
+function fadeFromRight(el, t, t0) {
+  if (!el._w) {
+    const words = el.textContent.split(' ');
+    el.textContent = '';
+    el._w = words.map((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w + (i < words.length - 1 ? ' ' : ''); el.appendChild(s); return s; });
+  }
+  el._w.forEach((s, i) => { const p = eo(seg(t, t0 + i * .11, t0 + i * .11 + .5)); s.style.opacity = p; s.style.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)'; });
+}
+function subIn(st, t, a) { const p = eo(seg(t, a, a + .6)); st.opacity = p; st.transform = 'translateX(' + lerp(26, 0, p) + 'px)'; }
+const textBlock = (top, tag, line, sub) =>
+  '<div class="words" style="left:140px;top:' + top + 'px;width:640px">' +
+  '<p class="tag">' + tag + '</p><h2 class="line">' + line + '</h2>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div>';
+function textRefs(self, root) { self.tagS = root.querySelector('.words .tag').style; self.line = root.querySelector('.words .line'); const s = root.querySelector('.words .sub'); self.subS = s && s.style; }
+function textRender(self, t, subAt) { self.tagS.opacity = eo(seg(t, 0.2, 0.7)); fadeFromRight(self.line, t, 0.4); if (self.subS) subIn(self.subS, t, subAt); }
+let SCALE = 0.6;   // current stage scale, used for canvas text size
+const fpx = (target, lo, hi) => Math.min(hi, Math.max(lo, target / SCALE));
+
+// ---------- canvas drawing kit ----------
+const C = { navy: '#1e376c', ink: '#25282b', orange: '#f47920', orangeDk: '#d4610c', blue: '#1667c4', red: '#c8322a', grid: '#8fa7cc', sea: '#dbe8f6', grass: '#e4efd9', tree: '#a8cf94', treeEdge: '#5f8f4e', plate: '#f4f6fa', wedge: '#dfe6f2' };
+const P = (cx, cy, r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];   // math angle (counterclockwise) to screen
+function label(ctx, txt, x, y, color, size, align, weight) {
+  ctx.font = (weight || 700) + ' ' + size + 'px "Nunito Sans", system-ui, sans-serif';
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.26; ctx.strokeStyle = 'rgba(255,255,255,.95)';
+  ctx.strokeText(txt, x, y); ctx.fillStyle = color; ctx.fillText(txt, x, y);
+  return ctx.measureText(txt).width;
+}
+function disc(ctx, x, y, r, fill, stroke, lw) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 3; ctx.stroke(); } }
+function line(ctx, pts, color, w, dash) {
+  if (pts.length < 2) return;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]); ctx.stroke(); ctx.setLineDash([]);
+}
+function head(ctx, x, y, ang, size, color) {   // arrowhead at (x,y) pointing along screen angle ang
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x, y);
+  ctx.lineTo(x - size * Math.cos(ang - 0.45), y - size * Math.sin(ang - 0.45));
+  ctx.lineTo(x - size * Math.cos(ang + 0.45), y - size * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill();
+}
+function arrow(ctx, x1, y1, x2, y2, color, w) {
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 3) return;
+  const a = Math.atan2(y2 - y1, x2 - x1), hd = Math.min(w * 4, L * 0.7);
+  line(ctx, [[x1, y1], [x2 - Math.cos(a) * hd * 0.7, y2 - Math.sin(a) * hd * 0.7]], color, w);
+  head(ctx, x2, y2, a, hd, color);
+}
+function pathArrow(ctx, pts, color, w, dash) {   // a line with an arrowhead at its end
+  if (pts.length < 2) return;
+  const n = pts.length - 1; let k = n - 1;
+  while (k > 0 && Math.hypot(pts[n][0] - pts[k][0], pts[n][1] - pts[k][1]) < w * 3) k--;
+  const a = Math.atan2(pts[n][1] - pts[k][1], pts[n][0] - pts[k][0]), hd = w * 4;
+  line(ctx, pts.slice(0, n).concat([[pts[n][0] - Math.cos(a) * hd * 0.7, pts[n][1] - Math.sin(a) * hd * 0.7]]), color, w, dash);
+  head(ctx, pts[n][0], pts[n][1], a, hd, color);
+}
+function arcPts(cx, cy, r, a0, a1, n) { const o = []; for (let i = 0; i <= (n || 40); i++) o.push(P(cx, cy, r, lerp(a0, a1, i / (n || 40)))); return o; }
+function badge(ctx, x, y, letter, on, alpha) {
+  ctx.globalAlpha = alpha;
+  disc(ctx, x, y, 28, on ? C.orange : '#ffffff', on ? C.orange : C.navy, 4);
+  ctx.font = '700 32px "Nunito Sans", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = on ? '#ffffff' : C.navy; ctx.fillText(letter, x, y + 1);
+  ctx.globalAlpha = 1;
+}
+function clear(ctx) { ctx.clearRect(0, 0, 1920, 1080); }
+const SCENES = [];
+function scene(id, name, dur, def) { SCENES.push(Object.assign({ id, name, dur }, def)); }
+const wideBlock = (tag, line, sub) =>   // title in the upper left, description in the upper right, picture below
+  '<div><div class="words wide" style="left:60px;top:40px;width:820px">' +
+  '<p class="tag">' + tag + '</p><h2 class="line">' + line + '</h2></div>' +
+  '<div class="words wide" style="left:960px;top:34px;width:910px">' + (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div></div>';
+function cscene(id, name, dur, text, render, extra, wide) {
+  scene(id, name, dur, {
+    wide: !!wide,
+    init(root) {
+      const tb = h(wide ? wideBlock(text[1], text[2], text[3]) : textBlock(text[0], text[1], text[2], text[3]));
+      if (extra) tb.append(h(extra));
+      root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas></div>'));
+      if (wide) [...tb.children].forEach(c => root.firstChild.append(c)); else root.firstChild.append(tb);
+      this.ctx = root.querySelector('canvas').getContext('2d');
+      textRefs(this, root);
+    },
+    render(t) { setArt(this.wide); textRender(this, t, 1.2); clear(this.ctx); render.call(this, t, this.ctx); },
+  });
+}
+
+// ================= side-view picture kit =================
+let XL = 830, XR = 1890, YT = 86, YB = 966, GY = 850, KM = 70, ZT = 11.2;
+function setArt(wide) {   // standard: picture on the right; wide: picture across the bottom, words above it
+  if (wide) { XL = 50; XR = 1870; YT = 372; YB = 1030; GY = 958; KM = 52; }
+  else { XL = 830; XR = 1890; YT = 86; YB = 966; GY = 850; KM = 70; }
+  ZT = (GY - YT) / KM + 0.2;
+}
+const zy = z => GY - z * KM;
+const A_DOME = 5.5, B_RAMP = 62, B_STAT = 50;          // cold-front dome x = 5.5·z² px (like y = √(−3x)); warm ramp 62 px per km
+const AIR = { cold: '#bcd3f0', coldest: '#9cbde9', cool: '#dce9f7', warm: '#f8d7c6' };
+const AIRTX = { cold: '#1e4f8c', coldest: '#163f78', cool: '#2a5d93', warm: '#9a3320' };
+const FC = { cold: '#1f5fc0', warm: '#c8322a', occ: '#7a3aa8' };
+const sm = x => { x = clamp01(x); return x * x * (3 - 2 * x); };
+const hash = i => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+
+function rr(ctx, x, y, w, hh, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + hh, r); ctx.arcTo(x + w, y + hh, x, y + hh, r); ctx.arcTo(x, y + hh, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function fillPts(ctx, pts, fill) { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); }
+function artClip(ctx) { ctx.save(); rr(ctx, XL, YT, XR - XL, YB - YT, 22); ctx.clip(); }
+function artFrame(ctx) { rr(ctx, XL, YT, XR - XL, YB - YT, 22); ctx.strokeStyle = '#cfd6e2'; ctx.lineWidth = 3; ctx.stroke(); }
+function sizes() { return { fs: fpx(14, 26, 44), sm: fpx(12, 22, 38), big: fpx(17, 34, 54) }; }
+function callout(ctx, txt, x, y, a, o) {
+  if (a <= 0.01) return; o = o || {};
+  const fs = o.size || sizes().fs, lines = txt.split('\n');
+  ctx.save(); ctx.globalAlpha *= a;
+  lines.forEach((ln, i) => label(ctx, ln, x, y + i * fs * 1.2, o.color || C.navy, fs, o.align || 'left', o.weight || 700));
+  ctx.restore();
+}
+
+// surfaces, as screen points
+function domePts(xc) { const o = []; for (let z = 0; z <= ZT + 0.01; z += (z < 1 ? 0.1 : 0.25)) o.push([xc - A_DOME * z * z, zy(z)]); return o; }
+function rampPts(x0, z0, dir, k) { const o = []; for (let z = z0; z <= ZT + 0.01; z += 0.25) o.push([x0 + dir * k * (z - z0), zy(z)]); return o; }
+function occGeo(xo, h, s) {   // s = -1 cold-type, +1 warm-type
+  h = Math.max(h, 0.02);
+  const Px = s < 0 ? xo - A_DOME * h * h : xo + B_RAMP * h, c = s < 0 ? 1 : 0;
+  const low = [];
+  if (s < 0) for (let z = 0; z < h; z += 0.08) low.push([xo + (Px - xo) * (z / h) * (z / h), zy(z)]); else low.push([xo, GY]);
+  low.push([Px, zy(h)]);
+  const up = []; for (let z = h + 0.1; z <= ZT + 0.01; z += 0.2) { const q = z - h + h * c; up.push([Px - A_DOME * (q * q - h * h * c * c), zy(z)]); }
+  const ws = rampPts(Px, h, 1, B_RAMP).slice(1);
+  return { Px, Py: zy(h), low, up, ws };
+}
+const leftOf = pts => [...pts, [XL - 80, zy(ZT)], [XL - 80, GY + 4]];
+const rightOf = pts => [...pts, [XR + 80, zy(ZT)], [XR + 80, GY + 4]];
+
+// ---------- clouds ----------
+function puffs(ctx, list, alpha, dark) {
+  if (alpha <= 0.01) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.fillStyle = dark ? '#6f7b86' : '#9ba8b4';
+  list.forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x, y, r + 3, 0, TAU); ctx.fill(); });
+  list.forEach(([x, y, r]) => {
+    const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.4, r * 0.1, x, y, r * 1.1);
+    g.addColorStop(0, dark ? '#c9d0d7' : '#ffffff'); g.addColorStop(0.6, dark ? '#a7b1ba' : '#f1f4f7'); g.addColorStop(1, dark ? '#8b96a1' : '#d3dbe2');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  });
+  ctx.restore();
+}
+const BAND = { ns: ['#a9b3bc', '#76828d', '#5f6b76'], as: ['#e6eaee', '#bec8d0', '#9aa6b1'], cs: ['rgba(255,255,255,.85)', 'rgba(235,240,245,.7)', 'rgba(170,182,194,.8)'] };
+function band(ctx, kind, xa, xb, bot, top, amp, alpha) {   // bot/top: x -> screen y
+  if (alpha <= 0.01 || xb - xa < 6) return;
+  const tp = [], bp = [];
+  for (let x = xa; x <= xb + 0.01; x += 8) {
+    const e = Math.min(x - xa, xb - x), f = sm(e / 40), b = bot(x), tt = top(x);
+    tp.push([x, b + (tt - b) * (0.3 + 0.7 * f) - amp * Math.pow(Math.abs(Math.sin(x / 26)), 0.6) * f]);
+    bp.push([x, b - (1 - f) * 10]);
+  }
+  const yMin = Math.min(...tp.map(p => p[1])), yMax = Math.max(...bp.map(p => p[1]));
+  const g = ctx.createLinearGradient(0, yMin, 0, yMax); g.addColorStop(0, BAND[kind][0]); g.addColorStop(1, BAND[kind][1]);
+  ctx.save(); ctx.globalAlpha *= alpha;
+  const pts = tp.concat(bp.reverse());
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); pts.forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = BAND[kind][2]; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.restore();
+}
+function cirrus(ctx, xa, xb, yf, alpha, dir) {
+  if (alpha <= 0.01) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.lineCap = 'round';
+  for (let x = xa, i = 0; x <= xb; x += 34, i++) {
+    const y = yf(x) + (i % 2 ? 10 : 0), d = dir || 1;
+    [['#9aa7b3', 7], ['#ffffff', 4]].forEach(([c, w]) => {
+      ctx.strokeStyle = c; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(x + d * 14, y - 14, x + d * 34, y - 6); ctx.quadraticCurveTo(x + d * 40, y - 3, x + d * 42, y + 6); ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+function cumulonimbus(ctx, xc, yb, yt, g, alpha, adir, lean) {   // g: growth 0..1; lean: sideways shift at the top
+  if (alpha <= 0.01 || g <= 0.01) return;
+  const H = (yb - yt) * g, top = yb - H, xt = xc + (lean || 0) * g;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  const ga = sm((g - 0.75) / 0.25);
+  if (ga > 0) {
+    const aL = adir < 0 ? 210 : 50, aR = adir > 0 ? 210 : 50;
+    const pts = [[xt - 50, top + 60], [xt - 50 - aL * ga, top + 22], [xt - 58 - aL * ga, top], [xt + 58 + aR * ga, top], [xt + 50 + aR * ga, top + 22], [xt + 50, top + 60]];
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); pts.forEach(p => ctx.lineTo(p[0], p[1])); ctx.closePath();
+    const gr = ctx.createLinearGradient(0, top, 0, top + 60); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#d6dde4');
+    ctx.fillStyle = gr; ctx.fill(); ctx.strokeStyle = '#9ba8b4'; ctx.lineWidth = 3; ctx.stroke();
+  }
+  const list = [];
+  const n = Math.max(2, Math.round(H / 55));
+  for (let i = 0; i < n; i++) {
+    const f = n > 1 ? i / (n - 1) : 0, y = yb - 34 - f * (H - 80), w = 150 + 40 * Math.sin(f * Math.PI);
+    const xm = xc + (xt - xc) * f * f;
+    list.push([xm - w * 0.33 + 6 * Math.sin(i * 1.7), y + 6, w * 0.27], [xm + 4 * Math.cos(i * 2.1), y - 10, w * 0.32], [xm + w * 0.33 + 6 * Math.cos(i * 1.3), y + 4, w * 0.26]);
+  }
+  if (H > 120) list.push([xt - 44, top + 58, 46], [xt + 14, top + 44, 54], [xt + 66, top + 62, 40]);
+  ctx.globalAlpha = 1; ctx.restore();
+  puffs(ctx, list, alpha, false);
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.fillStyle = '#7d8893'; rr(ctx, xc - 62, yb - 14, 124, 16, 8); ctx.fill(); ctx.restore();
+}
+function cumulus(ctx, x, y, s, alpha) { puffs(ctx, [[x - 26 * s, y, 22 * s], [x, y - 12 * s, 28 * s], [x + 26 * s, y, 20 * s], [x + 6 * s, y + 6 * s, 22 * s]], alpha); }
+function rain(ctx, xa, xb, ytop, t, gap, alpha, speed) {
+  if (alpha <= 0.01 || xb - xa < 4) return;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = '#2a63a3'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  const n = Math.floor((xb - xa) / gap);
+  for (let i = 0; i < n; i++) {
+    const x = xa + (i + 0.5) * gap + (hash(i) - 0.5) * gap * 0.6, y0 = typeof ytop === 'function' ? ytop(x) : ytop, span = GY - y0 - 8;
+    if (span < 20) continue;
+    const ph = ((t * (speed || 1.4) + hash(i + 7)) % 1), y = y0 + ph * span;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 5, Math.min(y + 26, GY - 4)); ctx.stroke();
+  }
+  ctx.restore();
+}
+function precip(ctx, kind, xa, xb, ytop, t, alpha) {
+  if (alpha <= 0.01) return;
+  if (kind === 'rain') return rain(ctx, xa, xb, ytop, t, 15, alpha, 1.2);
+  ctx.save(); ctx.globalAlpha *= alpha;
+  if (kind === 'frz') { line(ctx, [[xa + 4, GY - 3], [xb - 4, GY - 3]], '#3fb8c2', 8); }
+  const gap = kind === 'snow' ? 10 : kind === 'sleet' ? 11 : 12, n = Math.floor((xb - xa) / gap);
+  for (let i = 0; i < n; i++) {
+    let x = xa + (i + 0.5) * gap + (hash(i) - 0.5) * gap * 0.6;
+    const y0 = ytop(x), span = GY - y0 - 8; if (span < 20) continue;
+    const spd = kind === 'snow' ? 0.35 : kind === 'sleet' ? 0.9 : 1.2, y = y0 + ((t * spd + hash(i + 7)) % 1) * span;
+    if (kind === 'snow') {
+      x += 6 * Math.sin(t * 2 + i); const r = 7;
+      [['#2c4f7c', 4.5], ['#ffffff', 2.2]].forEach(([c, w]) => { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.beginPath();
+        for (let j = 0; j < 3; j++) { const a = j * Math.PI / 3; ctx.moveTo(x - r * Math.cos(a), y - r * Math.sin(a)); ctx.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); } ctx.stroke(); });
+    } else if (kind === 'sleet') disc(ctx, x, y, 5, '#ffffff', '#2a63a3', 2.5);
+    else { ctx.strokeStyle = '#0a7f86'; ctx.lineWidth = 3.4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 5, Math.min(y + 26, GY - 6)); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+// clouds along a gently rising surface: z(u) = z0 + u/k at x = x0 + dir·u
+function layered(ctx, x0, z0, dir, k, rev, alpha, t, rainA, only, types) {
+  const zs = u => z0 + Math.max(u, 0) / k, X = u => x0 + dir * u, U = x => dir * (x - x0);
+  const lim = only || 4, out = {};
+  const piece = (i, kind, ua, ub, bot, top, amp) => {
+    if (i >= lim || zs(ua) > ZT - 0.6) return;
+    const a = Math.min(X(ua), X(ub)), b = Math.max(X(ua), X(ub));
+    band(ctx, kind, a, b, x => zy(bot(U(x))), x => zy(top(U(x))), amp, alpha * rev[i]);
+    out[kind] = [X((ua + ub) / 2), zy((bot((ua + ub) / 2) + top((ua + ub) / 2)) / 2)];
+  };
+  const nsB = u => Math.max(zs(u) + 0.25, 1.35);
+  // with the winter bands (warm front scene), the pieces are set by height, so they stretch with the slope
+  const e1 = types ? 5.4 * k : 260, e2 = types ? 7.0 * k : 420, e3 = types ? 8.2 * k : 560, e4 = types ? e3 + 0.9 * k : e3 + 150;
+  piece(0, 'ns', -30, e1, nsB, u => Math.min(zs(u) + 2.0 + 0.8 * sm((u + 30) / 140), types ? 7.2 : 6.2), 12);
+  piece(1, 'as', e1, e2, u => zs(u) + 0.3, u => Math.min(zs(u) + 1.7, 9.2), 6);
+  piece(2, 'cs', e2, e3, u => zs(u) + 0.35, u => Math.min(zs(u) + 1.0, 10.2), 3);
+  if (lim > 3 && zs(e3) < ZT - 1) { const y = x => zy(Math.min(zs(U(x)) + 0.5, 10.4)); cirrus(ctx, Math.min(X(e3), X(e4)), Math.max(X(e3), X(e4)), y, alpha * rev[3], dir); out.ci = [X(e3 + 75), y(X(e3 + 75)) - 30]; }
+  if (rainA > 0 && types) {
+    // far ahead: snow; closer, a warm layer aloft melts it, so sleet, then freezing rain; at the front: rain
+    [[-15, 0.9 * k, 'rain'], [0.9 * k, 2.1 * k, 'frz'], [2.1 * k, 3.3 * k, 'sleet'], [3.3 * k, 5.2 * k, 'snow']].forEach(([ua, ub, kind]) => {
+      const a = X(ua), b = X(ub); precip(ctx, kind, Math.min(a, b), Math.max(a, b), x => zy(nsB(U(x))) + 4, t, rainA * alpha); out['p_' + kind] = X((ua + ub) / 2);
+    });
+  } else if (rainA > 0) { const a = X(-15), b = X(230); rain(ctx, Math.min(a, b), Math.max(a, b), x => zy(nsB(U(x))) + 4, t, 15, rainA * alpha, 1.2); }
+  return out;
+}
+// animated streamline with an arrowhead
+function flow(ctx, pts, t, color, alpha, speed) {
+  if (alpha <= 0.01) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = color; ctx.lineWidth = 7;
+  ctx.setLineDash([22, 16]); ctx.lineDashOffset = -t * (speed || 60);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length - 1; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  const n = pts.length - 1, a = Math.atan2(pts[n][1] - pts[n - 1][1], pts[n][0] - pts[n - 1][0]);
+  ctx.lineTo(pts[n][0] - Math.cos(a) * 18, pts[n][1] - Math.sin(a) * 18); ctx.stroke(); ctx.setLineDash([]);
+  head(ctx, pts[n][0], pts[n][1], a, 30, color);
+  ctx.restore();
+}
+function smoothPts(ctrl, n) {   // Catmull-Rom through control points
+  const out = [], m = ctrl.length - 1;
+  for (let i = 0; i <= n; i++) {
+    const u = i / n * m, k = Math.min(Math.floor(u), m - 1), t = u - k, t2 = t * t, t3 = t2 * t;
+    const p0 = ctrl[Math.max(k - 1, 0)], p1 = ctrl[k], p2 = ctrl[k + 1], p3 = ctrl[Math.min(k + 2, m)];
+    const f = (a, b, c, d) => 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (-a + 3 * b - 3 * c + d) * t3);
+    out.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]);
+  }
+  return out;
+}
+const sp = ctrl => smoothPts(ctrl.map(([x, z]) => [x, zy(z)]), 60);
+function edge(ctx, pts, color, alpha) { if (alpha <= 0.01) return; ctx.save(); ctx.globalAlpha *= alpha; line(ctx, pts, '#ffffff', 9); line(ctx, pts, color, 5); ctx.restore(); }
+
+// ---------- the land below ----------
+const LAND_L = 1500;
+const OBJ = [[40, 'tree'], [120, 'house'], [205, 'tree'], [262, 'pine'], [300, 'pine'], [420, 'barn'], [480, 'silo'], [600, 'pole'], [690, 'tree'], [745, 'tree'], [860, 'house'], [950, 'pine'], [995, 'pine'], [1100, 'pole'], [1190, 'house'], [1255, 'tree'], [1370, 'barn']];
+function landObj(ctx, k, x) {
+  const y = GY;
+  if (k === 'tree') { ctx.fillStyle = '#7a5a3a'; ctx.fillRect(x - 5, y - 28, 10, 28); [[x, y - 50, 24], [x - 15, y - 38, 17], [x + 15, y - 38, 17]].forEach(([a, b, r]) => disc(ctx, a, b, r, '#5f9a3f', '#3f6e2a', 2.5)); }
+  else if (k === 'pine') { ctx.fillStyle = '#6a4a2e'; ctx.fillRect(x - 4, y - 14, 8, 14); fillPts(ctx, [[x - 20, y - 12], [x, y - 78], [x + 20, y - 12]], '#3f7d4a'); }
+  else if (k === 'house') { fillPts(ctx, [[x - 30, y], [x - 30, y - 38], [x + 30, y - 38], [x + 30, y]], '#f3e2c4'); fillPts(ctx, [[x - 36, y - 36], [x, y - 64], [x + 36, y - 36]], '#c8322a'); ctx.fillStyle = '#6b8fb8'; ctx.fillRect(x - 18, y - 28, 12, 12); ctx.fillStyle = '#7a5a3a'; ctx.fillRect(x + 6, y - 24, 12, 24); }
+  else if (k === 'barn') { fillPts(ctx, [[x - 38, y], [x - 38, y - 46], [x - 26, y - 66], [x + 26, y - 66], [x + 38, y - 46], [x + 38, y]], '#b0402f'); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.strokeRect(x - 14, y - 30, 28, 30); line(ctx, [[x - 14, y - 30], [x + 14, y]], '#ffffff', 3); line(ctx, [[x + 14, y - 30], [x - 14, y]], '#ffffff', 3); }
+  else if (k === 'silo') { ctx.fillStyle = '#c3cad2'; ctx.fillRect(x - 13, y - 84, 26, 84); disc(ctx, x, y - 84, 13, '#9aa4ae'); }
+  else if (k === 'pole') { line(ctx, [[x, y], [x, y - 82]], '#7a5c3e', 5); line(ctx, [[x - 16, y - 72], [x + 16, y - 72]], '#7a5c3e', 4); }
+}
+function land(ctx, off, dry) {
+  // distant hills
+  ctx.beginPath(); ctx.moveTo(XL - 10, GY);
+  for (let x = XL - 10; x <= XR + 10; x += 10) { const w = x + off * 0.5; ctx.lineTo(x, GY - 22 - 14 * Math.sin(w / 130) - 8 * Math.sin(w / 57)); }
+  ctx.lineTo(XR + 10, GY); ctx.closePath(); ctx.fillStyle = dry ? '#dcc796' : '#a9cd8f'; ctx.fill();
+  for (const [ox, k] of OBJ) { const m = ((ox - off) % LAND_L + LAND_L) % LAND_L; for (let x = XL - 120 + m; x < XR + 120; x += LAND_L) landObj(ctx, k, x); }
+  // fields in front
+  ctx.fillStyle = dry ? '#d2b97f' : '#86b563'; ctx.fillRect(XL, GY, XR - XL, YB - GY);
+  // two-color stripes repeat every 300 px, so shifting by the land's offset keeps them moving smoothly with the houses
+  const sh = ((off % 300) + 300) % 300;
+  for (let i = 0; i < Math.ceil((XR - XL) / 150) + 3; i++) { const x = XL + i * 150 - sh; ctx.fillStyle = dry ? (i % 2 ? '#c9ad72' : '#dcc68f') : (i % 2 ? '#7aa957' : '#90bf6c'); ctx.fillRect(x, GY + 10, 150, YB - GY - 10); }
+  line(ctx, [[XL, GY], [XR, GY]], dry ? '#a58a52' : '#5b7f3e', 3);
+}
+function frontSym(ctx, x, type) {   // the map symbol, standing on the ground where the front touches it
+  const y = GY, tri = (cx, c) => fillPts(ctx, [[cx - 17, y], [cx + 17, y], [cx, y - 27]], c);
+  const semi = (cx, c) => { ctx.beginPath(); ctx.arc(cx, y, 16, Math.PI, 0); ctx.closePath(); ctx.fillStyle = c; ctx.fill(); };
+  if (type === 'cold') tri(x, FC.cold);
+  else if (type === 'warm') semi(x, FC.warm);
+  else if (type === 'occ') { tri(x - 19, FC.occ); semi(x + 19, FC.occ); }
+  else { tri(x - 19, FC.cold); semi(x + 19, FC.warm); }
+}
+function pill(ctx, txt, a) {
+  if (a <= 0.01) return;
+  const fs = sizes().sm; ctx.save(); ctx.globalAlpha *= a;
+  ctx.font = '700 ' + fs + 'px "Nunito Sans", system-ui, sans-serif'; const w = ctx.measureText(txt).width + fs * 1.4;
+  rr(ctx, XL + 22, YT + 20, w, fs * 1.9, fs * 0.5); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill(); ctx.strokeStyle = C.navy; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.fillStyle = C.navy; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(txt, XL + 22 + fs * 0.7, YT + 20 + fs * 0.97);
+  ctx.restore();
+}
+function landArrow(ctx, moving, a) {
+  if (a <= 0.01) return;
+  const fs = sizes().sm, y = GY + 66; ctx.save(); ctx.globalAlpha *= a;
+  label(ctx, 'West', XL + 24, y, C.ink, fs, 'left'); label(ctx, 'East', XR - 24, y, C.ink, fs, 'right');
+  if (!moving) label(ctx, 'No forward motion of the front', 1360, y, C.ink, fs, 'center');
+  ctx.restore();
+}
+function windSym(ctx, x, y, into, txt, a) {
+  if (a <= 0.01) return; ctx.save(); ctx.globalAlpha *= a;
+  disc(ctx, x, y, 26, '#ffffff', C.ink, 4);
+  if (into) { line(ctx, [[x - 15, y - 15], [x + 15, y + 15]], C.ink, 4); line(ctx, [[x + 15, y - 15], [x - 15, y + 15]], C.ink, 4); } else disc(ctx, x, y, 8, C.ink);
+  ctx.restore(); callout(ctx, txt, x, y + 56, a, { align: 'center', size: sizes().sm });
+}
+
+// ================= scenes =================
+const S_COLD = 17, S_WARM = 21, S_STAT = 16, S_OCC = 20, S_DRY = 15, S_MAP = 13, S_WIND = 13;
+
+
+// ---------- wind markers for the side views ----------
+function windAhead(ctx, x, y, a, txt) { windSym(ctx, x, y, true, txt || 'Wind along the front,\ntoward the north', a); }
+function windPush(ctx, x, y, a, txt, above) {   // a wind blowing toward the east, into the front
+  if (a <= 0.01) return;
+  ctx.save(); ctx.globalAlpha *= a; arrow(ctx, x - 60, y, x + 60, y, C.ink, 9); ctx.restore();
+  const S = sizes();
+  callout(ctx, txt || 'Wind pushing\ninto the front', x, above ? y - 34 - S.sm * 1.2 : y + 44, a, { align: 'center', size: S.sm });
+}
+function bolt(ctx, x, y0, y1) {
+  const pts = [[x, y0], [x - 18, y0 + (y1 - y0) * 0.35], [x + 6, y0 + (y1 - y0) * 0.4], [x - 14, y1]];
+  line(ctx, pts, '#3d2f00', 9); line(ctx, pts, '#ffd23a', 5);
+}
+function fog(ctx, xa, xb, a) {
+  if (a <= 0.01) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  for (let x = xa, i = 0; x <= xb; x += 26, i++) {
+    const g = ctx.createRadialGradient(x, GY - 10, 3, x, GY - 10, 38);
+    g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, GY - 10 - 3 * Math.sin(i), 40, 18, 0, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+}
+function stratocu(ctx, x, y, a) { puffs(ctx, [[x - 30, y + 4, 22], [x - 4, y - 8, 27], [x + 24, y + 2, 21], [x + 6, y + 10, 22]], a, true); }
+function thermo(ctx, x, yTop, h, frac, txt, a) {
+  if (a <= 0.01) return;
+  ctx.save(); ctx.globalAlpha *= a;
+  rr(ctx, x - 13, yTop, 26, h, 13); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.stroke();
+  const f = h - 26; ctx.fillStyle = '#c8322a'; rr(ctx, x - 6, yTop + 13 + f * (1 - frac), 12, f * frac + 10, 6); ctx.fill();
+  disc(ctx, x, yTop + h + 12, 22, '#c8322a', C.ink, 3);
+  ctx.restore();
+  callout(ctx, txt, x + 34, yTop + h * 0.45, a, { color: '#9a3320' });
+}
+
+// ---------- scene 3: cold front ----------
+function coldScene(ctx, t, opt) {
+  opt = opt || {};
+  const xF = 1330, off = 70 * t, intro = opt.loop ? 1 : eo(seg(t, 0.6, 2.4));
+  const xc = xF - (1 - intro) * 520;
+  artClip(ctx);
+  ctx.fillStyle = AIR.warm; ctx.fillRect(XL, YT, XR - XL, YB - YT);
+  fillPts(ctx, leftOf(domePts(xc)), AIR.cold);
+  const L = opt.loop ? () => 1 : (a) => eo(seg(t, a, a + 0.8));
+  const g = opt.loop ? 1 : eo(seg(t, 8, 10.6)), ra = sm((g - 0.6) / 0.4);
+  land(ctx, off);
+  // the cloud keeps building as the warm air rises up and back over the dome, so it leans back over the cold air
+  cumulonimbus(ctx, xc + 10, zy(1.7), zy(9.8), g, 1, 1, -170);
+  rain(ctx, xc - 60, xc + 88, zy(1.7) + 4, t, 9, ra, 2.2);          // heavy rain just ahead of and just behind the front
+  rain(ctx, xc - 160, xc - 60, zy(2.6), t, 15, ra * 0.85, 1.8);     // lighter rain under the part that leans back
+  if (ra > 0.5 && (t % 2.3) < 0.14) bolt(ctx, xc + 62, zy(1.7) + 12, GY - 12);
+  const gu = L(11);   // gusts ahead of the front
+  if (gu > 0.01) { ctx.save(); ctx.globalAlpha *= gu; [[0.3, 0], [0.85, 0.5]].forEach(([z, ph]) => { const sh = ((t * 0.9 + ph) % 1) * 70; arrow(ctx, xc + 115 + sh, zy(z), xc + 215 + sh, zy(z), '#7a4a00', 5); }); ctx.restore(); }
+  const cu = L(12.5);
+  cumulus(ctx, xc - 360, zy(2.1), 1, cu); cumulus(ctx, xc - 520, zy(2.4), 0.8, cu);
+  edge(ctx, domePts(xc), FC.cold, 1);
+  frontSym(ctx, xc, 'cold');
+  const fw = L(5.2);
+  flow(ctx, sp([[XR - 30, 0.45], [xc + 150, 0.5], [xc + 50, 1.0], [xc + 22, 2.6], [xc - 20, 5.0], [xc - 120, 7.3], [xc - 250, 8.8], [xc - 380, 9.6]]), t, FC.warm, fw);
+  flow(ctx, sp([[XR - 30, 1.6], [xc + 120, 1.8], [xc + 60, 3.4], [xc + 20, 6.0], [xc - 60, 8.2], [xc - 180, 9.5], [xc - 260, 10]]), t + 0.4, FC.warm, fw * 0.75);
+  flow(ctx, sp([[XL + 30, 0.35], [xc - 200, 0.35], [xc - 46, 0.38]]), t, FC.cold, L(2.4), 80);
+  const fr = L(3.6);
+  if (fr > 0.01) { ctx.save(); ctx.globalAlpha *= fr; [[0.3, 46], [1.1, 92], [2.0, 132]].forEach(([z, w]) => arrow(ctx, XL + 40, zy(z), XL + 40 + w, zy(z), '#163f78', 5)); ctx.restore(); }
+  ctx.restore();
+  artFrame(ctx);
+  if (opt.loop) return;
+  const S = sizes();
+  pill(ctx, 'Moving along with the front →', L(0.8));
+  landArrow(ctx, true, L(1.2));
+  callout(ctx, 'Cold, dense air', XL + 40, zy(7.4), L(2.4), { color: AIRTX.cold });
+  callout(ctx, 'Warm, humid air', XR - 40, zy(4.6), L(2.4), { color: AIRTX.warm, align: 'right' });
+  windPush(ctx, XL + 110, zy(3.7), L(3));
+  windAhead(ctx, XR - 110, zy(6.4), L(3));
+  callout(ctx, 'Friction slows the air\nat the ground, so the\nfront gets a steep,\nrounded nose', XL + 200, zy(2.0), fr, { size: S.sm });
+  callout(ctx, 'Warm air is shoved\nup quickly', xc + 150, zy(2.9), L(5.2), { color: AIRTX.warm });
+  callout(ctx, 'The cumulonimbus keeps building as\nthe air rises and leans back, so rain\nfalls on both sides of the front', XR - 30, zy(8.9), L(9.4), { align: 'right', size: S.sm });
+  callout(ctx, 'Ahead: thunderstorms,\nshowers and gusty winds', XR - 40, zy(1.7), gu, { align: 'right', size: S.sm, color: '#7a4a00' });
+  callout(ctx, 'Behind it: cooler, drier\nair and clearing skies', XL + 40, zy(5.0), cu, { size: S.sm });
+}
+cscene('cold', 'Cold front', S_COLD, [190, 'Scene 3 · Cold front', 'Cold air plows ahead', 'Dense cold air pushes under warmer air like a wedge. <b class="o">Friction</b> slows the air touching the ground, so the front gets a <b class="o">steep, rounded nose</b>. Warm air is shoved up fast, and the cumulonimbus keeps growing as it rises, so rain falls <b class="o">on both sides</b> of the front.'],
+  function (t, ctx) { coldScene(ctx, t); });
+
+// ---------- scene 4: warm front (wide) ----------
+cscene('warm', 'Warm front', S_WARM, [0, 'Scene 4 · Warm front', 'Warm air glides up', 'Warm air is lighter, so it can\'t push the cold air away. It <b class="o">slides up over</b> a retreating wedge of cold air along a <b class="o">very gentle</b> slope, so the clouds spread far ahead. In winter the precipitation changes from <b class="o">snow</b> to <b class="o">sleet</b> to <b class="o">freezing rain</b> to rain as the front nears.'],
+  function (t, ctx) {
+    const B_WARM = 100, xW = 560, off = 35 * t, intro = eo(seg(t, 0.6, 2.4)), xw = xW - (1 - intro) * 760;
+    const L = a => eo(seg(t, a, a + 0.8));
+    artClip(ctx);
+    ctx.fillStyle = AIR.warm; ctx.fillRect(XL, YT, XR - XL, YB - YT);
+    fillPts(ctx, rightOf([[xw, GY], ...rampPts(xw, 0, 1, B_WARM)]), AIR.cold);
+    land(ctx, off);
+    const sc = L(13);   // stratocumulus in the warm air behind the front
+    for (let x = XL + 70; x < xw - 80; x += 92) stratocu(ctx, x, zy(1.9), sc);
+    const rev = [L(9), L(10.2), L(11.4), L(12.6)];
+    const pos = layered(ctx, xw, 0, 1, B_WARM, rev, 1, t, L(13.6), 0, true);
+    fog(ctx, xw - 40, xw + 40, L(12.2));
+    edge(ctx, [[xw, GY], ...rampPts(xw, 0, 1, B_WARM)], FC.warm, 1);
+    frontSym(ctx, xw, 'warm');
+    const fw = L(3.6);
+    flow(ctx, sp([[XL + 20, 0.4], [xw - 30, 0.5], [xw + 60, 1.2], ...[220, 420, 620, 820].map(u => [xw + u, u / B_WARM + 0.55])]), t, FC.warm, fw, 45);
+    flow(ctx, sp([[XL + 20, 1.2], [xw - 60, 1.3], [xw + 40, 1.9], ...[220, 420, 620].map(u => [xw + u, u / B_WARM + 1.8])]), t + 0.5, FC.warm, fw * 0.75, 45);
+    flow(ctx, sp([[xw + 320, 0.35], [XR - 40, 0.35]]), t, FC.cold, L(2.4), 25);
+    ctx.restore();
+    artFrame(ctx);
+    const S = sizes();
+    pill(ctx, 'Moving along with the front →', L(0.8));
+    landArrow(ctx, true, L(1.2));
+    callout(ctx, 'Warm, humid air', XL + 40, zy(9.4), L(2.4), { color: AIRTX.warm });
+    callout(ctx, 'Cold air, below freezing,\nslowly retreating', XR - 40, zy(2.6), L(2.4), { color: AIRTX.cold, align: 'right' });
+    windAhead(ctx, XR - 150, zy(7.2), L(3));
+    windPush(ctx, XL + 130, zy(3.2), L(3), null, true);
+    callout(ctx, 'Lighter warm air\ncan\'t push the cold\nair away, so it\nglides up over it', XL + 40, zy(7.6), fw * (1 - sm(seg(t, 14.4, 15))), { size: S.sm });
+    callout(ctx, 'Snow falls far ahead.\nCloser, warm air aloft\nmelts it: it refreezes\nas sleet, or freezes on\ncontact as freezing rain.\nAt the front: rain.', XL + 40, zy(7.6), L(15), { size: S.sm });
+    callout(ctx, 'A long, gentle slope: about 1 km\nup for every 100 to 200 km', XR - 30, zy(4.9), L(6.4), { size: S.sm, align: 'right' });
+    const lab = (k, txt, a, dy) => { if (pos[k]) callout(ctx, txt, pos[k][0], pos[k][1] + (dy || 0), a, { align: 'center', size: S.sm }); };
+    lab('ns', 'Nimbostratus', rev[0]); lab('as', 'Altostratus', rev[1], -6); lab('cs', 'Cirrostratus', rev[2], -30); lab('ci', 'Cirrus', rev[3], -20);
+    callout(ctx, 'Fog', xw - 52, GY - 18, L(12.2), { align: 'right', size: S.sm });
+    callout(ctx, 'Stratocumulus', XL + 250, zy(2.8), sc, { align: 'center', size: S.sm });
+    [['p_snow', 'Snow'], ['p_sleet', 'Sleet'], ['p_frz', 'Freezing rain'], ['p_rain', 'Rain']].forEach(([k, n], i) => { if (pos[k]) callout(ctx, n, pos[k], GY + (i % 2 ? 46 : 22), L(14.2), { align: 'center', size: S.sm, color: '#0d2f5c' }); });
+  }, null, true);
+
+// ---------- scene 5: dry line (wide) ----------
+const AIR_HOT = '#fbe5bd', AIR_HOTTER = '#f5c48d', DRY = '#9a5a1e';
+cscene('dry', 'Dry line', S_DRY, [0, 'Scene 5 · Dry line', 'No clouds, just a wind shift', 'A dry line works like a warm front, but the air on <b class="o">both sides is hot and dry</b>. The air still rises over the boundary, but it holds too little water to make clouds. When it passes, only the <b class="o">wind direction</b> and the <b class="o">temperature</b> change.'],
+  function (t, ctx) {
+    const B = 100, xD = 560, off = 35 * t, intro = eo(seg(t, 0.6, 2.4)), xd = xD - (1 - intro) * 760;
+    const L = a => eo(seg(t, a, a + 0.8));
+    const ramp = [[xd, GY], ...rampPts(xd, 0, 1, B)];
+    artClip(ctx);
+    ctx.fillStyle = AIR_HOTTER; ctx.fillRect(XL, YT, XR - XL, YB - YT);
+    fillPts(ctx, rightOf(ramp), AIR_HOT);
+    const sg = ctx.createRadialGradient(XR - 120, YT + 90, 10, XR - 120, YT + 90, 120);   // the sun
+    sg.addColorStop(0, 'rgba(255,214,90,1)'); sg.addColorStop(0.45, 'rgba(255,214,90,.9)'); sg.addColorStop(1, 'rgba(255,214,90,0)');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(XR - 120, YT + 90, 120, 0, TAU); ctx.fill();
+    land(ctx, off, true);
+    edge(ctx, ramp, DRY, 1);
+    // the dry-line symbol: open scallops
+    ctx.save(); ctx.strokeStyle = DRY; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(xd, GY, 16, Math.PI, 0); ctx.stroke(); ctx.restore();
+    const fw = L(3.6);
+    flow(ctx, sp([[XL + 20, 0.4], [xd - 30, 0.5], [xd + 60, 1.2], ...[220, 420, 620, 820].map(u => [xd + u, u / B + 0.55])]), t, '#b5651d', fw, 45);
+    flow(ctx, sp([[XL + 20, 1.2], [xd - 60, 1.3], [xd + 40, 1.9], ...[220, 420, 620].map(u => [xd + u, u / B + 1.8])]), t + 0.5, '#b5651d', fw * 0.75, 45);
+    ctx.restore();
+    artFrame(ctx);
+    const S = sizes();
+    pill(ctx, 'Moving along with the dry line →', L(0.8));
+    landArrow(ctx, true, L(1.2));
+    callout(ctx, 'Even hotter, dry air', XL + 40, zy(9.4), L(2.4), { color: '#8a3c12' });
+    callout(ctx, 'Hot, dry air', XR - 40, zy(2.6), L(2.4), { color: '#8a5a12', align: 'right' });
+    windAhead(ctx, XR - 150, zy(7.0), L(3), 'Wind along the line,\ntoward the north');
+    windPush(ctx, XL + 130, zy(3.2), L(3), 'Wind pushing\ninto the line', true);
+    callout(ctx, 'The air still rises over\nthe boundary, but it holds\ntoo little water to\nmake clouds', XL + 40, zy(7.6), L(4.6), { size: S.sm });
+    callout(ctx, 'When the dry line passes, only the\nwind direction and temperature change', XR - 30, zy(4.9), L(8), { size: S.sm, align: 'right' });
+    thermo(ctx, XL + 330, zy(5.4), 150, 0.88, '100 °F (38 °C)', L(6.2));
+    thermo(ctx, XR - 560, zy(3.7), 120, 0.68, '90 °F (32 °C)', L(6.2));
+  }, null, true);
+
+// ---------- scene 1: surface map (wide) ----------
+function mapFront(ctx, ctrl, type, side, prog) {
+  if (prog <= 0.01) return;
+  const all = smoothPts(ctrl, 90), cum = [0];
+  for (let i = 1; i < all.length; i++) cum.push(cum[i - 1] + Math.hypot(all[i][0] - all[i - 1][0], all[i][1] - all[i - 1][1]));
+  const Ltot = cum[cum.length - 1] * prog, pts = all.filter((p, i) => cum[i] <= Ltot);
+  if (pts.length < 2) return;
+  const col = type === 'cold' ? FC.cold : type === 'warm' ? FC.warm : type === 'occ' ? FC.occ : FC.cold;
+  line(ctx, pts, col, 6);
+  if (type === 'stat') line(ctx, pts, FC.warm, 6, [40, 40]);
+  for (let s = 22, k = 0; s < Ltot - 10; s += 40, k++) {
+    let i = 1; while (i < cum.length - 1 && cum[i] < s) i++;
+    const f = (s - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1), x = lerp(all[i - 1][0], all[i][0], f), y = lerp(all[i - 1][1], all[i][1], f);
+    const dx = all[i][0] - all[i - 1][0], dy = all[i][1] - all[i - 1][1], dl = Math.hypot(dx, dy) || 1, tx = dx / dl, ty = dy / dl;
+    let semi = type === 'warm' || ((type === 'occ' || type === 'stat') && k % 2 === 1), sd = side;
+    let c = col; if (type === 'stat') { c = semi ? FC.warm : FC.cold; if (semi) sd = -side; }
+    const nx = -ty * sd, ny = tx * sd;
+    if (semi) { const a0 = Math.atan2(ny, nx); ctx.beginPath(); ctx.arc(x, y, 12, a0 - Math.PI / 2, a0 + Math.PI / 2); ctx.closePath(); ctx.fillStyle = c; ctx.fill(); }
+    else fillPts(ctx, [[x - tx * 12, y - ty * 12], [x + nx * 20, y + ny * 20], [x + tx * 12, y + ty * 12]], c);
+  }
+}
+// longitude/latitude to picture coordinates for the wide map (about 24.5°N to 50°N)
+const LL = (lon, lat) => [960 + (lon + 96) * 20.6, 1030 - (lat - 24.5) * 25.8];
+const LLs = a => a.map(([lo, la]) => LL(lo, la));
+const MAP = {
+  pacific: LLs([[-150, 52], [-127.5, 52], [-128, 50.5], [-125.5, 49.3], [-124.7, 48.4], [-124.1, 46.9], [-123.9, 46.2], [-124.0, 44.6], [-124.5, 42.8], [-124.2, 41.0], [-123.8, 39.8], [-122.5, 37.8], [-121.9, 36.6], [-120.6, 34.6], [-118.5, 34.0], [-117.1, 32.5], [-116.4, 31.0], [-115.7, 29.8], [-114.2, 28.0], [-112.4, 26.5], [-111.0, 24.8], [-110.2, 23.5], [-150, 23.5]]),
+  atlantic: LLs([[-40, 52], [-59.5, 52], [-59.8, 47.6], [-61.5, 46.0], [-63.5, 46.2], [-64.8, 45.4], [-66.9, 44.8], [-68.8, 44.3], [-70.2, 43.6], [-70.8, 42.6], [-70.0, 41.8], [-71.4, 41.4], [-72.9, 41.1], [-74.0, 40.6], [-74.1, 39.7], [-74.9, 38.9], [-75.5, 38.4], [-75.9, 37.2], [-75.6, 35.9], [-75.5, 35.2], [-76.7, 34.7], [-78.0, 33.9], [-79.2, 33.2], [-80.9, 32.0], [-81.4, 30.7], [-81.3, 29.9], [-80.6, 28.4], [-80.0, 26.7], [-80.4, 25.2], [-81.1, 25.1], [-81.8, 26.1], [-82.7, 27.5], [-82.8, 28.9], [-83.7, 29.9], [-84.4, 30.0], [-85.4, 29.7], [-86.5, 30.4], [-88.0, 30.4], [-89.6, 30.2], [-89.4, 29.1], [-90.5, 29.1], [-91.8, 29.5], [-93.8, 29.7], [-94.8, 29.3], [-96.6, 28.3], [-97.4, 27.3], [-97.2, 25.9], [-97.7, 24.4], [-97.8, 23.5], [-40, 23.5]]),
+  borderN: LLs([[-123.3, 49], [-95.2, 49], [-94.8, 48.7], [-89.6, 48.0], [-84.8, 46.5], [-82.4, 45.3], [-82.5, 43], [-79.0, 43.4], [-76.8, 43.6], [-74.7, 45.0], [-71.5, 45.0], [-70.0, 46.7], [-69.2, 47.4], [-67.8, 47.1], [-67.8, 45.7], [-66.9, 44.8]]),
+  borderS: LLs([[-117.1, 32.5], [-114.7, 32.7], [-111.0, 31.3], [-108.2, 31.3], [-106.5, 31.8], [-104.5, 29.6], [-103.0, 29.0], [-101.4, 29.8], [-99.5, 27.5], [-97.4, 25.9]]),
+  lakes: [LLs([[-92.1, 46.7], [-89.6, 47.9], [-86.5, 48.7], [-84.8, 46.6], [-87.0, 46.4], [-90.0, 46.6]]),
+          LLs([[-87.8, 42.0], [-87.5, 45.8], [-85.0, 45.9], [-86.4, 43.5], [-86.3, 42.2]]),
+          LLs([[-84.5, 45.8], [-81.8, 45.9], [-80.2, 44.6], [-82.3, 43.1], [-83.4, 44.0]]),
+          LLs([[-83.4, 41.7], [-79.0, 42.9], [-79.8, 42.5], [-82.5, 41.4]]),
+          LLs([[-79.8, 43.3], [-76.2, 44.2], [-76.6, 43.3]])],
+  WL: LL(-120.5, 46), EL: LL(-78, 45),
+  wOcc: LLs([[-120.5, 46], [-118.5, 44.5], [-116.5, 42.6]]), wWarm: LLs([[-116.5, 42.6], [-110, 41.8], [-102, 42.3]]),
+  wCold: LLs([[-116.5, 42.6], [-118.6, 39.2], [-121.6, 35.6], [-125, 31.5]]),
+  stat: LLs([[-102, 42.3], [-96, 40.4], [-90.5, 37.4]]),
+  eOcc: LLs([[-78, 45], [-75.6, 43.6], [-74.6, 41.4]]), eWarm: LLs([[-74.6, 41.4], [-69, 40.4], [-62, 40.3]]),
+  eCold: LLs([[-74.6, 41.4], [-79.5, 38.6], [-85, 37.3], [-90.5, 37.4]]),
+};
+cscene('map', 'Surface map', S_MAP, [0, 'Scene 1 · Surface map', 'All the fronts on one map', 'Picture a storm, or <b class="o">mid-latitude cyclone</b>, near each coast, with a <b class="o">stationary front</b> stretched between them. Together they show every kind of front: cold, warm, stationary, and both kinds of occluded front. Near the west coast, mild ocean air often sits behind the cold front, making a <b class="o">warm-type</b> occlusion. Farther inland, the coldest air is usually behind it, making a <b class="o">cold type</b>.'],
+  function (t, ctx) {
+    const L = a => eo(seg(t, a, a + 0.9)), S = sizes();
+    artClip(ctx);
+    ctx.fillStyle = '#eef2e3'; ctx.fillRect(XL, YT, XR - XL, YB - YT);
+    // warm air south of the chain of fronts
+    const chain = [LL(-126, 23), ...smoothPts(MAP.wCold, 30).reverse(), ...smoothPts(MAP.wWarm, 30), ...smoothPts(MAP.stat, 20), ...smoothPts(MAP.eCold, 30).reverse(), ...smoothPts(MAP.eWarm, 30), LL(-45, 40.3), LL(-45, 23)];
+    ctx.save(); ctx.globalAlpha = 0.6 * L(5.6); fillPts(ctx, chain, AIR.warm); ctx.restore();
+    [MAP.pacific, MAP.atlantic, ...MAP.lakes].forEach(o => { fillPts(ctx, o, '#cfe4f5'); ctx.save(); ctx.strokeStyle = '#8fb3cf'; ctx.lineWidth = 2.5; ctx.beginPath(); o.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.stroke(); ctx.restore(); });
+    line(ctx, MAP.borderN, '#a3ad96', 2.5, [10, 8]); line(ctx, MAP.borderS, '#a3ad96', 2.5, [10, 8]);
+    const ol = (txt, lo, la, al) => { const q = LL(lo, la); callout(ctx, txt, q[0], q[1], 1, { color: '#2a5d93', size: S.sm, align: al || 'center' }); };
+    ol('Pacific\nOcean', -131, 37); ol('Atlantic\nOcean', -63, 33); ol('Gulf of Mexico', -90, 26.4);
+    const lw = L(1.2), cL = (txt, p, col) => callout(ctx, txt, p[0], p[1] - 12, lw, { color: col, size: S.big * 1.4, align: 'center' });
+    cL('L', MAP.WL, FC.warm); cL('L', MAP.EL, FC.warm); cL('H', LL(-97, 47.6), FC.cold);
+    mapFront(ctx, MAP.wCold, 'cold', -1, L(2.0)); mapFront(ctx, MAP.wWarm, 'warm', -1, L(2.6)); mapFront(ctx, MAP.wOcc, 'occ', -1, L(3.2));
+    mapFront(ctx, MAP.stat, 'stat', 1, L(3.8));
+    mapFront(ctx, MAP.eCold, 'cold', -1, L(4.4)); mapFront(ctx, MAP.eWarm, 'warm', -1, L(5.0)); mapFront(ctx, MAP.eOcc, 'occ', -1, L(5.0));
+    ctx.restore();
+    artFrame(ctx);
+    const o = (txt, lo, la, a, col, al) => { const q = LL(lo, la); callout(ctx, txt, q[0], q[1], a, { color: col, size: S.sm, align: al || 'center' }); };
+    o('Cold front', -116.5, 36.3, L(2.4), FC.cold, 'left');
+    o('Warm front', -109.5, 43.2, L(3.0), FC.warm);
+    o('Warm-occluded front', -112.5, 46.0, L(3.6), FC.occ);
+    o('Stationary front', -97.5, 38.6, L(4.2), FC.cold);
+    o('Cold front', -82.5, 36.0, L(4.8), FC.cold);
+    o('Warm front', -66, 38.8, L(5.4), FC.warm);
+    o('Cold-occluded front', -70.5, 46.6, L(5.4), FC.occ);
+    o('Warm air', -100, 31.5, L(6), AIRTX.warm);
+    o('Cold air', -88, 45.4, L(6), AIRTX.cold);
+  }, null, true);
+
+// ---------- scene 2: winds around fronts ----------
+cscene('winds', 'Winds around fronts', S_WIND, [170, 'Scene 2 · Winds around fronts', 'Which way the wind blows', 'Ahead of a front, the wind blows <b class="o">along</b> the front, toward the north. Behind it, the wind blows <b class="o">into</b> the front and drives it forward. A stationary front is the exception: winds blow along it on <b class="o">both sides, in opposite directions</b>.'],
+  function (t, ctx) {
+    const L = a => eo(seg(t, a, a + 0.8)), S = sizes();
+    artClip(ctx);
+    ctx.fillStyle = '#f4f7fb'; ctx.fillRect(XL, YT, XR - XL, YB - YT);
+    const panel = (y0, warmFirst) => { rr(ctx, XL + 16, y0, XR - XL - 32, 400, 16); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.strokeStyle = '#d6dde8'; ctx.lineWidth = 2; ctx.stroke(); };
+    panel(YT + 16); panel(YT + 456);
+    const u = [0.9, -0.43], nSE = [0.43, 0.9];   // along the front (toward the NE), and across it (toward the SE)
+    const P = (a, b, s, d) => [a[0] + (b[0] - a[0]) * s + nSE[0] * d, a[1] + (b[1] - a[1]) * s + nSE[1] * d];
+    // top: a moving front
+    const A1 = [1150, 460], B1 = [1760, 175], a1 = L(1);
+    ctx.save(); ctx.globalAlpha *= a1;
+    fillPts(ctx, [A1, B1, [XR - 16, B1[1] - 80], [XR - 16, YT + 416], [A1[0], YT + 416]].map(q => q), 'rgba(248,215,198,.6)');
+    mapFront(ctx, [A1, B1], 'cold', 1, 1);
+    ctx.restore();
+    [0.3, 0.55, 0.8].forEach((s, i) => {
+      const p = P(A1, B1, s, 95), q = [p[0] + u[0] * 130, p[1] + u[1] * 130];
+      flow(ctx, [p, q], t + i * 0.3, FC.warm, L(2), 40);
+      const r = P(A1, B1, s, -125), w = P(A1, B1, s, -32);
+      flow(ctx, [r, w], t + i * 0.3, FC.cold, L(3.2), 40);
+    });
+    callout(ctx, 'Cold, warm and occluded fronts', XL + 40, YT + 60, a1, { size: S.sm });
+    callout(ctx, 'Ahead: wind blows along\nthe front, toward the north', XR - 40, YT + 372, L(2), { size: S.sm, color: AIRTX.warm, align: 'right' });
+    callout(ctx, 'Behind: wind blows into\nthe front and drives it', XL + 40, YT + 150, L(3.2), { size: S.sm, color: AIRTX.cold });
+    // bottom: a stationary front
+    const A2 = [1150, 900], B2 = [1760, 615], a2 = L(6);
+    ctx.save(); ctx.globalAlpha *= a2;
+    fillPts(ctx, [A2, B2, [XR - 16, B2[1] - 80], [XR - 16, YT + 856], [A2[0], YT + 856]], 'rgba(248,215,198,.6)');
+    mapFront(ctx, [A2, B2], 'stat', 1, 1);
+    ctx.restore();
+    [0.3, 0.55, 0.8].forEach((s, i) => {
+      const p = P(A2, B2, s, 80); flow(ctx, [p, [p[0] + u[0] * 130, p[1] + u[1] * 130]], t + i * 0.3, FC.warm, L(7), 40);
+      const r = P(A2, B2, s, -80); flow(ctx, [[r[0] + u[0] * 130, r[1] + u[1] * 130], r], t + i * 0.3, FC.cold, L(7), 40);
+    });
+    callout(ctx, 'Stationary front', XL + 40, YT + 500, a2, { size: S.sm });
+    callout(ctx, 'Winds blow along the\nfront in opposite directions,\nso neither side pushes', XL + 40, YT + 590, L(7.6), { size: S.sm });
+    // compass
+    arrow(ctx, XL + 70, YT + 400, XL + 70, YT + 320, C.navy, 6); label(ctx, 'N', XL + 100, YT + 330, C.navy, S.fs, 'left');
+    ctx.restore();
+    artFrame(ctx);
+  });
+
+// ---------- recap (six rows) ----------
+scene('recap', 'Recap', 8, {
+  init(root) {
+    root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas>' +
+      '<div class="words" style="left:140px;top:300px;width:640px"><p class="tag">Recap</p><h2 class="line">Five kinds of fronts</h2><div class="rule"></div>' +
+      '<p class="sub">The shape of each front comes from which air is denser and which air is moving.</p></div></div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style; this.subS = root.querySelector('.sub').style;
+    this.ctx = root.querySelector('canvas').getContext('2d');
+  },
+  render(t) {
+    setArt(false);
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.2);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.8, 1.3)) + ')'; subIn(this.subS, t, 1.1);
+    const ctx = this.ctx; clear(ctx);
+    const rows = [['cold', 'Cold front', 'Steep, rounded nose. Fast lifting:', 'cumulonimbus, rain on both sides.'],
+      ['warm', 'Warm front', 'Long, gentle slope. Slow lifting:', 'layered clouds and steady rain.'],
+      ['stat', 'Stationary front', 'Winds blow along it, so it stalls:', 'rain on the same place for days.'],
+      ['cocc', 'Cold-occluded front', 'Coldest air behind digs under', 'the cool air ahead.'],
+      ['wocc', 'Warm-occluded front', 'Milder air behind rides over', 'the coldest air ahead.']];
+    const fs = fpx(15, 30, 48), sm2 = fpx(12, 24, 38);
+    rows.forEach(([k, n, a, b], i) => {
+      const y = 150 + i * 176, p = eo(seg(t, 1.2 + i * 0.5, 1.9 + i * 0.5));
+      if (p <= 0) return;
+      ctx.save(); ctx.globalAlpha = p; ctx.translate((1 - p) * 30, 0);
+      rr(ctx, 860, y - 70, 1020, 150, 16); ctx.fillStyle = '#f4f6fa'; ctx.fill(); ctx.strokeStyle = '#cfd6e2'; ctx.lineWidth = 2; ctx.stroke();
+      const x0 = 900, x1 = 1080, yy = y + 10;
+      if (k === 'dry') {
+        line(ctx, [[x0, yy], [x1, yy]], DRY, 6);
+        [x0 + 30, x0 + 90, x0 + 150].forEach(x => { ctx.save(); ctx.strokeStyle = DRY; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(x, yy, 15, Math.PI, 0); ctx.stroke(); ctx.restore(); });
+      } else {
+        const col = k === 'cold' ? FC.cold : k === 'warm' ? FC.warm : k === 'stat' ? FC.cold : FC.occ;
+        line(ctx, [[x0, yy], [x1, yy]], col, 6);
+        if (k === 'stat') line(ctx, [[x0 + 90, yy], [x1, yy]], FC.warm, 6);
+        [x0 + 30, x0 + 90, x0 + 150].forEach((x, j) => {
+          const tri = k === 'cold' || ((k === 'cocc' || k === 'wocc') && j % 2 === 0) || (k === 'stat' && j === 0);
+          if (tri) fillPts(ctx, [[x - 16, yy], [x + 16, yy], [x, yy - 26]].map(q => k === 'stat' ? [q[0], 2 * yy - q[1]] : q), k === 'stat' ? FC.cold : col);
+          else { ctx.beginPath(); ctx.arc(x, yy, 15, Math.PI, 0); ctx.closePath(); ctx.fillStyle = k === 'stat' ? FC.warm : col; ctx.fill(); }
+        });
+      }
+      label(ctx, n, 1120, y - 24, C.navy, fs, 'left');
+      label(ctx, a, 1120, y + 16, C.ink, sm2, 'left', 400);
+      label(ctx, b, 1120, y + 46, C.ink, sm2, 'left', 400);
+      ctx.restore();
+    });
+  },
+});
+
+cscene('stat', 'Stationary front', S_STAT, [190, 'Scene 6 · Stationary front', 'Neither side wins', 'The two air masses push with about the same strength, and the winds blow <b class="o">along</b> the front instead of across it. The front <b class="o">stalls</b>. Warm air keeps gliding up over the cold air, so the rain falls on the same places for days.'],
+  function (t, ctx) {
+    const xS = 1440, L = a => eo(seg(t, a, a + 0.8));
+    artClip(ctx);
+    ctx.fillStyle = AIR.warm; ctx.fillRect(XL, YT, XR - XL, YB - YT);
+    const surf = [[xS, GY], ...rampPts(xS, 0, -1, B_STAT)];
+    fillPts(ctx, leftOf(surf), AIR.cold);
+    land(ctx, 0);
+    const rv = [L(7.2), L(8.2)];
+    layered(ctx, xS, 0, -1, B_STAT, [rv[0], rv[1], 0, 0], 1, t, L(9.4), 2);
+    line(ctx, surf, '#ffffff', 9); line(ctx, surf, FC.warm, 5); line(ctx, surf, FC.cold, 5, [26, 26]);
+    frontSym(ctx, xS, 'stat');
+    flow(ctx, sp([[XR - 30, 0.4], [xS + 100, 0.45], [xS - 40, 1.3], ...[180, 330, 480].map(u => [xS - u, u / B_STAT + 0.6])]), t, FC.warm, L(6.4), 30);
+    ctx.restore();
+    artFrame(ctx);
+    const S = sizes();
+    pill(ctx, 'The front is not moving', L(0.8));
+    landArrow(ctx, false, L(1.2));
+    callout(ctx, 'Cold air', XL + 40, zy(7.0), L(1.8), { color: AIRTX.cold });
+    callout(ctx, 'Warm air', XR - 40, zy(6.4), L(1.8), { color: AIRTX.warm, align: 'right' });
+    windSym(ctx, XL + 120, zy(4.0), false, 'Wind out of\nthe screen', L(3.0));
+    windSym(ctx, XR - 150, zy(5.4), true, 'Wind into\nthe screen', L(3.0));
+    callout(ctx, 'Winds blow along the front,\nnot across it, so neither air\nmass can push the other away', XR - 40, zy(9.3), L(4.2), { align: 'right', size: S.sm });
+    callout(ctx, 'Warm air slowly glides\nup over the cold air', XR - 40, zy(1.6), L(6.4), { size: S.sm, color: AIRTX.warm, align: 'right' });
+    callout(ctx, 'Rain on the same\nplaces, day after day', xS - 270, zy(1.5), L(10.4), { size: S.sm, align: 'right' });
+  });
+
+function occScene(ctx, t, s) {
+  const xO = 1250, off = 40 * t, L = a => eo(seg(t, a, a + 0.8));
+  const tm = 8, gap = Math.max(0, 1 - eio(seg(t, 1.2, tm))) * 390, xc = xO - gap;
+  const h = 2.5 * eo(seg(t, tm, tm + 3.5)), merged = t >= tm;
+  const W = s < 0 ? AIR.coldest : AIR.cool, E = s < 0 ? AIR.cool : AIR.coldest;
+  const ghostA = merged ? 0.38 : 1, pre = 1 - sm(seg(t, tm - 0.2, tm + 1.4)), post = sm(seg(t, tm + 0.4, tm + 2.4));
+  artClip(ctx);
+  ctx.fillStyle = AIR.warm; ctx.fillRect(XL, YT, XR - XL, YB - YT);
+  let G = null;
+  if (!merged) {
+    fillPts(ctx, leftOf(domePts(xc)), W);
+    fillPts(ctx, rightOf([[xO, GY], ...rampPts(xO, 0, 1, B_RAMP)]), E);
+  } else {
+    G = occGeo(xO, h, s);
+    fillPts(ctx, leftOf([...G.low, ...G.up]), W);
+    fillPts(ctx, rightOf([...G.low, ...G.ws]), E);
+  }
+  land(ctx, off);
+  // clouds: before the merge, a cold front's cumulonimbus and a warm front's layers; afterwards, see-through clouds
+  if (pre > 0.01) {
+    layered(ctx, xO, 0, 1, B_RAMP, [L(2), L(2.3), L(2.6), L(2.9)], pre, t, L(3.2) * pre);
+    cumulonimbus(ctx, xc + 40, zy(1.7), zy(9.6), L(2.6), pre, 1);
+    rain(ctx, xc - 14, xc + 94, zy(1.7) + 4, t, 10, L(3.6) * pre, 2.2);
+  }
+  if (post > 0.01 && G) {
+    if (s < 0) { layered(ctx, G.Px, h, 1, B_RAMP, [1, 1, 1, 1], post * ghostA, t, post * 0.8); cumulonimbus(ctx, xO + 30, zy(1.7), zy(7.8), 1, post * 0.3, 1); rain(ctx, xO - 14, xO + 74, zy(1.7) + 4, t, 10, post * 0.8, 2); }
+    else { layered(ctx, xO, 0, 1, B_RAMP, [1, 1, 1, 1], post * ghostA, t, post * 0.8); cumulonimbus(ctx, G.Px - 10, zy(h + 0.2), zy(Math.min(h + 6.4, 9.8)), 1, post * 0.3, 1); }
+  }
+  cumulus(ctx, (merged ? xO : xc) - 360, zy(1.9), 0.9, L(3)); cumulus(ctx, (merged ? xO : xc) - 520, zy(2.2), 0.75, L(3));
+  // frontal surfaces on top of the clouds
+  if (!merged) { edge(ctx, domePts(xc), FC.cold, 1); edge(ctx, [[xO, GY], ...rampPts(xO, 0, 1, B_RAMP)], FC.warm, 1); frontSym(ctx, xc, 'cold'); frontSym(ctx, xO, 'warm'); }
+  else {
+    edge(ctx, G.low, FC.occ, 1); edge(ctx, [[G.Px, G.Py], ...G.up], FC.cold, 1); edge(ctx, [[G.Px, G.Py], ...G.ws], FC.warm, 1);
+    frontSym(ctx, xO, 'occ'); disc(ctx, G.Px, G.Py, 11, FC.occ, '#ffffff', 4);
+  }
+  // air flow
+  const fa = L(2.2);
+  if (!merged) {
+    flow(ctx, sp([[xc - 300, 0.32], [xc - 50, 0.35]]), t, FC.cold, fa, 90);
+    if (gap > 90) flow(ctx, sp([[xO - 30, 0.5], [xc + 60, 0.7], [xc + 26, 2.6], [xc - 30, 5.6], [xc - 140, 7.6]]), t, FC.warm, fa * clamp01((gap - 90) / 120));
+    flow(ctx, sp([[xO - 20, 1.0], [xO + 120, 2.6], ...[300, 480].map(u => [xO + u, u / B_RAMP + 0.9])]), t, FC.warm, fa, 45);
+  } else {
+    const a = L(tm + 1);
+    flow(ctx, sp([[G.Px + 20, h + 0.8], ...[160, 320, 480].map(u => [G.Px + u, h + u / B_RAMP + 0.7])]), t, FC.warm, a, 45);
+    if (s < 0) {
+      flow(ctx, sp([[XL + 40, 0.32], [xO - 180, 0.32], [xO - 40, 0.35]]), t, '#163f78', a, 90);
+      flow(ctx, sp([[xO + 300, 0.4], [xO + 60, 0.45], [xO + 14, h * 0.45], [G.Px + 20, h + 0.15]]), t, '#4f86c6', a, 50);
+    } else {
+      flow(ctx, sp([[XL + 40, 0.4], [xO - 120, 0.45], [xO + 20, 0.75], [xO + (G.Px - xO) * 0.6, h * 0.6 + 0.4], [G.Px - 30, h + 0.15]]), t, '#4f86c6', a, 50);
+    }
+  }
+  ctx.restore();
+  artFrame(ctx);
+  const S = sizes();
+  pill(ctx, 'Moving along with the warm front →', L(0.8));
+  landArrow(ctx, true, L(1.2));
+  const nW = s < 0 ? 'Coldest air' : 'Cool air', nE = s < 0 ? 'Cool air' : 'Coldest air';
+  callout(ctx, nW, XL + 40, zy(7.6), L(1.6), { color: AIRTX.coldest });
+  callout(ctx, nE, XR - 40, zy(1.4), L(1.6), { color: AIRTX.cool, align: 'right' });
+  windAhead(ctx, XR - 120, zy(3.3), L(2.6));
+  windPush(ctx, XL + 130, zy(3.0), L(2.6));
+  if (!merged) callout(ctx, 'Warm air', (xc + xO) / 2, zy(0.8), L(1.6) * clamp01((gap - 60) / 100), { color: AIRTX.warm, align: 'center' });
+  // the race
+  const ra = L(2.4) * (1 - sm(seg(t, tm - 1, tm)));
+  if (ra > 0.01) {   // ground speeds, drawn under each front
+    ctx.save(); ctx.globalAlpha *= ra; const y = GY + 30;
+    arrow(ctx, xc - 30, y, xc + 120, y, FC.cold, 7); arrow(ctx, xO + 30, y, xO + 105, y, FC.warm, 7); ctx.restore();
+    callout(ctx, 'Fast', xc - 40, y, ra, { align: 'right', color: FC.cold, size: S.sm });
+    callout(ctx, 'Slower', xO + 120, y, ra, { color: FC.warm, size: S.sm });
+  }
+  callout(ctx, 'The cold front moves about twice as fast,\nso it catches up and squeezes the warm air', XR - 40, zy(5.0), L(3.4) * (1 - sm(seg(t, tm - 0.5, tm + 0.5))), { align: 'right', size: S.sm });
+  callout(ctx, 'The fronts meet: occlusion!', 1360, zy(5.2), L(tm) * (1 - sm(seg(t, tm + 3, tm + 4))), { align: 'center', size: S.big, color: FC.occ });
+  const why = s < 0 ? 'The air behind is colder and\ndenser, so it digs underneath,\nlifting the cool air and the warm air'
+                    : 'The air behind is milder and\nlighter, so it rides up over\nthe colder air, lifting the warm air';
+  callout(ctx, why, XL + 40, zy(5.2), L(tm + 4), { size: S.sm });
+  if (G) callout(ctx, 'Warm air lifted off the ground', G.Px + 60, zy(Math.min(h + 6.9, 10.1)), L(tm + 4.6), { color: AIRTX.warm, size: S.sm });
+}
+cscene('cocc', 'Cold-occluded front', S_OCC, [170, 'Scene 7 · Cold-occluded front', 'The coldest air digs under', 'A fast cold front <b class="o">catches up</b> to a slower warm front. Here the air behind the cold front is the <b class="o">coldest and densest</b>, so it slides under the cool air ahead and lifts it. The warm air between them is pushed up off the ground.'],
+  function (t, ctx) { occScene(ctx, t, -1); });
+cscene('wocc', 'Warm-occluded front', S_OCC, [170, 'Scene 8 · Warm-occluded front', 'The milder air rides over', 'Again the cold front <b class="o">catches up</b> to the warm front. This time the air ahead of the warm front is colder, so the incoming air is <b class="o">lighter</b>. It rides up over the coldest air, like warm air at a warm front, and the warm air is lifted aloft.'],
+  function (t, ctx) { occScene(ctx, t, 1); });
+
+scene('title', 'How weather fronts form', 6, {
+  init(root) {
+    root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas>' +
+      '<div class="words" style="left:140px;top:300px;width:640px">' +
+      '<p class="tag">Introduction to meteorology</p><h1 class="line" style="font-size:100px">How weather fronts form</h1>' +
+      '<div class="rule"></div><p class="sub">Five fronts, seen from the side as the land rolls by beneath them</p></div></div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style; this.subS = root.querySelector('.sub').style;
+    this.ctx = root.querySelector('canvas').getContext('2d');
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.1);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.9, 1.4)) + ')';
+    subIn(this.subS, t, 1.2);
+    const ctx = this.ctx; clear(ctx); setArt(false);
+    ctx.globalAlpha = eo(seg(t, 0.3, 1.5)); coldScene(ctx, t + 4, { loop: true }); ctx.globalAlpha = 1;
+  },
+});
+// scene order
+const ORDER = ['title', 'map', 'winds', 'cold', 'warm', 'dry', 'stat', 'cocc', 'wocc', 'recap'];
+SCENES.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+
+// ---------- scene text (shown on screen and read by screen readers) ----------
+const META = {
+  title: { still: 6, cap: { tag: 'Introduction to meteorology', line: 'How weather fronts form', sub: 'Five fronts, seen from the side as the land rolls by beneath them' },
+    desc: 'This animation shows how five kinds of weather fronts form: cold, warm, stationary, cold-occluded and warm-occluded. Each scene is a side view. The camera moves along with the front, so the front holds still while the land passes underneath. The picture shows a cold front: a rounded dome of cold air on the left, warm air being pushed up over it, and a tall cumulonimbus cloud.' },
+  cold: { still: S_COLD, cap: { tag: 'Scene 1 · Cold front', line: 'Cold air plows ahead', sub: 'Dense cold air pushes under warmer air like a wedge. Friction slows the air touching the ground, so the front gets a steep, rounded nose. Warm air is shoved up fast and builds towering cumulonimbus clouds.' },
+    desc: 'A side view, moving along with a cold front, so the front holds still and fields, trees and houses slide by from east to west underneath. The cloud base sits above the rooftops, and the rain falls in front of the houses and trees. A dome of cold, dense air fills the left side, and warm, humid air fills the right. Arrows near the ground in the cold air are short, and arrows higher up are longer: friction with the ground slows the air at the bottom, so the front gets a steep, rounded nose. Warm air streams in from the right, is shoved almost straight up at the nose, and arcs back over the top of the cold dome. A cumulonimbus cloud grows where the warm air rises, with an anvil at its top and heavy rain beneath it. Behind the front, small fair-weather cumulus clouds float in cooler, drier, clearing air.' },
+  warm: { still: S_WARM, cap: { tag: 'Scene 2 · Warm front', line: 'Warm air glides up', sub: 'Warm air is lighter, so it can\'t push the cold air away. It slides up over a retreating wedge of cold air. The slope is very gentle, so the clouds spread far ahead of the front. In winter, the precipitation changes from snow to sleet to freezing rain to rain as the front nears.' },
+    desc: 'A side view, moving along with a warm front, so the land slides slowly by underneath. A thin wedge of cold air lies on the right, slowly retreating to the east. Warm, humid air on the left flows toward it. Because warm air is lighter, it cannot push the cold air away, so it glides up over the wedge along a long, gentle slope, about 1 kilometer up for every 100 to 200 kilometers across. As the air climbs and cools, clouds form along the slope: thick nimbostratus near the front, then altostratus, then thin cirrostratus, and wispy cirrus highest and farthest ahead. The cold air at the ground is below freezing. Far ahead of the front, snow falls from the nimbostratus. Closer to the front, the snow melts in the warm air aloft: where the cold layer below is deep it refreezes into sleet, and where the cold layer is shallow the drops freeze on contact as freezing rain, coating the ground with ice. Right at the front, rain falls.' },
+  stat: { still: S_STAT, cap: { tag: 'Scene 6 · Stationary front', line: 'Neither side wins', sub: 'The two air masses push with about the same strength, and the winds blow along the front instead of across it. The front stalls. Warm air keeps gliding up over the cold air, so the rain falls on the same places for days.' },
+    desc: 'A side view of a stationary front. The front is not moving, so the land stays still too. Cold air lies on the left and warm air on the right. Symbols show the wind blowing along the front, out of the screen on the cold side and into the screen on the warm side, so neither air mass pushes the other away. Warm air slowly glides up over the cold air along a gentle slope, making nimbostratus and altostratus clouds. Rain keeps falling on the same spot, which is how stationary fronts can cause flooding.' },
+  cocc: { still: S_OCC, cap: { tag: 'Scene 7 · Cold-occluded front', line: 'The coldest air digs under', sub: 'A fast cold front catches up to a slower warm front. Here the air behind the cold front is the coldest and densest, so it slides under the cool air ahead and lifts it. The warm air between them is pushed up off the ground. The clouds turn see-through so you can watch the fronts.' },
+    desc: 'A side view, moving along with a warm front. Cool air lies ahead of the warm front on the right, and the coldest air lies behind a cold front on the left, with warm air between them at the ground. Arrows show the cold front moving about twice as fast as the warm front, so it catches up, squeezing the warm air between them. When the two fronts meet, the coldest air behind the cold front, being the densest, digs underneath the cool air and lifts it. The warm air is lifted completely off the ground. The clouds become see-through so the shapes of the fronts stay visible: the blue cold-front dome continues under the cool air, and the warm air sits high above.' },
+  wocc: { still: S_OCC, cap: { tag: 'Scene 8 · Warm-occluded front', line: 'The milder air rides over', sub: 'Again the cold front catches up to the warm front. This time the air ahead of the warm front is colder, so the incoming air is lighter. It rides up over the coldest air, like warm air at a warm front, and the warm air is lifted aloft. The clouds turn see-through so you can watch the fronts.' },
+    desc: 'A side view, moving along with a warm front. This time the coldest air lies ahead of the warm front on the right, and cool air lies behind the cold front on the left, with warm air between them. The cold front moves about twice as fast and catches up. When the fronts meet, the cool air behind the cold front is lighter than the coldest air ahead, so it rides up the gentle slope over it, the way warm air does at a warm front. The warm air is lifted off the ground and sits above both. The clouds become see-through so the shapes stay visible: the red ramp runs from the ground up under the cool air, and the blue cold front sits aloft.' },
+  recap: { still: 8, cap: { tag: 'Recap', line: 'Five kinds of fronts', sub: 'The shape of each front comes from which air is denser and which air is moving.' },
+    desc: 'Recap. Cold front: a steep, rounded nose and fast lifting, with cumulonimbus clouds and heavy showers. Warm front: a long, gentle slope and slow lifting, with layered clouds and steady rain. Stationary front: winds blow along it, so it stalls, and rain falls on the same places for days. Cold-occluded front: the coldest air behind digs under the cool air ahead. Warm-occluded front: the milder air behind rides over the coldest air ahead.' },
+};
+
+// text for the added and changed scenes
+Object.assign(META, {
+  map: { still: S_MAP, cap: { tag: 'Scene 1 · Surface map', line: 'All the fronts on one map', sub: 'Picture a storm, or mid-latitude cyclone, near each coast, with a stationary front stretched between them. Together they show every kind of front: cold, warm, stationary, and both kinds of occluded front. Near the west coast, mild ocean air often sits behind the cold front, making a warm-type occlusion. Farther inland, the coldest air is usually behind it, making a cold type.' },
+    desc: 'A surface weather map of the United States, with the Pacific Ocean, the Atlantic Ocean, the Gulf of Mexico and the Great Lakes. A low-pressure center sits over the Pacific Northwest and another over the Northeast, with high pressure between them over the northern Plains. From each low, an occluded front runs out to a point where a warm front heads east and a cold front trails to the southwest. Warm air, tinted red, fills the area south of the fronts. A stationary front connects the western storm\'s warm front to the eastern storm\'s cold front. The western storm\'s occluded front is labeled warm-occluded, since mild ocean air often sits behind its cold front, and the eastern storm\'s is labeled cold-occluded, since the coldest air is often behind it farther inland.' },
+  winds: { still: S_WIND, cap: { tag: 'Scene 2 · Winds around fronts', line: 'Which way the wind blows', sub: 'Ahead of a front, the wind blows along the front, toward the north. Behind it, the wind blows into the front and drives it forward. A stationary front is the exception: winds blow along it on both sides, in opposite directions.' },
+    desc: 'Two maps of a front running from southwest to northeast, with north at the top. In the first, for cold, warm and occluded fronts, red arrows on the side ahead of the front point from southwest to northeast, along the front. Blue arrows on the side behind it point from northwest to southeast, straight into the front, pushing it along. In the second, a stationary front, the arrows on both sides run along the front: from southwest to northeast on the warm side and from northeast to southwest on the cold side, so neither side pushes the other.' },
+  dry: { still: S_DRY, cap: { tag: 'Scene 5 · Dry line', line: 'No clouds, just a wind shift', sub: 'A dry line works like a warm front, but the air on both sides is hot and dry. The air still rises over the boundary, but it holds too little water to make clouds. When it passes, only the wind direction and the temperature change.' },
+    desc: 'A wide side view, moving along with a dry line over tan, dry farmland under a hot sun. Even hotter, dry air on the left slides up a gentle ramp over hot, dry air on the right, just like a warm front. Arrows show the air rising along the ramp, but no clouds form because the air holds too little water. A wind symbol ahead of the line shows wind blowing along it, toward the north, and an arrow behind it shows wind pushing into the line from the west. Two thermometers show the temperature rising from 90 degrees Fahrenheit (32 degrees Celsius) ahead of the line to 100 degrees Fahrenheit (38 degrees Celsius) behind it.' },
+});
+META.title.cap.sub = 'Five fronts, seen from the side as the land rolls by beneath them';
+META.title.desc = META.title.desc.replace('five kinds of weather fronts form: cold, warm, stationary, cold-occluded and warm-occluded.', 'five kinds of weather fronts form: cold, warm, stationary, cold-occluded and warm-occluded. It starts with a weather map showing all five fronts and a look at the winds around them.');
+META.cold.cap = { tag: 'Scene 3 · Cold front', line: 'Cold air plows ahead', sub: 'Dense cold air pushes under warmer air like a wedge. Friction slows the air touching the ground, so the front gets a steep, rounded nose. Warm air is shoved up fast, and the cumulonimbus keeps growing as it rises, so rain falls on both sides of the front.' };
+META.cold.desc = 'A side view, moving along with a cold front, so the front holds still and fields, trees and houses slide by from east to west underneath. A dome of cold, dense air fills the left side, and warm, humid air fills the right. Behind the front, an arrow shows wind pushing into the front; ahead of it, a symbol shows wind blowing along the front, toward the north. Arrows near the ground in the cold air are short, and arrows higher up are longer: friction with the ground slows the air at the bottom, so the front gets a steep, rounded nose. Warm air streams in from the right, is shoved almost straight up at the nose, and arcs back over the top of the cold dome. A cumulonimbus cloud builds where the warm air rises and keeps growing as the air climbs, so it leans back over the cold dome. Its base sits just above the rooftops, and rain falls in front of the houses on both sides of the front: heavy rain just ahead and just behind it, and lighter rain farther behind. Ahead of the front, lightning flashes and gust arrows show thunderstorms, showers and gusty winds. Behind the front, small fair-weather cumulus clouds float in cooler, drier, clearing air.';
+META.warm.cap = { tag: 'Scene 4 · Warm front', line: 'Warm air glides up', sub: 'Warm air is lighter, so it can\'t push the cold air away. It slides up over a retreating wedge of cold air along a very gentle slope, so the clouds spread far ahead. In winter the precipitation changes from snow to sleet to freezing rain to rain as the front nears.' };
+META.warm.desc = 'A wide side view, moving along with a warm front, so the land slides slowly by underneath. A thin wedge of cold, below-freezing air lies on the right, slowly retreating to the east. Warm, humid air on the left flows toward it. Behind the front, an arrow shows wind pushing into the front; ahead of it, a symbol shows wind blowing along the front, toward the north. Because warm air is lighter, it cannot push the cold air away, so it glides up over the wedge along a long, gentle slope, about 1 kilometer up for every 100 to 200 kilometers across. As the air climbs and cools, clouds form along the slope: thick nimbostratus near the front, then altostratus, then thin cirrostratus, and wispy cirrus highest and farthest ahead. Fog hugs the ground right where the front meets it, and lumpy stratocumulus clouds float in the warm air behind the front. Far ahead of the front, snow falls from the nimbostratus. Closer to the front, the snow melts in the warm air aloft: where the cold layer below is deep it refreezes into sleet, and where the cold layer is shallow the drops freeze on contact as freezing rain, coating the ground with ice. Right at the front, rain falls.';
+META.cocc.desc += ' Behind the cold front, an arrow shows wind pushing into the front; ahead of the warm front, a symbol shows wind blowing along it, toward the north.';
+META.wocc.desc += ' Behind the cold front, an arrow shows wind pushing into the front; ahead of the warm front, a symbol shows wind blowing along it, toward the north.';
+META.recap.cap = { tag: 'Recap', line: 'Five kinds of fronts', sub: 'The shape of each front comes from which air is denser and which air is moving.' };
+META.recap.desc = 'Recap. Cold front: a steep, rounded nose and fast lifting, with a cumulonimbus cloud and rain on both sides of the front. Warm front: a long, gentle slope and slow lifting, with layered clouds and steady rain. Stationary front: winds blow along it, so it stalls, and rain falls on the same places for days. Cold-occluded front: the coldest air behind digs under the cool air ahead. Warm-occluded front: the milder air behind rides over the coldest air ahead.';
+
+SCENES.forEach(s => Object.assign(s, META[s.id]));
+
+// ---------- player ----------
+const $ = id => document.getElementById(id);
+const stage = $('stage'), frame = $('frame'), body = document.body;
+SCENES.forEach(s => { s.root = document.createElement('div'); s.root.className = 'layer'; stage.appendChild(s.root); s.init(s.root); });
+
+const mqPort = matchMedia('(orientation: portrait) and (max-width: 640px)');
+const mqLand = matchMedia('(orientation: landscape) and (max-height: 560px)');
+const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
+let mode = 'desk';
+function fit() {
+  const m = mqPort.matches ? 'port' : mqLand.matches ? 'land' : 'desk';
+  if (m !== mode) { body.classList.remove('desk', 'land', 'port'); mode = m; }
+  body.classList.add(mode);
+  const port = mode === 'port';
+  const wide = port && body.classList.contains('wide');
+  const s = frame.clientWidth / (port ? (wide ? 1840 : 1120) : 1920);
+  if (!s) return;
+  SCALE = s;
+  stage.style.transform = 'scale(' + s + ')' + (port ? (wide ? ' translate(-40px, -360px)' : ' translateX(-800px)') : '');
+  stage.classList.toggle('port', port);
+  stage.classList.toggle('big', s < 0.55);
+  const px = (target, lo, hi) => Math.min(hi, Math.max(lo, target / s)).toFixed(1) + 'px';
+  stage.style.setProperty('--sub', px(15, 34, 46));
+  stage.style.setProperty('--tag', px(13, 24, 42));
+  applyText();
+}
+new ResizeObserver(fit).observe(frame);
+[mqPort, mqLand].forEach(q => q.addEventListener ? q.addEventListener('change', fit) : q.addListener(fit));
+addEventListener('resize', fit);
+addEventListener('orientationchange', () => setTimeout(fit, 250));
+
+// scene text panel
+let textOn = false;
+try { textOn = localStorage.getItem('wf-text') === '1'; } catch (e) {}
+const desc = $('desc'), textB = $('textB');
+function applyText() {
+  const shown = mode === 'port' || textOn;
+  desc.classList.toggle('sr-only', !shown);
+  textB.setAttribute('aria-expanded', textOn ? 'true' : 'false');
+  textB.setAttribute('aria-label', textOn ? 'Hide scene text' : 'Show scene text');
+}
+function setText(on) { textOn = on; try { localStorage.setItem('wf-text', on ? '1' : '0'); } catch (e) {} applyText(); }
+textB.onclick = () => setText(!textOn);
+$('closeText').onclick = () => { setText(false); textB.focus(); };
+$('skip').addEventListener('click', e => { e.preventDefault(); if (mode !== 'port') setText(true); desc.focus(); });
+
+// scene navigation
+const dots = $('dots'), title = $('title'), count = $('count'), nextB = $('next'), backB = $('back');
+SCENES.forEach((s, i) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ': ' + s.name); b.onclick = () => go(i); dots.appendChild(b); });
+const esc = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+let cur = -1, start = performance.now(), prev = null, prevT = 0, fadeStart = 0, paused = false, pausedAt = 0, still = false;
+const FADE = 0.4;
+function sceneTime(now) { return ((paused ? pausedAt : now) - start) / 1000; }
+function setPaused(p) {
+  const now = performance.now();
+  if (p === paused) return;
+  if (paused) { start += now - pausedAt; paused = false; } else { pausedAt = now; paused = true; }
+  $('pauseTxt').textContent = paused ? 'Play' : 'Pause';
+  $('pause').setAttribute('aria-label', paused ? 'Play' : 'Pause');
+  $('pauseIco').innerHTML = paused ? '<path d="M7 5l12 7-12 7z"/>' : '<path d="M8 5v14M16 5v14"/>';
+}
+function go(i) {
+  if (i < 0 || i >= SCENES.length) return;
+  const now = performance.now();
+  const reduce = mqReduce.matches;
+  if (i !== cur && cur >= 0 && !reduce) { prev = cur; prevT = sceneTime(now); fadeStart = now; } else prev = null;
+  cur = i;
+  const s = SCENES[i];
+  body.classList.toggle('wide', !!s.wide); fit();
+  if (reduce) { setPaused(false); start = now - s.still * 1000; setPaused(true); still = true; }
+  else { start = now; if (paused) pausedAt = now; still = false; }
+  title.textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  count.textContent = (i + 1) + ' of ' + SCENES.length;
+  $('dTitle').textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  const c = s.cap;
+  $('cap').innerHTML = '<p class="cap-tag">' + esc(c.tag) + '</p><p class="cap-line">' + esc(c.line) + '</p>' +
+    (c.sub ? '<p class="cap-sub">' + esc(c.sub) + '</p>' : '') + (c.box ? '<div class="cap-box"><p class="cap-tag" style="color:var(--brand)">' + esc(c.box[0]) + '</p><p class="cap-sub">' + esc(c.box[1]) + '</p></div>' : '');
+  $('dText').textContent = s.desc;
+  [...dots.children].forEach((d, k) => { d.className = k === i ? 'on' : k < i ? 'done' : ''; if (k === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  if (document.activeElement === backB && i === 0) nextB.focus();
+  if (document.activeElement === nextB && i === SCENES.length - 1) backB.focus();
+  backB.disabled = i === 0;
+  nextB.disabled = i === SCENES.length - 1;
+  if (mode === 'port') desc.scrollTop = 0;
+}
+function frameLoop(now) {
+  const t = sceneTime(now);
+  const fp = prev === null ? 1 : clamp01((now - fadeStart) / 1000 / FADE);
+  SCENES.forEach((s, k) => { s.root.style.display = (k === cur || (k === prev && fp < 1)) ? 'block' : 'none'; });
+  if (prev !== null && fp < 1) { const ps = SCENES[prev]; ps.root.style.opacity = 1 - fp; ps.root.style.zIndex = 1; ps.render(prevT + (now - fadeStart) / 1000); }
+  else prev = null;
+  const s = SCENES[cur];
+  s.root.style.opacity = fp; s.root.style.zIndex = 2;
+  s.render(Math.max(0, t));
+  nextB.classList.toggle('ready', (t >= s.dur || still) && cur < SCENES.length - 1);
+  requestAnimationFrame(frameLoop);
+}
+nextB.onclick = () => go(cur + 1);
+backB.onclick = () => go(cur - 1);
+$('replay').onclick = () => { prev = null; still = false; setPaused(false); start = performance.now(); };
+$('pause').onclick = () => setPaused(!paused);
+
+// full screen, hidden where the browser can't do it (such as Safari on iPhone)
+const app = $('app');
+const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(app.requestFullscreen || app.webkitRequestFullscreen);
+if (!fsOK) body.classList.add('no-fs');
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+$('full').onclick = () => {
+  try {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (app.requestFullscreen || app.webkitRequestFullscreen).call(app); if (r && r.catch) r.catch(() => {}); }
+  } catch (e) {}
+};
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { $('full').setAttribute('aria-label', fsEl() ? 'Exit full screen' : 'Full screen'); fit(); }));
+
+// keyboard
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const onButton = e.target.closest && e.target.closest('button, a');
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (k === ' ' || k === 'Spacebar') { if (!onButton) { e.preventDefault(); go(cur + 1); } }
+  else if (k === 'Home') { e.preventDefault(); go(0); }
+  else if (k === 'End') { e.preventDefault(); go(SCENES.length - 1); }
+  else if (k === 'r' || k === 'R') $('replay').click();
+  else if (k === 'p' || k === 'P') $('pause').click();
+  else if ((k === 'f' || k === 'F') && fsOK) $('full').click();
+  else if (k === 't' || k === 'T') setText(!textOn);
+  else if (k === 'Escape' && textOn && mode === 'land') { setText(false); textB.focus(); }
+});
+
+// touch: swipe left/right, tap the right side for next and the far left for back (mouse clicks ignored)
+let tp = null;
+frame.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; tp = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+frame.addEventListener('pointercancel', () => { tp = null; });
+frame.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch' || !tp) return;
+  const dx = e.clientX - tp.x, dy = e.clientY - tp.y, dt = performance.now() - tp.t; tp = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 800) { go(cur + (dx < 0 ? 1 : -1)); return; }
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) {
+    const r = frame.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+    if (fx > 0.5) go(cur + 1); else if (fx < 0.25) go(cur - 1);
+  }
+});
+
+// test hook: WF.go(i), COR.seek(seconds) freezes the current scene at a moment
+window.WF = { go, seek(t) { setPaused(false); start = performance.now() - t * 1000; prev = null; setPaused(true); }, scenes: SCENES.length };
+
+fit();
+go(0);
+requestAnimationFrame(frameLoop);
+})();
+</script>
+
+</body>
+</html>

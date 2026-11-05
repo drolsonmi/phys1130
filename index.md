@@ -182,7 +182,8 @@ Wind
 * [Global Circulations](./animations/globalcirculations.html)
 
 Airmasses and Fronts
-* [Weather with Fronts](./animations/)
+* [Fronts](./animations/fronts.html)
+* [Weather with Fronts](./animations/front-weather.html)
 
 Tropical
 * [Upwelling](./animations/upwelling-mobile.html)
