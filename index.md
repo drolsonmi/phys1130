@@ -185,6 +185,9 @@ Airmasses and Fronts
 * [Fronts](./animations/fronts.html)
 * [Weather with Fronts](./animations/front-weather.html)
 
+Severe Weather
+* [Lightning](./animations/lightning.html)
+
 Tropical
 * [Upwelling](./animations/upwelling-mobile.html)
 * [ENSO](./animations/enso-mobile.html)
