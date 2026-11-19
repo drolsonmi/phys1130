@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Lightning Forms</title>
+<meta name="description" content="An animated, scene-by-scene explanation of how lightning forms, from colliding ice in a thunderstorm to the return stroke.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #e9edf4; --bar: #ffffff; --ink: #25282b; --muted: #5d6470; --edge: #cfd6e2;
+  --brand: #1e376c; --accent: #f47920; --btn: #f1f4f9; --btn-ink: #1e376c; --focus: #c2410c;
+  color-scheme: light;
+  box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+    --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+  --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; background: var(--page); overflow-x: hidden; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100%; background: var(--page); color: var(--ink); font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 12px; top: -100px; z-index: 50; background: var(--bar); color: var(--brand); font-weight: 700; padding: 12px 16px; border-radius: 8px; border: 2px solid var(--brand); }
+.skip:focus { top: calc(12px + env(safe-area-inset-top, 0px)); outline: 3px solid var(--focus); outline-offset: 2px; }
+
+#app { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; min-height: 100vh; background: var(--page); }
+#main { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+#frame { width: min(100%, calc((100vh - 140px) * 16 / 9)); aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,.12); touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app:fullscreen #frame { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+#turn { display: none; }
+
+/* ---------- the animation (fixed light picture, like the other 1130 animations) ---------- */
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #ffffff;
+  --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; --stn:#c8322a; --slp:#1667c4;
+  color: var(--second); font-family: "Nunito Sans", system-ui, sans-serif; }
+.layer { position: absolute; inset: 0; display: none; }
+.ground { position: absolute; inset: 0; background: var(--ground); }
+.words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.words > * { margin: 0; }
+.line { font-family: "Zilla Slab", Georgia, serif; font-size: 84px; line-height: 1.04; font-weight: 700; color: var(--main); }
+.line .w { display: inline-block; white-space: pre; }
+.sub { font-size: 34px; line-height: 1.4; color: color-mix(in srgb, var(--second) 82%, var(--ground)); }
+.sub b.o { color: #d4610c; }
+.sub .pp { display: block; margin-top: 18px; }
+.pov { display: block; width: fit-content; margin-bottom: 16px; padding: 6px 14px; border-radius: 8px; font-size: 24px; font-weight: 700; color: var(--main); background: color-mix(in srgb, var(--main) 9%, var(--ground)); }
+#stage.big .pov { font-size: var(--tag); } .sub b.b { color: var(--slp); }
+.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.rule { width: 96px; height: 4px; background: var(--accent); border-radius: 2px; }
+.art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.card { position: absolute; border-radius: 16px; background: color-mix(in srgb, var(--main) 6%, var(--ground)); border: 2px solid color-mix(in srgb, var(--main) 18%, var(--ground)); }
+#stage.big .sub { font-size: var(--sub); }
+#stage.big .tag { font-size: var(--tag); }
+#stage.big .rc { top: 400px !important; height: 580px !important; padding: 34px 26px !important; gap: 16px !important; }
+canvas.ri { width: 230px; height: 230px; flex: none; }
+#stage.big .ri { width: 200px; height: 200px; }
+/* upright phone: the picture shows the right part of the scene; its text is shown below */
+#stage.port .ground > .words { display: none; }
+#stage.port .rc { left: 830px !important; width: 1060px !important; height: 320px !important; flex-direction: row !important; text-align: left !important; padding: 0 40px !important; gap: 40px !important; }
+#stage.port .rc0 { top: 30px !important; } #stage.port .rc1 { top: 380px !important; } #stage.port .rc2 { top: 730px !important; }
+#stage.port .rc .words { align-items: flex-start !important; gap: 14px !important; }
+#stage.port .ri { width: 220px; height: 220px; }
+
+/* ---------- scene text ---------- */
+#desc { width: min(100%, calc((100vh - 140px) * 16 / 9)); background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 16px 20px 18px; }
+#desc:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+#dTitle { margin: 0 0 6px; font-size: 18px; line-height: 1.3; color: var(--brand); }
+#dText { margin: 0; font-size: 17px; line-height: 1.6; max-width: 72ch; }
+#closeText { display: none; }
+#cap { display: none; }
+.cap-tag { margin: 0 0 2px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.cap-line { margin: 0 0 6px; font-family: "Zilla Slab", Georgia, serif; font-size: 24px; line-height: 1.15; color: var(--brand); }
+.cap-sub { margin: 0 0 4px; font-size: 16px; line-height: 1.5; }
+.cap-box { margin: 10px 0 4px; padding: 10px 12px; border-radius: 8px; background: var(--bar); border: 1px solid var(--edge); }
+.cap-note { margin: 0; font-size: 14px; color: var(--muted); }
+
+/* ---------- controls ---------- */
+#bar { width: min(100%, calc((100vh - 140px) * 16 / 9)); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 6px 8px; }
+#app:fullscreen #bar, #app:fullscreen #desc { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+button { font: inherit; font-weight: 700; font-size: 15px; color: var(--btn-ink); background: var(--btn); border: 1px solid var(--edge);
+  border-radius: 8px; min-height: 44px; min-width: 44px; padding: 0 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+button:hover { border-color: var(--brand); }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#next { background: var(--brand); color: var(--bar); border-color: var(--brand); padding: 0 20px; }
+#next.ready { background: var(--accent); border-color: var(--accent); color: #25282b; }
+#where { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 0; padding: 0 4px; }
+#title { font-size: 15px; font-weight: 700; color: var(--ink); padding-left: 9px; }
+#dots { display: flex; flex-wrap: nowrap; }
+#wtop { display: flex; align-items: baseline; gap: 12px; padding-right: 4px; }
+#wtop .hint { margin-left: auto; }
+#dots button { min-height: 44px; height: 44px; width: 38px; min-width: 38px; padding: 0; border: 0; background: transparent; border-radius: 6px; }
+#dots button::before { content: ""; width: 24px; height: 8px; border-radius: 4px; background: var(--edge); }
+#dots button.on::before { background: var(--brand); }
+#dots button.done::before { background: color-mix(in srgb, var(--brand) 45%, var(--edge)); }
+#count { display: none; font-size: 14px; font-weight: 700; color: var(--ink); text-align: center; white-space: nowrap; }
+.hint { font-size: 13px; color: var(--muted); }
+#textB[aria-expanded="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.no-fs #full { display: none !important; }
+
+/* ---------- phone held sideways ---------- */
+body.land #app { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 6px max(6px, env(safe-area-inset-right, 0px)) 6px max(6px, env(safe-area-inset-left, 0px)); }
+body.land #main { flex: 1; min-width: 0; justify-content: center; }
+body.land #frame { width: min(100%, calc((100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9));
+  width: min(100%, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9)); border-radius: 8px; }
+body.land #bar { width: 76px; flex: none; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 6px; gap: 5px; overflow-y: auto; }
+body.land #bar .t, body.land #where, body.land .hint { display: none; }
+body.land #count { display: block; order: 0; padding: 4px 0; }
+body.land #replay { order: 1; } body.land #pause { order: 2; } body.land #full { order: 3; } body.land #textB { order: 4; }
+body.land #spacer { order: 5; flex: 1; min-height: 4px; }
+body.land #back { order: 6; } body.land #next { order: 7; min-height: 64px; padding: 0; }
+body.land #next svg { width: 28px; height: 28px; }
+body.land button { padding: 0; }
+body.land #desc { position: fixed; z-index: 20; width: auto; overflow-y: auto;
+  top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-height: calc(100% - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  left: calc(max(6px, env(safe-area-inset-left, 0px)) + 10px); right: calc(max(6px, env(safe-area-inset-right, 0px)) + 96px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); padding: 12px 16px; }
+body.land #closeText { display: inline-flex; flex: none; padding: 0 16px; }
+body.land #dText { font-size: 16px; line-height: 1.55; }
+
+/* ---------- phone held upright ---------- */
+body.port #app { justify-content: flex-start; align-items: stretch; gap: 0; padding: 0; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+body.port #main { flex: none; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); }
+body.port #frame { width: 100%; aspect-ratio: 1120 / 1080; border-radius: 0; box-shadow: none; }
+body.port #turn { display: block; margin: 0; width: 100%; padding: 6px 16px; font-size: 14px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--edge); }
+body.port #desc { width: auto; flex: 1; min-height: 0; overflow-y: auto; border: 0; border-radius: 0; background: var(--page); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+body.port #desc.sr-only { position: static !important; width: auto; height: auto; margin: 0; overflow-y: auto; clip: auto; white-space: normal; }
+body.port #cap { display: block; margin: 4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--edge); }
+body.port #dText { font-size: 16px; }
+body.port #bar { width: auto; flex: none; flex-wrap: nowrap; border: 0; border-top: 1px solid var(--edge); border-radius: 0; gap: 8px;
+  padding: 8px max(10px, env(safe-area-inset-right, 0px)) 8px max(10px, env(safe-area-inset-left, 0px)); }
+body.port #where, body.port .hint, body.port #textB { display: none; }
+body.port #replay, body.port #pause, body.port #full { padding: 0; }
+body.port #replay .t, body.port #pause .t { display: none; }
+body.port #back, body.port #next { flex: 1; min-height: 52px; font-size: 17px; }
+body.port #back { order: 0; } body.port #replay { order: 1; } body.port #pause { order: 2; } body.port #full { order: 3; } body.port #next { order: 4; }
+body.port #spacer { display: none; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<a class="skip" href="#desc" id="skip">Skip to scene text</a>
+<div id="app">
+  <div id="main">
+    <div id="frame" aria-hidden="true"><div id="stage"></div></div>
+    <p id="turn">Turn your phone sideways for a bigger picture.</p>
+  </div>
+  <section id="desc" tabindex="-1" aria-labelledby="dTitle" class="sr-only">
+    <div class="dhead">
+      <div id="live" aria-live="polite" aria-atomic="true"><h2 id="dTitle"></h2><div id="cap" aria-hidden="true"></div><p id="dText"></p></div>
+      <button id="closeText" aria-label="Close scene text">Close</button>
+    </div>
+  </section>
+  <nav id="bar" aria-label="Animation controls">
+    <button id="back" aria-label="Previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">Back</span></button>
+    <button id="replay" aria-label="Replay this scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" id="pauseIco"><path d="M8 5v14M16 5v14"/></svg><span class="t" id="pauseTxt">Pause</span></button>
+    <div id="where"><div id="wtop"><div id="title" aria-hidden="true"></div><span class="hint" aria-hidden="true">Arrow keys or Space</span></div><div id="dots" role="group" aria-label="Scenes"></div></div>
+    <div id="count" aria-hidden="true"></div>
+    <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="textB" aria-label="Show scene text" aria-controls="desc" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 10h14M5 14h10M5 18h7"/></svg><span class="t">Text</span></button>
+    <div id="spacer" aria-hidden="true"></div>
+    <button id="next" aria-label="Next scene"><span class="t">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </nav>
+</div>
+
+<script>
+(function () {
+document.documentElement.lang = 'en';
+// ---------- helpers ----------
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const TAU = Math.PI * 2, DEG = Math.PI / 180;
+function h(html) { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; }
+function fadeFromRight(el, t, t0) {
+  if (!el._w) {
+    const words = el.textContent.split(' ');
+    el.textContent = '';
+    el._w = words.map((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w + (i < words.length - 1 ? ' ' : ''); el.appendChild(s); return s; });
+  }
+  el._w.forEach((s, i) => { const p = eo(seg(t, t0 + i * .11, t0 + i * .11 + .5)); s.style.opacity = p; s.style.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)'; });
+}
+function subIn(st, t, a) { const p = eo(seg(t, a, a + .6)); st.opacity = p; st.transform = 'translateX(' + lerp(26, 0, p) + 'px)'; }
+const textBlock = (top, tag, line, sub) =>
+  '<div class="words" style="left:140px;top:' + top + 'px;width:640px">' +
+  '<p class="tag">' + tag + '</p><h2 class="line">' + line + '</h2>' + (sub ? '<p class="sub">' + sub + '</p>' : '') + '</div>';
+function textRefs(self, root) { self.tagS = root.querySelector('.words .tag').style; self.line = root.querySelector('.words .line'); const s = root.querySelector('.words .sub'); self.subS = s && s.style; }
+function textRender(self, t, subAt) { self.tagS.opacity = eo(seg(t, 0.2, 0.7)); fadeFromRight(self.line, t, 0.4); if (self.subS) subIn(self.subS, t, subAt); }
+let SCALE = 0.6;   // current stage scale, used for canvas text size
+const fpx = (target, lo, hi) => Math.min(hi, Math.max(lo, target / SCALE));
+
+// ---------- canvas drawing kit ----------
+const C = { navy: '#1e376c', ink: '#25282b', orange: '#f47920', orangeDk: '#d4610c', blue: '#1667c4', red: '#c8322a', grid: '#8fa7cc', sea: '#dbe8f6', grass: '#e4efd9', tree: '#a8cf94', treeEdge: '#5f8f4e', plate: '#f4f6fa', wedge: '#dfe6f2' };
+const P = (cx, cy, r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];   // math angle (counterclockwise) to screen
+function label(ctx, txt, x, y, color, size, align, weight) {
+  ctx.font = (weight || 700) + ' ' + size + 'px "Nunito Sans", system-ui, sans-serif';
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.26; ctx.strokeStyle = 'rgba(255,255,255,.95)';
+  ctx.strokeText(txt, x, y); ctx.fillStyle = color; ctx.fillText(txt, x, y);
+  return ctx.measureText(txt).width;
+}
+function disc(ctx, x, y, r, fill, stroke, lw) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 3; ctx.stroke(); } }
+function line(ctx, pts, color, w, dash) {
+  if (pts.length < 2) return;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]); ctx.stroke(); ctx.setLineDash([]);
+}
+function head(ctx, x, y, ang, size, color) {   // arrowhead at (x,y) pointing along screen angle ang
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x, y);
+  ctx.lineTo(x - size * Math.cos(ang - 0.45), y - size * Math.sin(ang - 0.45));
+  ctx.lineTo(x - size * Math.cos(ang + 0.45), y - size * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill();
+}
+function arrow(ctx, x1, y1, x2, y2, color, w) {
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 3) return;
+  const a = Math.atan2(y2 - y1, x2 - x1), hd = Math.min(w * 4, L * 0.7);
+  line(ctx, [[x1, y1], [x2 - Math.cos(a) * hd * 0.7, y2 - Math.sin(a) * hd * 0.7]], color, w);
+  head(ctx, x2, y2, a, hd, color);
+}
+function pathArrow(ctx, pts, color, w, dash) {   // a line with an arrowhead at its end
+  if (pts.length < 2) return;
+  const n = pts.length - 1; let k = n - 1;
+  while (k > 0 && Math.hypot(pts[n][0] - pts[k][0], pts[n][1] - pts[k][1]) < w * 3) k--;
+  const a = Math.atan2(pts[n][1] - pts[k][1], pts[n][0] - pts[k][0]), hd = w * 4;
+  line(ctx, pts.slice(0, n).concat([[pts[n][0] - Math.cos(a) * hd * 0.7, pts[n][1] - Math.sin(a) * hd * 0.7]]), color, w, dash);
+  head(ctx, pts[n][0], pts[n][1], a, hd, color);
+}
+function arcPts(cx, cy, r, a0, a1, n) { const o = []; for (let i = 0; i <= (n || 40); i++) o.push(P(cx, cy, r, lerp(a0, a1, i / (n || 40)))); return o; }
+function badge(ctx, x, y, letter, on, alpha) {
+  ctx.globalAlpha = alpha;
+  disc(ctx, x, y, 28, on ? C.orange : '#ffffff', on ? C.orange : C.navy, 4);
+  ctx.font = '700 32px "Nunito Sans", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = on ? '#ffffff' : C.navy; ctx.fillText(letter, x, y + 1);
+  ctx.globalAlpha = 1;
+}
+function clear(ctx) { ctx.clearRect(0, 0, 1920, 1080); }
+
+// ================= the thunderstorm =================
+// The picture sits in a rounded window on the right. World units inside it: 980 × 940.
+const PX = 860, PY = 70, LW = 980, LH = 940;
+const GY = 860, BASE = 620, FZ = 480;
+const HOME = { x: LW / 2, y: LH / 2, s: 1 };
+const MIX = { x: 500, y: 395, s: 5.5 };
+const LEAD = { x: 505, y: 735, s: 2.3 };
+const WIDE = { x: 600, y: 480, s: 0.74 };
+const K = { sky1: '#5a7493', sky2: '#b8c8d8', cloud1: '#f7f9fc', cloud2: '#9eabb9', ground: '#6c8c52', groundDk: '#56723f',
+  cin1: '#e6edf4', cin2: '#bccbda', ice: '#3b6fb0', drop: '#0d7d7d', graupel: '#7f8fa3', bolt: '#fff7c0' };
+function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function camLerp(a, b, p) { return { x: lerp(a.x, b.x, p), y: lerp(a.y, b.y, p), s: Math.exp(lerp(Math.log(a.s), Math.log(b.s), p)) }; }
+const W2S = (cam, x, y) => [LW / 2 + (x - cam.x) * cam.s, LH / 2 + (y - cam.y) * cam.s];
+function rrect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+/* draws the picture window: world drawing under the camera, then screen-space labels on top */
+function panel(ctx, cam, world, screen) {
+  const a = ctx.globalAlpha;
+  ctx.save(); ctx.translate(PX, PY); rrect(ctx, 0, 0, LW, LH, 22); ctx.clip();
+  ctx.save(); ctx.translate(LW / 2, LH / 2); ctx.scale(cam.s, cam.s); ctx.translate(-cam.x, -cam.y); world(ctx); ctx.restore();
+  ctx.globalAlpha = a; if (screen) screen(ctx);
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(PX, PY); rrect(ctx, 0, 0, LW, LH, 22); ctx.strokeStyle = '#cfd6e2'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+}
+
+// ---------- fixed shapes ----------
+const STORM = new Path2D();
+(p => {
+  p.moveTo(300, BASE); p.lineTo(690, BASE);
+  p.bezierCurveTo(730, BASE - 6, 735, 560, 705, 540);
+  p.bezierCurveTo(745, 505, 730, 440, 700, 420);
+  p.bezierCurveTo(735, 385, 720, 320, 690, 300);
+  p.bezierCurveTo(720, 270, 705, 225, 680, 212);
+  p.bezierCurveTo(760, 205, 850, 205, 905, 185);
+  p.bezierCurveTo(932, 175, 925, 150, 895, 145);
+  p.bezierCurveTo(800, 118, 680, 108, 560, 110);
+  p.bezierCurveTo(430, 110, 280, 118, 160, 140);
+  p.bezierCurveTo(115, 150, 118, 175, 160, 182);
+  p.bezierCurveTo(220, 192, 280, 200, 312, 214);
+  p.bezierCurveTo(285, 235, 282, 280, 305, 300);
+  p.bezierCurveTo(268, 330, 270, 390, 298, 415);
+  p.bezierCurveTo(262, 450, 262, 520, 288, 545);
+  p.bezierCurveTo(258, 570, 265, 610, 300, BASE); p.closePath();
+})(STORM);
+const CELL2 = new Path2D();
+[[1010, 575, 62], [1075, 525, 80], [1145, 570, 64], [1070, 450, 66], [1035, 605, 48], [1115, 605, 48], [1105, 395, 46]].forEach(([x, y, r]) => { CELL2.moveTo(x + r, y); CELL2.arc(x, y, r, 0, TAU); });
+CELL2.rect(985, 600, 180, 40);
+const r0 = rng(5);
+function ellipsePts(cx, cy, rx, ry, n) { const o = []; for (let i = 0; i < n; i++) { const r = Math.sqrt(r0()), a = r0() * TAU; o.push([cx + rx * r * Math.cos(a), cy + ry * r * Math.sin(a)]); } return o; }
+const POS = ellipsePts(495, 188, 175, 34, 34), NEG = ellipsePts(495, 568, 160, 28, 34);
+const GND = []; for (let i = 0; i < 18; i++) GND.push([305 + i * 23 + r0() * 8, GY + 18 + r0() * 34]);
+for (let i = GND.length - 1; i > 0; i--) { const j = Math.floor(r0() * (i + 1)); [GND[i], GND[j]] = [GND[j], GND[i]]; }
+
+// ---------- world drawing ----------
+function sky(c, flash) {
+  const g = c.createLinearGradient(0, 0, 0, GY); g.addColorStop(0, K.sky1); g.addColorStop(1, K.sky2);
+  c.fillStyle = g; c.fillRect(-1500, -1500, 4500, GY + 1500);
+  if (flash) { c.fillStyle = 'rgba(255,255,255,' + (0.28 * flash) + ')'; c.fillRect(-1500, -1500, 4500, GY + 1500); }
+}
+function groundW(c) { c.fillStyle = K.ground; c.fillRect(-1500, GY, 4500, 1500); c.fillStyle = K.groundDk; c.fillRect(-1500, GY, 4500, 4); }
+function stormW(c, flash, cell2) {
+  const g = c.createLinearGradient(0, 110, 0, BASE); g.addColorStop(0, K.cloud1); g.addColorStop(1, K.cloud2);
+  c.fillStyle = g; c.fill(STORM);
+  if (cell2) { const g2 = c.createLinearGradient(0, 360, 0, 640); g2.addColorStop(0, K.cloud1); g2.addColorStop(1, K.cloud2); c.fillStyle = g2; c.fill(CELL2); }
+  if (flash) { c.fillStyle = 'rgba(255,255,240,' + (0.45 * flash) + ')'; c.fill(STORM); if (cell2) c.fill(CELL2); }
+}
+function rainW(c, t, x0, x1) {
+  c.strokeStyle = 'rgba(70,95,125,.35)'; c.lineWidth = 2; c.beginPath();
+  for (let i = 0; i < 40; i++) { const x = x0 + (i * 37.3) % (x1 - x0); const y = BASE + ((t * (280 + (i % 5) * 40) + i * 53) % (GY - BASE - 14)); c.moveTo(x, y); c.lineTo(x - 4, y + 14); }
+  c.stroke();
+}
+function freezeW(c, cam, a) {
+  c.globalAlpha *= a; c.setLineDash([14 / cam.s, 10 / cam.s]); c.strokeStyle = '#ffffff'; c.lineWidth = 3 / cam.s;
+  c.beginPath(); c.moveTo(-1500, FZ); c.lineTo(3000, FZ); c.stroke(); c.setLineDash([]);
+}
+function house(c, x) { c.fillStyle = '#b5583a'; c.beginPath(); c.moveTo(x - 32, GY - 30); c.lineTo(x, GY - 52); c.lineTo(x + 32, GY - 30); c.closePath(); c.fill();
+  c.fillStyle = '#f2e6cf'; c.fillRect(x - 26, GY - 31, 52, 31); c.fillStyle = '#1e376c'; c.fillRect(x - 6, GY - 18, 12, 18); }
+function tree(c, x) { c.fillStyle = '#6b4a32'; c.fillRect(x - 4, GY - 24, 8, 24); c.fillStyle = '#3f7d3a';
+  [[0, -44, 20], [-13, -33, 15], [13, -33, 15], [0, -56, 13]].forEach(([dx, dy, r]) => disc(c, x + dx, GY + dy, r, '#3f7d3a')); }
+function pole(c, x) { c.fillStyle = '#5b4a3a'; c.fillRect(x - 3, GY - 78, 6, 78); c.fillRect(x - 15, GY - 70, 30, 4); }
+function tower(c, x) { const h = 185; c.strokeStyle = '#c8322a'; c.lineWidth = 3; c.beginPath();
+  c.moveTo(x - 16, GY); c.lineTo(x, GY - h); c.lineTo(x + 16, GY);
+  for (let k = 1; k < 7; k++) { const y = GY - k * h / 7, w = 16 * (1 - k / 7); c.moveTo(x - w, y); c.lineTo(x + w, y); }
+  c.stroke(); disc(c, x, GY - h - 4, 4, '#c8322a'); }
+const OBJ = [[house, 380], [tree, 560], [pole, 650]];
+const OBJ_TOP = { 380: GY - 52, 560: GY - 69, 650: GY - 78 };
+function objectsW(c) { OBJ.forEach(([f, x]) => f(c, x)); }
+function plusW(c, x, y, s, col) { line(c, [[x - s, y], [x + s, y]], col, s * .42); line(c, [[x, y - s], [x, y + s]], col, s * .42); }
+function minusW(c, x, y, s, col) { line(c, [[x - s, y], [x + s, y]], col, s * .42); }
+/* cloud and ground charges: n of the cloud, g of the ground, k climbing each tall object */
+function chargesW(c, n, g, k) {
+  for (let i = 0; i < Math.min(n, POS.length); i++) { plusW(c, POS[i][0], POS[i][1], 8, C.red); minusW(c, NEG[i][0], NEG[i][1], 8, C.blue); }
+  for (let i = 0; i < Math.min(g, GND.length); i++) plusW(c, GND[i][0], GND[i][1], 7, '#ffffff');
+  OBJ.forEach(([, x]) => { const top = OBJ_TOP[x]; for (let j = 0; j < k; j++) plusW(c, x + 22, GY - 10 - j * (GY - 10 - top) / 3, 5.5, C.red); });
+}
+function crystal(c, x, y, r, rot, lw) {
+  c.beginPath(); for (let k = 0; k < 6; k++) { const a = rot + k * Math.PI / 3; const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; k ? c.lineTo(px, py) : c.moveTo(px, py); } c.closePath();
+  c.fillStyle = 'rgba(59,111,176,.18)'; c.fill(); c.strokeStyle = K.ice; c.lineWidth = lw; c.stroke();
+  c.beginPath(); for (let k = 0; k < 3; k++) { const a = rot + k * Math.PI / 3; c.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r); c.lineTo(x - Math.cos(a) * r, y - Math.sin(a) * r); } c.lineWidth = lw * .6; c.stroke();
+}
+function graupel(c, x, y, r, lw) {
+  c.beginPath(); for (let k = 0; k <= 26; k++) { const a = k / 26 * TAU; const q = r * (1 + .08 * Math.sin(a * 5 + 1) + .05 * Math.sin(a * 9)); const px = x + Math.cos(a) * q, py = y + Math.sin(a) * q; k ? c.lineTo(px, py) : c.moveTo(px, py); } c.closePath();
+  c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = K.graupel; c.lineWidth = lw; c.stroke();
+  for (let i = 0; i < 9; i++) { const a = i * 2.4, q = r * .62 * Math.sqrt((i + 1) / 9); disc(c, x + Math.cos(a) * q, y + Math.sin(a) * q, r * .09, '#c3cdd8'); }
+}
+// storm-scale particles: droplets and crystals in the updraft, graupel and hail in the downdraft
+function particlesW(c, t, a) {
+  c.globalAlpha = a;
+  for (let i = 0; i < 30; i++) { const y = BASE - 10 - ((t * 140 + i * 37) % (BASE - 240)); const x = 432 + Math.sin(i * 1.7 + t * 1.3) * 22;
+    if (y > FZ) disc(c, x, y, 3.5, K.drop); else crystal(c, x, y, 5, i, 1.6); }
+  for (let i = 0; i < 22; i++) { const y = 235 + ((t * 100 + i * 41) % (BASE + 150 - 235)); const x = 578 + Math.sin(i * 2.1 + t) * 20; disc(c, x, y, 5, '#ffffff', K.graupel, 1.6); }
+  c.globalAlpha = 1;
+}
+function draftArrows(c, a) { c.globalAlpha = a; arrow(c, 432, 596, 432, 228, 'rgba(244,121,32,.8)', 12); arrow(c, 578, 236, 578, 600, 'rgba(30,55,108,.75)', 12); c.globalAlpha = 1; }
+
+// ---------- lightning ----------
+function jag(r, a, b, n, amp) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L, p = [a];
+  for (let i = 1; i < n; i++) { const u = i / n, o = (r() - .5) * 2 * amp; p.push([a[0] + dx * u + nx * o, a[1] + dy * u + ny * o]); }
+  p.push(b); return p;
+}
+function twig(r, from, dirX, dirY, n, len) { const p = [from]; let [x, y] = from; for (let i = 0; i < n; i++) { x += dirX * len * (.5 + r() * .8); y += dirY * len * (.6 + r() * .6); p.push([x, y]); } return p; }
+function boltW(c, pts, a, w) {
+  if (pts.length < 2 || a <= 0) return;
+  c.globalAlpha = a; line(c, pts, 'rgba(150,120,255,.45)', w * 4.5); line(c, pts, K.bolt, w * 1.8); line(c, pts, '#ffffff', w * .8); c.globalAlpha = 1;
+}
+// the stepped leader, from the cloud base down toward the tree
+const rl = rng(21);
+const LEADER = jag(rl, [512, 612], [560, 766], 14, 15);
+const LBR = [3, 5, 8, 10, 12].map((i, k) => ({ at: i, pts: twig(rl, LEADER[i], k % 2 ? 1 : -1, 1, 3, 13) }));
+const STREAM = [{ x: 560, top: OBJ_TOP[560], len: 22 }, { x: 650, top: OBJ_TOP[650], len: 14 }, { x: 380, top: OBJ_TOP[380], len: 10 }];
+const CHANNEL = LEADER.concat([[560, OBJ_TOP[560] - 22], [560, OBJ_TOP[560]]]);
+// three kinds of lightning for the last scene
+const rk = rng(77);
+const CG = jag(rk, [612, 624], [632, GY], 12, 16), CGB = [3, 6, 9].map((i, k) => twig(rk, CG[i], k % 2 ? 1 : -1, 1, 3, 16));
+const GC = jag(rk, [240, GY - 189], [318, 548], 8, 12), GCB = [2, 4, 6, 8].map((i, k) => twig(rk, GC[i], k % 2 ? 1 : -1, -1, 3, 14));
+const CC = jag(rk, [702, 432], [988, 478], 13, 18), CCB = [4, 8].map((i, k) => twig(rk, CC[i], 1, k ? 1 : -1, 2, 14));
+const ri = rng(91);
+const IC = jag(ri, [470, 575], [545, 228], 11, 24), ICB = [3, 6, 8].map((i, k) => twig(ri, IC[i], k % 2 ? 1 : -1, k === 1 ? 1 : -1, 2, 16));
+
+function leaderW(c, t, T0, step) {
+  const k = Math.min(LEADER.length, Math.floor((t - T0) / step) + 2);
+  if (t < T0 || k < 2) return { k: 0 };
+  const pts = LEADER.slice(0, k), fresh = 1 - clamp01(((t - T0) % step) / step);
+  line(c, pts, 'rgba(120,90,230,.22)', 7); line(c, pts, 'rgba(225,215,255,.85)', 2.2);
+  LBR.forEach(b => { if (k > b.at) { const m = Math.min(b.pts.length, k - b.at + 1); line(c, b.pts.slice(0, m), 'rgba(225,215,255,.75)', 1.6); } });
+  const tip = pts[pts.length - 1];
+  if (k < LEADER.length) disc(c, tip[0], tip[1], 4 + 4 * fresh, 'rgba(255,255,255,' + (0.5 + 0.5 * fresh) + ')');
+  return { k, tip };
+}
+function streamersW(c, p) {
+  STREAM.forEach(s => { const L = s.len * p; if (L < 1) return; const pts = []; for (let y = 0; y <= L; y += 3) pts.push([s.x + (Math.round(y / 3) % 2 ? 1.6 : -1.6), s.top - y]);
+    line(c, pts, 'rgba(200,50,42,.35)', 7); line(c, pts, '#ffd9d2', 2.6); });
+}
+function closeBg(c) { const g = c.createLinearGradient(0, 0, 0, LH); g.addColorStop(0, K.cin1); g.addColorStop(1, K.cin2); c.fillStyle = g; c.fillRect(0, 0, LW, LH);
+  for (let i = 0; i < 40; i++) disc(c, (i * 211.7) % LW, (i * 97.3 + 40) % LH, 2 + (i % 3), 'rgba(13,125,125,.18)'); }
+function closeArrows(c) { arrow(c, 250, LH - 70, 250, 90, 'rgba(244,121,32,.16)', 46); arrow(c, 730, 90, 730, LH - 70, 'rgba(30,55,108,.13)', 46); }
+function electron(c, x, y) { disc(c, x, y, 13, C.blue, '#ffffff', 3); line(c, [[x - 6, y], [x + 6, y]], '#ffffff', 3.5); }
+// zoomed in: crystals ride the updraft, graupel falls in the downdraft
+function closeSort(c, t) {
+  closeBg(c); closeArrows(c);
+  for (let i = 0; i < 9; i++) { const x = 140 + (i % 3) * 110 + Math.sin(t * 1.3 + i) * 14; const y = LH + 60 - ((t * 120 + i * 113) % (LH + 120)); crystal(c, x, y, 22, t * .8 + i, 4); }
+  for (let i = 0; i < 7; i++) { const x = 630 + (i % 3) * 110 + Math.sin(t + i * 2) * 10; const y = -60 + ((t * 95 + i * 151) % (LH + 120)); graupel(c, x, y, 34, 3.5); }
+}
+// zoomed in: collisions move electrons from the crystals to the graupel
+const EVT = [{ cx: 480, cy: 250, off: .5 }, { cx: 430, cy: 530, off: 1.9 }, { cx: 545, cy: 770, off: 3.3 }], EP = 4.2;
+function closeCollide(c, t) {
+  closeBg(c); closeArrows(c);
+  EVT.forEach(E => {
+    const e = t - E.off; if (e < 0) return; const u = e % EP, hit = 1.4;
+    const C0 = [E.cx - 26, E.cy + 20], G0 = [E.cx + 30, E.cy - 20];
+    let cp, gp;
+    if (u < hit) { const p = u / hit; cp = [lerp(E.cx - 150, C0[0], p), lerp(E.cy + 560, C0[1], p)]; gp = [lerp(E.cx + 160, G0[0], p), lerp(E.cy - 560, G0[1], p)]; }
+    else { const p = (u - hit) / (EP - hit); cp = [lerp(C0[0], E.cx - 170, p), lerp(C0[1], E.cy - 700, p)]; gp = [lerp(G0[0], E.cx + 170, p), lerp(G0[1], E.cy + 700, p)]; }
+    graupel(c, gp[0], gp[1], 36, 3.5); crystal(c, cp[0], cp[1], 24, e * .8, 4);
+    if (u > hit && u < hit + .25) { const s = 1 - (u - hit) / .25; c.globalAlpha *= 1; for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; line(c, [[E.cx + Math.cos(a) * 10, E.cy + Math.sin(a) * 10], [E.cx + Math.cos(a) * (18 + 20 * (1 - s)), E.cy + Math.sin(a) * (18 + 20 * (1 - s))]], 'rgba(244,121,32,' + s + ')', 4); } }
+    const eo1 = [[14, -10], [4, 14]], go1 = [[-22, 16], [-30, -4]];
+    for (let k = 0; k < 2; k++) {
+      const p = eo(seg(u, hit + .05 + k * .12, hit + .5 + k * .12));
+      if (u < hit) continue;
+      else if (p < 1) electron(c, lerp(cp[0] + eo1[k][0], gp[0] + go1[k][0], p), lerp(cp[1] + eo1[k][1], gp[1] + go1[k][1], p));
+      else { electron(c, gp[0] + go1[k][0], gp[1] + go1[k][1]); plusW(c, cp[0] + 36 + k * 26, cp[1] - 28, 10, C.red); }
+    }
+  });
+}
+// storm view with the whole picture
+function stormScene(c, o) {
+  sky(c, o.flash || 0); groundW(c); objectsW(c);
+  if (o.tower) tower(c, 240);
+  stormW(c, o.flash || 0, o.cell2);
+  rainW(c, o.t, 520, 690);
+  if (o.cell2) rainW(c, o.t + 3, 1010, 1140);
+}
+
+// ---------- scenes ----------
+const SCENES = [];
+function scene(id, name, dur, def) { SCENES.push(Object.assign({ id, name, dur }, def)); }
+function cscene(id, name, dur, text, render) {
+  scene(id, name, dur, {
+    init(root) {
+      root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas></div>'));
+      root.firstChild.append(h(textBlock(text[0], text[1], text[2], text[3])));
+      this.ctx = root.querySelector('canvas').getContext('2d');
+      textRefs(this, root);
+    },
+    render(t) { textRender(this, t, 1.2); clear(this.ctx); render.call(this, t, this.ctx); },
+  });
+}
+const L1 = () => fpx(13, 28, 44), L2 = () => fpx(12, 24, 40);
+
+scene('title', 'How lightning forms', 5, {
+  init(root) {
+    root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas>' +
+      '<div class="words" style="left:140px;top:300px;width:660px">' +
+      '<p class="tag">Introduction to meteorology</p><h1 class="line" style="font-size:104px">How lightning forms</h1>' +
+      '<div class="rule"></div><p class="sub">From colliding ice to a flash in the sky</p></div></div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style; this.subS = root.querySelector('.sub').style;
+    this.ctx = root.querySelector('canvas').getContext('2d');
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.1);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.9, 1.4)) + ')';
+    subIn(this.subS, t, 1.2);
+    const ctx = this.ctx; clear(ctx);
+    const u = (t + 1.2) % 3.2, on = t > 1.6 && (u < .12 || (u > .2 && u < .3));
+    ctx.globalAlpha = eo(seg(t, 0.3, 1.5));
+    panel(ctx, HOME, c => { stormScene(c, { t, flash: on ? 1 : 0 }); if (on) { boltW(c, CG, 1, 3); CGB.forEach(b => boltW(c, b, .8, 1.6)); } });
+    ctx.globalAlpha = 1;
+  },
+});
+
+cscene('storm', 'Updrafts and downdrafts', 7, [250, 'The whole storm', 'Updrafts and downdrafts', 'A strong <b class="o">updraft</b> carries water droplets miles above the freezing level. A <b class="o">downdraft</b> brings ice (hail and graupel) down from the frozen upper cloud.'], function (t, ctx) {
+  const a = eo(seg(t, 0.1, 0.9));
+  ctx.globalAlpha = a;
+  panel(ctx, HOME, c => {
+    stormScene(c, { t }); freezeW(c, HOME, a); c.globalAlpha = a;
+    particlesW(c, t, a); draftArrows(c, a * eo(seg(t, 1.4, 2.2)));
+  }, s => {
+    const b = a * eo(seg(t, 2.2, 2.8)); s.globalAlpha = b;
+    label(s, 'Updraft', 412, 330, C.orangeDk, L1(), 'right');
+    label(s, 'Downdraft', 600, 330, C.navy, L1(), 'left');
+    label(s, 'Freezing level (0 °C)', LW - 24, FZ - 24, C.navy, L2(), 'right');
+    label(s, 'Droplets', 412, 560, K.drop, L2(), 'right');
+    label(s, 'Ice crystals', 412, 400, K.ice, L2(), 'right');
+    s.globalAlpha = a * eo(seg(t, 2.8, 3.4)); label(s, 'Hail and graupel', 600, 400, C.navy, L2(), 'left');
+  });
+  ctx.globalAlpha = 1;
+});
+
+cscene('zoomin', 'Zoom in: ice and graupel', 8, [230, 'Zooming in', 'Ice rises, graupel falls', 'Above the freezing level, the updraft lifts tiny <b class="o">ice crystals</b>. In the downdraft, heavier ice precipitation falls (most commonly <b class="o">graupel</b>).'], function (t, ctx) {
+  const z = eio(seg(t, 0.7, 2.3)), cam = camLerp(HOME, MIX, z), ca = eo(seg(t, 1.8, 2.5));
+  panel(ctx, cam, c => {
+    stormScene(c, { t }); freezeW(c, cam, 1); c.globalAlpha = 1; particlesW(c, t, 1); draftArrows(c, 1);
+    const bw = LW / MIX.s, bh = LH / MIX.s; c.globalAlpha = eo(seg(t, 0.1, 0.6)) * (1 - ca);
+    c.setLineDash([10 / cam.s, 7 / cam.s]); c.strokeStyle = '#ffffff'; c.lineWidth = 4 / cam.s; c.strokeRect(MIX.x - bw / 2, MIX.y - bh / 2, bw, bh); c.setLineDash([]); c.globalAlpha = 1;
+  }, s => {
+    if (ca <= 0) return;
+    s.globalAlpha = ca; closeSort(s, t);
+    s.globalAlpha = ca * eo(seg(t, 2.6, 3.2));
+    label(s, 'Updraft', 250, 70, C.orangeDk, L1(), 'center'); label(s, 'Ice crystals rise', 250, 70 + L1() * 1.15, K.ice, L2(), 'center', 400);
+    label(s, 'Downdraft', 730, 70, C.navy, L1(), 'center'); label(s, 'Graupel falls', 730, 70 + L1() * 1.15, C.navy, L2(), 'center', 400);
+    s.globalAlpha = 1;
+  });
+});
+
+cscene('collide', 'Collisions separate charge', 9, [210, 'Charge separation', 'Collisions separate charge', 'When a rising ice crystal bumps a falling piece of graupel, <b class="o">electrons</b> are transferred from the crystal to the graupel. The crystal becomes <b class="o">positive</b>. The graupel becomes <b class="o">negative</b>.'], function (t, ctx) {
+  panel(ctx, MIX, () => {}, s => {
+    closeCollide(s, t);
+    s.globalAlpha = eo(seg(t, 2.2, 2.8));
+    label(s, 'Electrons move to the graupel', 520, 160, C.blue, L1(), 'left');
+    s.globalAlpha = eo(seg(t, 3.4, 4));
+    label(s, 'Crystal: lost electrons, now +', 30, LH - 70, C.red, L2(), 'left');
+    label(s, 'Graupel: gained electrons, now −', 30, LH - 70 + L2() * 1.35, C.blue, L2(), 'left');
+    s.globalAlpha = 1;
+  });
+});
+
+cscene('zoomout', 'Zoom out: a charged cloud', 8.5, [230, 'Zooming out', 'Positive top, negative bottom', 'The updraft carries the light, <b class="o">positively-charged</b> ice crystals to the top of the cloud. The heavier, <b class="o">negatively-charged</b> graupel gathers near the bottom.'], function (t, ctx) {
+  const z = eio(seg(t, 0.3, 2.1)), cam = camLerp(MIX, HOME, z), ca = 1 - eo(seg(t, 0.6, 1.3));
+  const n = Math.floor(eo(seg(t, 2.0, 6.5)) * 22);
+  panel(ctx, cam, c => {
+    stormScene(c, { t }); freezeW(c, cam, 1); c.globalAlpha = 1;
+    chargesW(c, n, 0, 0);
+    c.globalAlpha = eo(seg(t, 1.2, 2));
+    for (let i = 0; i < 16; i++) { const p = ((t * .45 + i / 16) % 1); const x = lerp(430 + (i % 4 - 1.5) * 14, POS[i][0], p * p), y = lerp(430, POS[i][1], p); crystal(c, x, y, 6, i + t, 1.8); plusW(c, x + 11, y - 9, 4.5, C.red); }
+    for (let i = 0; i < 12; i++) { const p = ((t * .4 + i / 12) % 1); const x = lerp(560 + (i % 3 - 1) * 14, NEG[i][0], p), y = lerp(330, NEG[i][1], p); disc(c, x, y, 6, '#ffffff', K.graupel, 1.8); minusW(c, x + 12, y - 9, 4.5, C.blue); }
+    c.globalAlpha = 1;
+  }, s => {
+    if (ca > 0) { s.globalAlpha = ca; closeCollide(s, t + 9); s.globalAlpha = 1; }
+    s.globalAlpha = eo(seg(t, 3.2, 3.8));
+    label(s, 'Positive ice crystals', LW - 24, 250, C.red, L1(), 'right'); label(s, 'at the top', LW - 24, 250 + L1() * 1.15, C.red, L1(), 'right');
+    s.globalAlpha = eo(seg(t, 4.2, 4.8));
+    label(s, 'Negative graupel', LW - 24, 560, C.blue, L1(), 'right'); label(s, 'near the bottom', LW - 24, 560 + L1() * 1.15, C.blue, L1(), 'right');
+    s.globalAlpha = 1;
+  });
+});
+
+cscene('build', 'Charge builds up', 9, [200, 'Charge builds up', 'The ground answers', 'More and more charge separates. The negative cloud base attracts <b class="o">positive charge in the ground</b>, which gathers beneath the storm and follows it.<span class="pp">Air is a good insulator, so a huge amount of charge builds before lightning strikes.</span>'], function (t, ctx) {
+  const n = 22 + Math.floor(eo(seg(t, 0.4, 5)) * 12), k = Math.floor(eo(seg(t, 4.2, 6.5)) * 3.99);
+  panel(ctx, HOME, c => {
+    stormScene(c, { t }); chargesW(c, n, 0, k);
+    GND.forEach((g, i) => { const p = eio(seg(t, 1.6 + i * .18, 3.2 + i * .18)); if (p <= 0) return; const from = i % 2 ? -80 : LW + 80; c.globalAlpha = Math.min(1, p * 3); plusW(c, lerp(from, g[0], p), g[1], 7, '#ffffff'); });
+    c.globalAlpha = 1;
+    const f = eo(seg(t, 5.5, 6.5)) * (.55 + .45 * Math.sin(t * 4)); if (f > 0) { c.globalAlpha = f * .7; c.setLineDash([8, 8]); for (let i = 0; i < 5; i++) { const x = 340 + i * 80; line(c, [[x, GY - 6], [x, BASE + 12]], '#ffffff', 2.5, [8, 8]); } c.setLineDash([]); c.globalAlpha = 1; }
+  }, s => {
+    s.globalAlpha = eo(seg(t, 1, 1.6));
+    label(s, 'More + at the top', LW - 24, 250, C.red, L1(), 'right');
+    label(s, 'More − at the base', LW - 24, 580, C.blue, L1(), 'right');
+    s.globalAlpha = eo(seg(t, 3.4, 4));
+    label(s, '+ gathers in the ground below', LW - 24, GY + 46, C.navy, L1(), 'right');
+    s.globalAlpha = eo(seg(t, 5.6, 6.2));
+    label(s, 'The pull grows stronger', 330, 720, C.navy, L2(), 'right');
+    s.globalAlpha = 1;
+  });
+});
+
+const LT0 = 2.3, LSTEP = .42;
+cscene('leader', 'The stepped leader', 10, [130, 'Between cloud and ground', 'The stepped leader', 'A channel of negative charge, the <b class="o">stepped leader</b>, zigzags down from the cloud base in quick steps, each faster than a blink. It is invisible to the eye. Negative charges branch in different directions seeking the path of least resistance to the ground.<span class="pp">As it nears the ground, <b class="o">streamers</b> of positive charge reach up from tall objects.</span>'], function (t, ctx) {
+  const cam = camLerp(HOME, LEAD, eio(seg(t, 0.4, 2.0)));
+  let L = { k: 0 };
+  panel(ctx, cam, c => {
+    stormScene(c, { t }); chargesW(c, 34, 18, 3);
+    L = leaderW(c, t, LT0, LSTEP);
+    streamersW(c, eo(seg(t, LT0 + 10 * LSTEP, LT0 + 14 * LSTEP)));
+  }, s => {
+    s.globalAlpha = eo(seg(t, LT0 + .6, LT0 + 1.2));
+    if (L.tip) { const q = LEADER[Math.min(L.k - 1, 6)]; const [x, y] = W2S(cam, q[0], q[1]); label(s, 'Stepped leader (−)', x + 30, y, C.navy, L1(), 'left'); }
+    s.globalAlpha = eo(seg(t, LT0 + 12 * LSTEP, LT0 + 13 * LSTEP));
+    const [sx, sy] = W2S(cam, 560, OBJ_TOP[560] - 10); label(s, 'Streamer (+)', sx - 34, sy, C.red, L1(), 'right');
+    s.globalAlpha = eo(seg(t, 2.2, 2.8)) * (1 - eo(seg(t, LT0 + 4, LT0 + 4.5)));
+    label(s, 'Cloud base', 24, W2S(cam, 0, BASE - 30)[1], C.navy, L2(), 'left');
+    s.globalAlpha = 1;
+  });
+});
+
+cscene('stroke', 'Connection and return stroke', 8, [190, 'Connection', 'The return stroke', 'When the leader meets a streamer, the path is complete. A huge surge, the <b class="o">return stroke</b>, races up the channel from the ground to the cloud. That is the flash we see. If charge is left, more strokes follow the same channel, so the bolt flickers.'], function (t, ctx) {
+  const u = t % 5.5;
+  const join = eo(seg(u, .7, .9)), wave = seg(u, .95, 1.35);
+  const re = [[2.7, 2.82], [3.2, 3.3], [3.65, 3.73]].some(([a, b]) => u >= a && u <= b);
+  const bright = (u >= 1.35 && u < 1.75) || re ? 1 : u >= 1.75 && u < 2.5 ? .35 * (1 - seg(u, 1.75, 2.5)) : 0;
+  const dim = u >= .95 && u < 4.6 ? .25 * (1 - seg(u, 3.9, 4.6)) : 0;
+  const flash = bright > .5 ? 1 : wave > 0 && wave < 1 ? wave : 0;
+  panel(ctx, LEAD, c => {
+    stormScene(c, { t, flash }); chargesW(c, 34, bright > .5 || u > 1.35 ? 6 : 18, u > 1.35 ? 0 : 3);
+    if (u < .95) {
+      leaderW(c, 99, 0, 1); streamersW(c, 1);
+      if (join > 0) { const p = LEADER[LEADER.length - 1], q = [560, OBJ_TOP[560] - 22]; line(c, [p, [lerp(p[0], q[0], join), lerp(p[1], q[1], join)]], '#ffffff', 3.2); }
+    } else {
+      boltW(c, CHANNEL, dim, 3);
+      if (wave > 0 && wave < 1) { const n = CHANNEL.length, m = Math.max(2, Math.round(wave * n)); boltW(c, CHANNEL.slice(n - m), 1, 3.4); const tip = CHANNEL[n - m]; disc(c, tip[0], tip[1], 9, '#ffffff'); }
+      if (bright > 0) { boltW(c, CHANNEL, bright, 3.4); if (!re) LBR.forEach(b => boltW(c, [LEADER[b.at]].concat(b.pts.slice(1)), bright * .8, 1.6)); }
+    }
+  }, s => {
+    s.globalAlpha = join > 0 && u < 2.6 ? 1 : 0;
+    const [jx, jy] = W2S(LEAD, 560, OBJ_TOP[560] - 24); label(s, 'Connection', jx + 34, jy, C.navy, L1(), 'left');
+    s.globalAlpha = eo(seg(u, 1.0, 1.4)) * (1 - seg(u, 4.2, 4.8));
+    const [ax, ay] = W2S(LEAD, 462, GY - 70), [bx, by] = W2S(LEAD, 462, BASE + 30);
+    arrow(s, ax, ay, bx, by, C.orange, 9);
+    label(s, 'Return stroke', ax - 24, (ay + by) / 2 - L1() * .6, C.orangeDk, L1(), 'right');
+    label(s, 'races up', ax - 24, (ay + by) / 2 + L1() * .6, C.orangeDk, L1(), 'right');
+    s.globalAlpha = 1;
+  });
+});
+
+// thunder: the flash heats the channel, the air bursts outward, and the sound reaches a listener 5 seconds later
+const TH = { x: 640, y: 690, s: 1.35 }, TSRC = [545, 730], TLIS = 935, TSPD = (TLIS - 14 - TSRC[0]) / 5;
+// flash times: two strikes 5 s apart from the listener with a pause after each boom, then strikes at irregular intervals
+const TFL = [0.5, 10]; (() => { const r = rng(55); let x = 15.8 + r(); while (x < 400) { TFL.push(x); x += 0.9 + r() * 3.8; } })();
+function listener(c, x, a) { c.globalAlpha = a; disc(c, x, GY - 52, 9, '#1e376c'); line(c, [[x, GY - 43], [x, GY - 18]], '#1e376c', 5); line(c, [[x, GY - 18], [x - 7, GY]], '#1e376c', 5); line(c, [[x, GY - 18], [x + 7, GY]], '#1e376c', 5); line(c, [[x, GY - 36], [x - 12, GY - 24]], '#1e376c', 5); line(c, [[x, GY - 36], [x + 9, GY - 50]], '#1e376c', 5); c.globalAlpha = 1; }
+cscene('thunder', 'Thunder', 16, [170, 'The sound of lightning', 'Thunder', 'The lightning channel heats the air around it to about <b class="o">50,000 °F</b>, five times hotter than the surface of the sun. The air expands so suddenly that it makes a shock wave, which we hear as <b class="o">thunder</b>.<span class="pp">Light arrives almost at once, but sound takes about <b class="o">5 seconds to travel a mile</b>. Count the seconds from flash to thunder and divide by 5 to find how many miles away the lightning struck.</span>'], function (t, ctx) {
+  const cam = camLerp(LEAD, TH, eio(seg(t, 0, 0.5)));
+  let li = -1; for (let i = 0; i < TFL.length && TFL[i] <= t; i++) li = i;
+  const d = li >= 0 ? t - TFL[li] : 99;
+  const fl = d < .14 || (d > .2 && d < .3) ? 1 : 0, heat = li >= 0 ? eo(seg(d, .1, .5)) * (1 - seg(d, 2.2, 3.4)) : 0;
+  panel(ctx, cam, c => {
+    stormScene(c, { t, flash: fl }); listener(c, TLIS, 1);
+    if (fl) boltW(c, CHANNEL, 1, 3.4);
+    if (heat > 0) { c.globalAlpha = heat; line(c, CHANNEL, 'rgba(244,121,32,.35)', 26); line(c, CHANNEL, 'rgba(255,170,90,.8)', 9); line(c, CHANNEL, '#fff1d6', 3); c.globalAlpha = 1; }
+    // one arc on each side of the channel, moving left and right at the speed of sound
+    for (let i = 0; i <= li; i++) {
+      const r = (t - TFL[i]) * TSPD + 14; if (r > 1100) continue;
+      c.globalAlpha = Math.max(0, 1 - r / 1150); c.strokeStyle = '#f47920'; c.lineWidth = 6; c.lineCap = 'round';
+      c.beginPath(); c.arc(TSRC[0], TSRC[1], r, -0.42, 0.42); c.stroke();
+      c.beginPath(); c.arc(TSRC[0], TSRC[1], r, Math.PI - 0.42, Math.PI + 0.42); c.stroke();
+      c.globalAlpha = 1;
+    }
+  }, s => {
+    const counted = li >= 0 && li <= 1;
+    s.globalAlpha = counted ? heat : 0;
+    const [hx, hy] = W2S(cam, 545, 610); label(s, 'Air heated to', hx - 40, hy, C.orangeDk, L1(), 'right'); label(s, 'about 50,000 °F', hx - 40, hy + L1() * 1.15, C.orangeDk, L1(), 'right');
+    s.globalAlpha = li === 0 ? eo(seg(d, 1.0, 1.5)) * (1 - seg(d, 4.5, 5)) : 0;
+    const [wx, wy] = W2S(cam, 545 + 1.9 * TSPD, 640); label(s, 'Shock wave', wx, wy, C.navy, L1(), 'center');
+    const [lx, ly] = W2S(cam, TLIS, GY - 120);
+    if (counted) {
+      s.globalAlpha = eo(seg(d, .3, .8));
+      label(s, Math.min(5, Math.floor(d)) + ' s', lx, ly - L1() * 1.2, C.navy, fpx(18, 40, 60), 'center');
+      label(s, 'since the flash', lx, ly, C.navy, L2(), 'center', 400);
+      s.globalAlpha = d >= 5 ? eo(seg(d, 5, 5.3)) * (1 - seg(d, 7.5, 8)) : 0;
+      label(s, 'Boom!', lx - 70, ly - L1() * 3.2, C.orangeDk, fpx(18, 40, 60), 'center');
+    }
+    s.globalAlpha = eo(seg(t, TFL[0] + 5, TFL[0] + 5.4));
+    label(s, '5 seconds ≈ 1 mile away', LW - 24, LH - 40, C.navy, L1(), 'right');
+    s.globalAlpha = 1;
+  });
+});
+
+// four kinds of lightning, flashing in turn; ground-to-cloud comes last, after its leaders climb from the tower
+const KT = [2.6, 3.9, 5.2, 7.4], KP = 6;
+function kind(t, T) { if (t < T) return { a: 0, lab: 0 }; const u = (t - T) % KP; return { a: u < .18 || (u > .26 && u < .34) ? 1 : .22, lab: eo(seg(t, T + .1, T + .6)) }; }
+const GCQ = []; [[305, 214, 609], [338, 262, 611], [371, 196, 607], [404, 282, 610]].forEach(([cx, gx, cy]) => GCQ.push([[cx, cy], [gx, GY + 30]]));
+const RAINQ = [[545, 598], [585, 606], [625, 597], [665, 605], [605, 586]], TREEQ = [[540, GY + 24], [578, GY + 44], [620, GY + 26], [655, GY + 46], [690, GY + 28]];
+cscene('types', 'Kinds of lightning', 13, [100, 'The whole storm again', 'Four main types of lightning', '<b class="o">Cloud-to-ground:</b> starts in the cloud and branches down.<span class="pp"><b class="o">Within-cloud:</b> stays inside one cloud.</span><span class="pp"><b class="o">Cloud-to-cloud:</b> jumps between clouds.</span><span class="pp"><b class="o">Ground-to-cloud:</b> here, <b class="o">positive</b> charge collects at the bottom of the cloud, so <b class="o">negative</b> charge gathers on the ground. Stepped leaders branch <b class="o">upward</b> from tall objects.</span>'], function (t, ctx) {
+  const cam = camLerp(LEAD, WIDE, eio(seg(t, 0.3, 2.3)));
+  const A = kind(t, KT[0]), I = kind(t, KT[1]), D = kind(t, KT[2]), B = kind(t, KT[3]);
+  const flash = Math.max(A.a, I.a, D.a, B.a) === 1 ? 1 : 0;
+  const q = eo(seg(t, 5.6, 6.2)), climb = t < KT[3] ? seg(t, 6.2, KT[3]) : 0;
+  panel(ctx, cam, c => {
+    stormScene(c, { t, flash, cell2: true, tower: true });
+    const q0 = eo(seg(t, 1.6, 2.4)); if (q0 > 0) { c.globalAlpha = q0; RAINQ.forEach(([x, y]) => minusW(c, x, y, 12, C.blue)); TREEQ.forEach(([x, y]) => plusW(c, x, y, 11, '#ffffff')); c.globalAlpha = 1; }
+    if (q > 0) { c.globalAlpha = q; GCQ.forEach(([cp, gp]) => { plusW(c, cp[0], cp[1], 12, C.red); minusW(c, gp[0], gp[1], 12, C.blue); }); c.globalAlpha = 1; }
+    if (climb > 0) { const k = Math.max(2, Math.ceil(climb * GC.length)); line(c, GC.slice(0, k), 'rgba(225,215,255,.85)', 2.4); GCB.forEach((b, j) => { const at = [2, 4, 6, 8][j]; if (k > at) line(c, b.slice(0, Math.min(b.length, k - at + 1)), 'rgba(225,215,255,.75)', 1.6); }); }
+    boltW(c, CG, A.a, 3); CGB.forEach(b => boltW(c, b, A.a * .85, 1.7));
+    boltW(c, IC, I.a, 3); ICB.forEach(b => boltW(c, b, I.a * .85, 1.7));
+    boltW(c, CC, D.a, 3); CCB.forEach(b => boltW(c, b, D.a * .85, 1.7));
+    boltW(c, GC, B.a, 3); GCB.forEach(b => boltW(c, b, B.a * .85, 1.7));
+  }, s => {
+    const two = (x, y, a, b, al, col) => { label(s, a, x, y, col, L1(), al); label(s, b, x, y + L1() * 1.15, col, L2(), al, 400); };
+    s.globalAlpha = A.lab; two(500, 868, 'Cloud-to-ground', 'branches point down', 'center', C.navy);
+    s.globalAlpha = I.lab; two(380, 430, 'Within-cloud', 'inside one cloud', 'center', C.navy);
+    s.globalAlpha = D.lab; two(690, 318, 'Cloud-to-cloud', 'jumps between clouds', 'center', C.navy);
+    s.globalAlpha = q; label(s, '+ collects at the cloud base', 200, 690, C.red, L2(), 'center'); label(s, '− gathers on the ground', 200, 690 + L2() * 1.3, C.blue, L2(), 'center');
+    s.globalAlpha = B.lab; two(190, 800, 'Ground-to-cloud', 'leaders branch up', 'center', C.navy);
+    s.globalAlpha = 1;
+  });
+});
+
+// ---------- scene text (shown on screen and read by screen readers) ----------
+const META = {
+  title: { still: 5, cap: { tag: 'Introduction to meteorology', line: 'How lightning forms', sub: 'From colliding ice to a flash in the sky' },
+    desc: 'This animation explains how lightning forms, following NOAA’s National Weather Service JetStream lessons. It starts with the updrafts and downdrafts in a thunderstorm, zooms in to colliding ice crystals and graupel, and ends with the stepped leader, the return stroke and three kinds of lightning. The picture shows a thunderstorm with a flash of cloud-to-ground lightning.' },
+  storm: { still: 7, cap: { tag: 'The whole storm', line: 'Updrafts and downdrafts', sub: 'A strong updraft carries water droplets miles above the freezing level. A downdraft brings ice (hail and graupel) down from the frozen upper cloud.' },
+    desc: 'A side view of a thunderstorm with a tall tower and a wide anvil at the top. A dashed line marks the freezing level. An orange arrow shows the updraft rising through the middle of the storm, carrying water droplets that turn into ice crystals above the freezing level. Beside it, a navy arrow shows the downdraft carrying ice, hail and graupel, down toward the cloud base, where rain falls out.' },
+  zoomin: { still: 8, cap: { tag: 'Zooming in', line: 'Ice rises, graupel falls', sub: 'Above the freezing level, the updraft lifts tiny ice crystals. In the downdraft, heavier ice precipitation falls (most commonly graupel).' },
+    desc: 'The view zooms into a small box in the middle of the storm, just above the freezing level, where the updraft and downdraft sit side by side. Up close, small six-sided ice crystals rise on the left in the updraft, and larger, lumpy pieces of graupel fall on the right in the downdraft.' },
+  collide: { still: 9, cap: { tag: 'Charge separation', line: 'Collisions separate charge', sub: 'When a rising ice crystal bumps a falling piece of graupel, electrons are transferred from the crystal to the graupel. The crystal becomes positive. The graupel becomes negative.' },
+    desc: 'Up close, rising ice crystals and falling graupel collide again and again. At the moment of each collision, small blue electrons appear and move from the crystal to the graupel. The crystal leaves with red plus signs because it lost negative electrons and is now positive. The graupel carries the electrons away and is now negative.' },
+  zoomout: { still: 8.5, cap: { tag: 'Zooming out', line: 'Positive top, negative bottom', sub: 'The updraft carries the light, positively-charged ice crystals to the top of the cloud. The heavier, negatively-charged graupel gathers near the bottom.' },
+    desc: 'The view zooms back out to the whole storm. Positively charged ice crystals ride the updraft to the top of the cloud, where red plus signs collect. Negatively charged graupel sinks toward the cloud base, where blue minus signs collect. The storm now has a positive top and a negative bottom.' },
+  build: { still: 9, cap: { tag: 'Charge builds up', line: 'The ground answers', sub: ['More and more charge separates. The negative cloud base attracts positive charge in the ground, which gathers beneath the storm and follows it.', 'Air is a good insulator, so a huge amount of charge builds before lightning strikes.'] },
+    desc: 'The plus signs at the top of the storm and the minus signs at its base keep multiplying. Plus signs slide in along the ground from both sides and gather under the storm, attracted by the negative cloud base, and climb up the house, the tree and the pole. Dashed lines between the cloud base and the ground show the pull growing stronger. Air resists the flow of electricity, so a huge amount of charge must build before lightning can strike.' },
+  leader: { still: 10, cap: { tag: 'Between cloud and ground', line: 'The stepped leader', sub: ['A channel of negative charge, the stepped leader, zigzags down from the cloud base in quick steps, each faster than a blink. It is invisible to the eye. Negative charges branch in different directions seeking the path of least resistance to the ground.', 'As it nears the ground, streamers of positive charge reach up from tall objects.'] },
+    desc: 'The view zooms into the space between the cloud base and the ground, where a house, a tree and a utility pole stand. A faint channel of negative charge, the stepped leader, grows down from the cloud base one short step at a time, with branches splitting off in different directions as the charge seeks the easiest path to the ground. As it gets close to the ground, short streamers of positive charge rise from the top of the tree, the pole and the house. The leader and the tree’s streamer end just short of touching.' },
+  stroke: { still: 1.5, cap: { tag: 'Connection', line: 'The return stroke', sub: 'When the leader meets a streamer, the path is complete. A huge surge, the return stroke, races up the channel from the ground to the cloud. That is the flash we see. If charge is left, more strokes follow the same channel, so the bolt flickers.' },
+    desc: 'The stepped leader and the tree’s streamer connect. A bright surge, the return stroke, races up the channel from the tree to the cloud base, and the whole channel flashes white while the sky lights up. The flash fades, then the same channel flashes again several times, which is why lightning flickers. An orange arrow pointing up labels the return stroke.' },
+  thunder: { still: 5.6, cap: { tag: 'The sound of lightning', line: 'Thunder', sub: ['The lightning channel heats the air around it to about 50,000 °F, five times hotter than the surface of the sun. The air expands so suddenly that it makes a shock wave, which we hear as thunder.', 'Light arrives almost at once, but sound takes about 5 seconds to travel a mile. Count the seconds from flash to thunder and divide by 5 to find how many miles away the lightning struck.'] },
+    desc: 'The lightning channel flashes, then glows orange, labeled as air heated to about 50,000 degrees Fahrenheit. Two arcs, one on each side of the channel, move outward to the left and to the right, showing the shock wave of thunder traveling through the air. A person stands about a mile away to the right with a counter that starts at the flash. The counter reaches 5 seconds just as the right-hand arc arrives, labeled Boom, showing that 5 seconds between flash and thunder means the lightning is about 1 mile away. After a pause, a second strike repeats the count. After that, lightning keeps flashing at irregular intervals, each flash sending out its own pair of arcs.' },
+  types: { still: 13, cap: { tag: 'The whole storm again', line: 'Four main types of lightning', sub: ['Cloud-to-ground: starts in the cloud and branches down.', 'Within-cloud: stays inside one cloud.', 'Cloud-to-cloud: jumps between clouds.', 'Ground-to-cloud: here, positive charge collects at the bottom of the cloud, so negative charge gathers on the ground. Stepped leaders branch upward from tall objects.'] },
+    desc: 'The view zooms out to the whole storm, now with a second storm cloud to its right and a tall radio tower on the left. Four kinds of lightning flash in turn and are labeled. Blue minus signs sit in the cloud base where the rain falls, and white plus signs sit in the ground under the tree and the pole. Cloud-to-ground lightning starts at the cloud base above the rain and branches downward to the ground. Within-cloud lightning flashes between the charge regions inside the main storm. Cloud-to-cloud lightning jumps across the clear air between the two storm clouds. Last, a few red plus signs collect at the cloud base above the tower and a few blue minus signs gather on the ground around it, labeled beside the middle of the tower. Faint stepped leaders climb upward from the top of the tower, branching as they go, and then the ground-to-cloud flash lights them up.' },
+};
+SCENES.forEach(s => Object.assign(s, META[s.id]));
+
+
+// ---------- player ----------
+const $ = id => document.getElementById(id);
+const stage = $('stage'), frame = $('frame'), body = document.body;
+SCENES.forEach(s => { s.root = document.createElement('div'); s.root.className = 'layer'; stage.appendChild(s.root); s.init(s.root); });
+
+const mqPort = matchMedia('(orientation: portrait) and (max-width: 640px)');
+const mqLand = matchMedia('(orientation: landscape) and (max-height: 560px)');
+const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
+let mode = 'desk';
+function fit() {
+  const m = mqPort.matches ? 'port' : mqLand.matches ? 'land' : 'desk';
+  if (m !== mode) { body.classList.remove('desk', 'land', 'port'); mode = m; }
+  body.classList.add(mode);
+  const port = mode === 'port';
+  const s = frame.clientWidth / (port ? 1120 : 1920);
+  if (!s) return;
+  SCALE = s;
+  stage.style.transform = 'scale(' + s + ')' + (port ? ' translateX(-800px)' : '');
+  stage.classList.toggle('port', port);
+  stage.classList.toggle('big', s < 0.55);
+  const px = (target, lo, hi) => Math.min(hi, Math.max(lo, target / s)).toFixed(1) + 'px';
+  stage.style.setProperty('--sub', px(15, 34, 46));
+  stage.style.setProperty('--tag', px(13, 24, 42));
+  applyText();
+}
+new ResizeObserver(fit).observe(frame);
+[mqPort, mqLand].forEach(q => q.addEventListener ? q.addEventListener('change', fit) : q.addListener(fit));
+addEventListener('resize', fit);
+addEventListener('orientationchange', () => setTimeout(fit, 250));
+
+// scene text panel
+let textOn = false;
+try { textOn = localStorage.getItem('ltg-text') === '1'; } catch (e) {}
+const desc = $('desc'), textB = $('textB');
+function applyText() {
+  const shown = mode === 'port' || textOn;
+  desc.classList.toggle('sr-only', !shown);
+  textB.setAttribute('aria-expanded', textOn ? 'true' : 'false');
+  textB.setAttribute('aria-label', textOn ? 'Hide scene text' : 'Show scene text');
+}
+function setText(on) { textOn = on; try { localStorage.setItem('ltg-text', on ? '1' : '0'); } catch (e) {} applyText(); }
+textB.onclick = () => setText(!textOn);
+$('closeText').onclick = () => { setText(false); textB.focus(); };
+$('skip').addEventListener('click', e => { e.preventDefault(); if (mode !== 'port') setText(true); desc.focus(); });
+
+// scene navigation
+const dots = $('dots'), title = $('title'), count = $('count'), nextB = $('next'), backB = $('back');
+SCENES.forEach((s, i) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ': ' + s.name); b.onclick = () => go(i); dots.appendChild(b); });
+const esc = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+let cur = -1, start = performance.now(), prev = null, prevT = 0, fadeStart = 0, paused = false, pausedAt = 0, still = false;
+const FADE = 0.4;
+function sceneTime(now) { return ((paused ? pausedAt : now) - start) / 1000; }
+function setPaused(p) {
+  const now = performance.now();
+  if (p === paused) return;
+  if (paused) { start += now - pausedAt; paused = false; } else { pausedAt = now; paused = true; }
+  $('pauseTxt').textContent = paused ? 'Play' : 'Pause';
+  $('pause').setAttribute('aria-label', paused ? 'Play' : 'Pause');
+  $('pauseIco').innerHTML = paused ? '<path d="M7 5l12 7-12 7z"/>' : '<path d="M8 5v14M16 5v14"/>';
+}
+function go(i) {
+  if (i < 0 || i >= SCENES.length) return;
+  const now = performance.now();
+  const reduce = mqReduce.matches;
+  if (i !== cur && cur >= 0 && !reduce) { prev = cur; prevT = sceneTime(now); fadeStart = now; } else prev = null;
+  cur = i;
+  const s = SCENES[i];
+  if (reduce) { setPaused(false); start = now - s.still * 1000; setPaused(true); still = true; }
+  else { start = now; if (paused) pausedAt = now; still = false; }
+  title.textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  count.textContent = (i + 1) + ' of ' + SCENES.length;
+  $('dTitle').textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  const c = s.cap;
+  $('cap').innerHTML = '<p class="cap-tag">' + esc(c.tag) + '</p><p class="cap-line">' + esc(c.line) + '</p>' +
+    (c.sub ? [].concat(c.sub).map(x => '<p class="cap-sub">' + esc(x) + '</p>').join('') : '') + (c.box ? '<div class="cap-box"><p class="cap-tag" style="color:var(--brand)">' + esc(c.box[0]) + '</p><p class="cap-sub">' + esc(c.box[1]) + '</p></div>' : '');
+  $('dText').textContent = s.desc;
+  [...dots.children].forEach((d, k) => { d.className = k === i ? 'on' : k < i ? 'done' : ''; if (k === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  if (document.activeElement === backB && i === 0) nextB.focus();
+  if (document.activeElement === nextB && i === SCENES.length - 1) backB.focus();
+  backB.disabled = i === 0;
+  nextB.disabled = i === SCENES.length - 1;
+  if (mode === 'port') desc.scrollTop = 0;
+}
+function frameLoop(now) {
+  const t = sceneTime(now);
+  const fp = prev === null ? 1 : clamp01((now - fadeStart) / 1000 / FADE);
+  SCENES.forEach((s, k) => { s.root.style.display = (k === cur || (k === prev && fp < 1)) ? 'block' : 'none'; });
+  if (prev !== null && fp < 1) { const ps = SCENES[prev]; ps.root.style.opacity = 1 - fp; ps.root.style.zIndex = 1; ps.render(prevT + (now - fadeStart) / 1000); }
+  else prev = null;
+  const s = SCENES[cur];
+  s.root.style.opacity = fp; s.root.style.zIndex = 2;
+  s.render(Math.max(0, t));
+  nextB.classList.toggle('ready', (t >= s.dur || still) && cur < SCENES.length - 1);
+  requestAnimationFrame(frameLoop);
+}
+nextB.onclick = () => go(cur + 1);
+backB.onclick = () => go(cur - 1);
+$('replay').onclick = () => { prev = null; still = false; setPaused(false); start = performance.now(); };
+$('pause').onclick = () => setPaused(!paused);
+
+// full screen, hidden where the browser can't do it (such as Safari on iPhone)
+const app = $('app');
+const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(app.requestFullscreen || app.webkitRequestFullscreen);
+if (!fsOK) body.classList.add('no-fs');
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+$('full').onclick = () => {
+  try {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (app.requestFullscreen || app.webkitRequestFullscreen).call(app); if (r && r.catch) r.catch(() => {}); }
+  } catch (e) {}
+};
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { $('full').setAttribute('aria-label', fsEl() ? 'Exit full screen' : 'Full screen'); fit(); }));
+
+// keyboard
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const onButton = e.target.closest && e.target.closest('button, a');
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (k === ' ' || k === 'Spacebar') { if (!onButton) { e.preventDefault(); go(cur + 1); } }
+  else if (k === 'Home') { e.preventDefault(); go(0); }
+  else if (k === 'End') { e.preventDefault(); go(SCENES.length - 1); }
+  else if (k === 'r' || k === 'R') $('replay').click();
+  else if (k === 'p' || k === 'P') $('pause').click();
+  else if ((k === 'f' || k === 'F') && fsOK) $('full').click();
+  else if (k === 't' || k === 'T') setText(!textOn);
+  else if (k === 'Escape' && textOn && mode === 'land') { setText(false); textB.focus(); }
+});
+
+// touch: swipe left/right, tap the right side for next and the far left for back (mouse clicks ignored)
+let tp = null;
+frame.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; tp = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+frame.addEventListener('pointercancel', () => { tp = null; });
+frame.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch' || !tp) return;
+  const dx = e.clientX - tp.x, dy = e.clientY - tp.y, dt = performance.now() - tp.t; tp = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 800) { go(cur + (dx < 0 ? 1 : -1)); return; }
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) {
+    const r = frame.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+    if (fx > 0.5) go(cur + 1); else if (fx < 0.25) go(cur - 1);
+  }
+});
+
+// test hook: COR.go(i), COR.seek(seconds) freezes the current scene at a moment
+window.LTG = { go, seek(t) { setPaused(false); start = performance.now() - t * 1000; prev = null; setPaused(true); }, scenes: SCENES.length };
+
+fit();
+go(0);
+requestAnimationFrame(frameLoop);
+})();
+</script>

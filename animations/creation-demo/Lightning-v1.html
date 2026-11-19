@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lightning Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<style>
+/* Same type and palette as the other labs in this series. The storm picture is the page; Explain steps sit under it, Explore controls replace them. */
+:root{
+  --bg:#eef2f5; --panel:#ffffff; --fg:#13202b; --muted:#56656f; --line:#d3dce3;
+  --accent:#1a6782; --accent-ink:#ffffff; --chip:#e3eaef;
+  --sky1:#5f7183; --sky2:#aab7c2; --cloud:#e9edf1; --cloud2:#98a3ae; --cin1:#e2e8ee; --cin2:#c3ced8;
+  --ground:#5b7346; --ground2:#435736; --tree:#2f6b3a; --house:#8a5a44;
+  --pos:#c2410c; --neg:#1d4ed8; --glow:#4c1d95; --drop:#0d7373; --icec:#3a6fb0; --warm:#e8862a;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161d; --panel:#16212b; --fg:#e4ecf2; --muted:#a3b3c0; --line:#2a3946;
+  --accent:#5bbbdc; --accent-ink:#06141c; --chip:#1f2d39;
+  --sky1:#070d13; --sky2:#18232e; --cloud:#4a5662; --cloud2:#232d37; --cin1:#2c3844; --cin2:#1b252f;
+  --ground:#22321c; --ground2:#17230f; --tree:#3f7d4a; --house:#a06a52;
+  --pos:#ff8a5c; --neg:#8fb2ff; --glow:#c4a8ff; --drop:#45cfc9; --icec:#8fb8f0; --warm:#f0a35e; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f161d; --panel:#16212b; --fg:#e4ecf2; --muted:#a3b3c0; --line:#2a3946;
+  --accent:#5bbbdc; --accent-ink:#06141c; --chip:#1f2d39;
+  --sky1:#070d13; --sky2:#18232e; --cloud:#4a5662; --cloud2:#232d37; --cin1:#2c3844; --cin2:#1b252f;
+  --ground:#22321c; --ground2:#17230f; --tree:#3f7d4a; --house:#a06a52;
+  --pos:#ff8a5c; --neg:#8fb2ff; --glow:#c4a8ff; --drop:#45cfc9; --icec:#8fb8f0; --warm:#f0a35e; color-scheme:dark;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header h1{font-family:var(--f-display);font-weight:600;font-size:clamp(26px,4vw,36px);line-height:1.1;margin:0}
+header p{margin:6px 0 0;color:var(--muted);max-width:75ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.modebar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.seg{display:inline-flex;background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{appearance:none;border:0;background:transparent;font:inherit;font-weight:600;color:var(--muted);
+  padding:8px 20px;border-radius:999px;min-height:42px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg button:disabled{cursor:not-allowed;opacity:.55}
+.linkbtn{appearance:none;border:0;background:none;color:var(--accent);font:inherit;font-size:14px;text-decoration:underline;cursor:pointer;padding:8px 4px}
+
+.track{overflow-x:auto;padding:10px}
+.track ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;min-width:max-content}
+.track button{appearance:none;font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--chip);color:var(--muted);
+  border-radius:999px;padding:6px 12px;min-height:38px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.track button .n{font-family:var(--f-mono);font-size:12px}
+.track button.seen{color:var(--fg)}
+.track button[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.stage{position:relative;width:100%;max-width:max(520px,calc((100dvh - 250px) * 1.6667));margin:0 auto;
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sky2)}
+.stage canvas{display:block;width:100%;height:auto;aspect-ratio:5/3;touch-action:manipulation}
+.stage.exploring canvas{cursor:crosshair}
+
+.caption{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end}
+.caption h2{font-family:var(--f-display);font-weight:600;font-size:23px;line-height:1.15;margin:0 0 6px}
+.caption p{margin:0;max-width:75ch}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.btn{appearance:none;font:inherit;font-weight:600;border:1px solid var(--line);background:var(--panel);color:var(--fg);
+  border-radius:8px;padding:8px 16px;min-height:44px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.4;cursor:default}
+@media (max-width:680px){.caption{grid-template-columns:1fr}}
+
+.explore{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:960px){.explore{grid-template-columns:1fr 1fr}}
+@media (max-width:620px){.explore{grid-template-columns:1fr}}
+.explore h3{font-family:var(--f-display);font-weight:600;font-size:17px;margin:0 0 10px}
+.meter{position:relative;height:18px;border-radius:999px;background:var(--chip);border:1px solid var(--line);overflow:hidden}
+.meter .fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,var(--neg),var(--glow))}
+.meter .mark{position:absolute;top:0;bottom:0;left:80%;width:3px;background:var(--fg)}
+.legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.legend span:last-child{margin-right:12%}
+.status{min-height:4.5em;margin:12px 0 0;font-weight:500}
+.field{margin:0 0 12px}
+.field label{display:flex;justify-content:space-between;font-weight:600;font-size:14px}
+.field output{font-family:var(--f-mono);font-weight:400;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:32px;margin:2px 0 0}
+.check{display:flex;gap:10px;align-items:center;font-size:14px;min-height:36px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{appearance:none;font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--chip);color:var(--fg);
+  border-radius:999px;padding:6px 14px;min-height:38px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+dl.tally{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px;margin:0}
+dl.tally dt{color:var(--muted)}
+dl.tally dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
+dl.tally .sep{grid-column:1/-1;height:1px;background:var(--line);margin:4px 0}
+footer{font-size:13px;color:var(--muted)}
+footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Lightning Lab</h1>
+    <p>How a thunderstorm builds up electric charge and releases it as lightning. Walk through it in Explain, then run your own storm in Explore.</p>
+  </header>
+
+  <div class="modebar">
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="mExplain" aria-pressed="true">Explain</button>
+      <button id="mExplore" aria-pressed="false" disabled title="Finish Explain to unlock">
+        <svg id="lockIcon" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 10V8a6 6 0 1 1 12 0v2h1a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V11a1 1 0 0 1 1-1h1Zm2 0h8V8a4 4 0 1 0-8 0v2Z"/></svg>
+        Explore
+      </button>
+    </div>
+    <button class="linkbtn" id="unlockNow">Unlock Explore now</button>
+  </div>
+
+  <nav class="panel track" id="track" aria-label="Explain steps"><ol id="trackList"></ol></nav>
+
+  <div class="stage" id="stage">
+    <canvas id="cv" role="img" aria-label="Cross-section of a thunderstorm showing particles, electric charges, and lightning."></canvas>
+  </div>
+
+  <section class="panel caption" id="caption" aria-live="polite">
+    <div>
+      <h2 id="capTitle"></h2>
+      <p id="capText"></p>
+    </div>
+    <div class="nav">
+      <button class="btn" id="back">Back</button>
+      <button class="btn primary" id="next">Next</button>
+    </div>
+  </section>
+
+  <section class="explore" id="explorePanel" hidden>
+    <div class="panel">
+      <h3>Electric field</h3>
+      <div class="meter" aria-hidden="true"><div class="fill" id="mFill"></div><div class="mark"></div></div>
+      <div class="legend"><span>Charge building</span><span>Air breaks down</span></div>
+      <p class="status" id="status" aria-live="polite"></p>
+      <div class="row">
+        <button class="btn" id="pause">Pause</button>
+        <button class="btn" id="reset">Reset storm</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Storm controls</h3>
+      <div class="field">
+        <label for="up">Updraft strength <output id="upOut">70%</output></label>
+        <input type="range" id="up" min="0" max="100" value="70">
+      </div>
+      <div class="field">
+        <label for="ice">Ice in the cloud <output id="iceOut">70%</output></label>
+        <input type="range" id="ice" min="0" max="100" value="70">
+      </div>
+      <label class="check"><input type="checkbox" id="slow"> Extra-slow motion</label>
+      <label class="check"><input type="checkbox" id="skipIC"> Skip in-cloud flashes</label>
+    </div>
+    <div class="panel">
+      <h3>Ground and tally</h3>
+      <div class="chips" role="group" aria-label="Object to place">
+        <button data-place="tree" aria-pressed="true">Tree</button>
+        <button data-place="house" aria-pressed="false">House</button>
+        <button data-place="pole" aria-pressed="false">Pole</button>
+        <button id="clearObjs" aria-pressed="false">Clear all</button>
+      </div>
+      <p class="hint">Tap the ground to add or remove an object. Tap the cloud to look inside it.</p>
+      <dl class="tally" style="margin-top:12px">
+        <dt>In-cloud flashes</dt><dd id="tIc">0</dd>
+        <dt>Negative ground strikes</dt><dd id="tNeg">0</dd>
+        <dt>Positive ground strikes</dt><dd id="tPos">0</dd>
+        <dt>Share in-cloud</dt><dd id="tShare">–</dd>
+        <div class="sep"></div>
+        <dt>Hit a tree</dt><dd id="hTree">0</dd>
+        <dt>Hit a house</dt><dd id="hHouse">0</dd>
+        <dt>Hit a pole</dt><dd id="hPole">0</dd>
+        <dt>Hit open ground</dt><dd id="hGround">0</dd>
+      </dl>
+    </div>
+  </section>
+
+  <footer>Based on NOAA JetStream: <a href="https://www.noaa.gov/jetstream/lightning" target="_blank" rel="noopener">Lightning</a>, <a href="https://www.noaa.gov/jetstream/lightning/how-lightning-is-created" target="_blank" rel="noopener">How Lightning is Created</a>, and <a href="https://www.noaa.gov/jetstream/lightning/positive-and-negative-side-of-lightning" target="_blank" rel="noopener">The Positive and Negative Side of Lightning</a>. Animations are slowed far below real speed.</footer>
+</div>
+
+<script>
+(()=>{
+const W=1000,H=600,GY=560;
+const ftY=ft=>GY-ft*0.0105;
+const FREEZE_Y=ftY(16000), BASE_Y=ftY(8000);
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const rand=(a,b)=>a+Math.random()*(b-a);
+const rint=(a,b)=>Math.floor(rand(a,b+1));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t)};
+const last=a=>a[a.length-1];
+const $=s=>document.querySelector(s);
+function withA(hex,a){const h=hex.replace('#','');const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}
+
+let T={};
+const darkMQ=matchMedia('(prefers-color-scheme: dark)');
+function readTheme(){const cs=getComputedStyle(document.documentElement);const g=n=>cs.getPropertyValue('--'+n).trim();
+  T={sky1:g('sky1'),sky2:g('sky2'),cloud:g('cloud'),cloud2:g('cloud2'),cin1:g('cin1'),cin2:g('cin2'),ground:g('ground'),ground2:g('ground2'),
+     tree:g('tree'),house:g('house'),pos:g('pos'),neg:g('neg'),glow:g('glow'),drop:g('drop'),icec:g('icec'),warm:g('warm'),
+     ink:g('fg'),muted:g('muted'),panel:g('panel'),dark:darkMQ.matches};}
+readTheme(); darkMQ.addEventListener('change',readTheme);
+
+/* ---------- canvas ---------- */
+const cv=$('#cv'), ctx=cv.getContext('2d');
+let baseScale=1, viewScale=1;
+function resize(){const w=cv.clientWidth||800;const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(w*dpr);cv.height=Math.round(w*0.6*dpr);baseScale=cv.width/W;viewScale=w/W;}
+new ResizeObserver(resize).observe(cv); resize();
+const wf=px=>Math.min(px*2.3,Math.max(px,11.5/viewScale));
+const FONT=(w,px)=>`${w} ${wf(px)}px "IBM Plex Sans", system-ui, sans-serif`;
+
+function circ(c,x,y,r){c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill()}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function plus(c,x,y,s,col){c.strokeStyle=col;c.lineWidth=Math.max(1.6,s*.34);c.lineCap='round';c.beginPath();c.moveTo(x-s,y);c.lineTo(x+s,y);c.moveTo(x,y-s);c.lineTo(x,y+s);c.stroke()}
+function minus(c,x,y,s,col){c.strokeStyle=col;c.lineWidth=Math.max(1.6,s*.34);c.lineCap='round';c.beginPath();c.moveTo(x-s,y);c.lineTo(x+s,y);c.stroke()}
+function hex(c,x,y,r,rot,stroke,fill,lw){c.beginPath();for(let k=0;k<6;k++){const a=rot+k*Math.PI/3;const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;k?c.lineTo(px,py):c.moveTo(px,py)}c.closePath();if(fill){c.fillStyle=fill;c.fill()}c.strokeStyle=stroke;c.lineWidth=lw||1.3;c.stroke()}
+function tag(c,text,x,y,o={}){const fs=wf(o.size||14);c.font=FONT(600,o.size||14);const w=c.measureText(text).width;const pad=fs*.55,h=fs*1.65;
+  let x0=o.align==='left'?x:o.align==='right'?x-w-pad*2:x-w/2-pad;x0=clamp(x0,4,W-w-pad*2-4);const y0=clamp(y-h/2,4,H-h-4);
+  c.fillStyle=withA(T.panel,.9);rr(c,x0,y0,w+pad*2,h,h/2);c.fill();if(o.col){c.strokeStyle=o.col;c.lineWidth=1.5;c.stroke()}
+  c.fillStyle=o.col||T.ink;c.textBaseline='middle';c.textAlign='left';c.fillText(text,x0+pad,y0+h/2+1)}
+
+/* ---------- fixed geometry ---------- */
+function mulberry(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const sr=mulberry(11);
+function ellPts(cx,cy,rx,ry,n){const a=[];for(let i=0;i<n;i++){const r=Math.sqrt(sr()),th=sr()*Math.PI*2;a.push({x:cx+rx*r*Math.cos(th),y:cy+ry*r*Math.sin(th)})}return a}
+const POS_PTS=ellPts(600,168,150,34,32), NEG_PTS=ellPts(588,426,135,28,32);
+const GND_PTS=[];for(let i=0;i<22;i++)GND_PTS.push({x:400+i*17+sr()*8,y:GY+11+sr()*20});
+for(let i=GND_PTS.length-1;i>0;i--){const j=Math.floor(sr()*(i+1));[GND_PTS[i],GND_PTS[j]]=[GND_PTS[j],GND_PTS[i]]}
+
+const cloudP=new Path2D();
+(p=>{p.moveTo(380,BASE_Y);p.lineTo(760,BASE_Y);
+  p.bezierCurveTo(800,BASE_Y-4,795,425,770,405);
+  p.bezierCurveTo(805,370,780,305,748,288);
+  p.bezierCurveTo(780,250,760,205,732,190);
+  p.bezierCurveTo(810,186,910,188,982,168);
+  p.bezierCurveTo(1000,158,990,132,958,126);
+  p.bezierCurveTo(870,100,760,90,650,94);
+  p.bezierCurveTo(540,90,420,100,335,118);
+  p.bezierCurveTo(298,126,300,146,335,150);
+  p.bezierCurveTo(385,158,425,166,445,182);
+  p.bezierCurveTo(415,212,422,252,442,272);
+  p.bezierCurveTo(398,300,402,352,422,372);
+  p.bezierCurveTo(378,402,368,452,380,BASE_Y);p.closePath();})(cloudP);
+const hitC=document.createElement('canvas').getContext('2d');
+
+const OBJ_H={tree:78,house:48,pole:90};
+const OBJ_NAME={tree:'tree',house:'house',pole:'utility pole'};
+function drawObj(c,o){const x=o.x;
+  if(o.type==='tree'){c.fillStyle=T.house;c.fillRect(x-4,GY-28,8,28);c.fillStyle=T.tree;
+    for(const [dx,dy,r] of [[0,-48,24],[-14,-36,17],[14,-36,17],[0,-62,16]]){circ(c,x+dx,GY+dy,r)}}
+  else if(o.type==='house'){c.fillStyle=T.house;c.fillRect(x-28,GY-28,56,28);c.fillStyle=withA(T.house,1);
+    c.beginPath();c.moveTo(x-34,GY-27);c.lineTo(x,GY-48);c.lineTo(x+34,GY-27);c.closePath();c.fillStyle=T.dark?'#6b4636':'#5e3b2c';c.fill();
+    c.fillStyle=T.dark?'#2a1d16':'#f1e3c8';c.fillRect(x-6,GY-16,12,16);}
+  else{c.fillStyle=T.dark?'#8d7a66':'#5b4a3a';c.fillRect(x-3,GY-90,6,90);c.fillRect(x-17,GY-82,34,4);}
+}
+
+/* ---------- particles ---------- */
+let now=0;
+const ups=[],downs=[];
+for(let i=0;i<60;i++)ups.push({x:rand(505,590),y:rand(150,BASE_Y),ph:rand(0,6)});
+for(let i=0;i<34;i++)downs.push({x:rand(615,705),y:rand(150,BASE_Y+60),ph:rand(0,6)});
+function updParticles(dt,up){const s=dt/1000;const vU=50+170*up,vD=40+70*up;
+  for(const p of ups){p.y-=vU*s*(0.8+0.4*Math.sin(p.ph));p.x+=Math.sin(now*.002+p.ph)*10*s;if(p.y<140+p.ph*6){p.y=BASE_Y+rand(-6,14);p.x=rand(505,590)}}
+  for(const p of downs){p.y+=vD*s;p.x+=Math.sin(now*.0017+p.ph)*8*s;if(p.y>BASE_Y+70){p.y=rand(140,190);p.x=rand(615,705)}}}
+function drawParticles(c,up,ice,alpha){const nU=Math.round(10+up*50),nD=Math.round(ice*34);c.globalAlpha=alpha;
+  for(let i=0;i<nU;i++){const p=ups[i];if(p.y<FREEZE_Y)hex(c,p.x,p.y,3.8,p.ph,T.icec,null,1.4);else{c.fillStyle=T.drop;circ(c,p.x,p.y,3)}}
+  for(let i=0;i<nD;i++){const p=downs[i];c.fillStyle=T.cin1;circ(c,p.x,p.y,4.4);c.strokeStyle=T.icec;c.lineWidth=1.3;c.stroke()}
+  c.globalAlpha=1}
+const sparks=[];
+function updSparks(dt,rate){const s=dt/1000;if(Math.random()<rate*s)sparks.push({x:rand(545,665),y:rand(240,410),t:0});
+  for(let i=sparks.length-1;i>=0;i--){sparks[i].t+=s;if(sparks[i].t>.35)sparks.splice(i,1)}}
+function drawSparks(c){for(const p of sparks){const a=1-p.t/.35;c.strokeStyle=withA(T.warm,a);c.lineWidth=1.8;const r=5+p.t*22;c.beginPath();
+  for(let k=0;k<4;k++){const th=k*Math.PI/2+.4;c.moveTo(p.x+Math.cos(th)*r*.35,p.y+Math.sin(th)*r*.35);c.lineTo(p.x+Math.cos(th)*r,p.y+Math.sin(th)*r)}c.stroke()}}
+
+/* ---------- strike engine ---------- */
+function jag(a,b,n){const pts=[a];for(let i=1;i<n;i++){const t=i/n;pts.push({x:lerp(a.x,b.x,t)+rand(-20,20),y:lerp(a.y,b.y,t)+rand(-8,8)})}pts.push(b);return pts}
+function makeStrike(type,o={}){
+  const s={type,phase:'leader',t:0,acc:0,main:[],branches:[],streamers:[],hit:null,cp:null,stepMs:o.stepMs||45,
+    stopAtConnect:!!o.stopAtConnect,done:false,objs:o.objs||[],onStroke:o.onStroke,fired:false,ground:null,strokes:1};
+  if(type==='ic'){const a={x:rand(500,670),y:rand(405,440)},b={x:rand(510,700),y:rand(160,200)};s.main=jag(a,b,12);
+    for(let k=0;k<3;k++){const i=rint(2,9);let p=s.main[i];const br=[p];const d=Math.random()<.5?-1:1;for(let j=0;j<4;j++){p={x:p.x+d*rand(10,24),y:p.y+rand(-14,10)};br.push(p)}s.branches.push({pts:br,life:0})}
+    s.phase='stroke';s.strokes=rint(1,2);}
+  else{s.main=[type==='neg'?{x:o.startX!=null?o.startX+rand(-30,30):rand(470,700),y:BASE_Y-34}:{x:rand(845,905),y:178}];
+    s.strokes=type==='neg'?rint(2,4):1;}
+  return s}
+function nearestStreamer(s,tip){let best=null,bd=1e9;for(const t of s.streamers){const d=Math.hypot(t.x-tip.x,(t.y0-t.len)-tip.y);if(d<bd){bd=d;best=t}}return best}
+function leaderStep(s){const tip=last(s.main);let dx=rand(-22,22);
+  const near=nearestStreamer(s,tip);if(near&&Math.abs(near.x-tip.x)<260)dx+=clamp((near.x-tip.x)*.3,-16,16);
+  if(s.type==='pos')dx+=tip.x<930?7:-4;
+  const sz=s.type==='pos'?1:.6;dx*=s.type==='pos'?1:.7;const np={x:clamp(tip.x+dx,15,990),y:Math.min(GY,tip.y+rand(15,26)*sz)};s.main.push(np);
+  if(Math.random()<.3)s.branches.push({pts:[tip],life:rint(2,5),dir:Math.random()<.5?-1:1});
+  for(const b of s.branches)if(b.life>0){const bt=last(b.pts);b.pts.push({x:bt.x+b.dir*rand(6,20),y:bt.y+rand(10,20)});b.life--}
+  for(const o of s.objs){const h=OBJ_H[o.type];if(!s.streamers.find(t=>t.obj===o)&&np.y>GY-h-170&&Math.abs(o.x-np.x)<210)
+    s.streamers.push({x:o.x,y0:GY-h,len:0,max:55,obj:o})}
+  if(!s.ground&&np.y>GY-125){s.ground={x:clamp(np.x+rand(-12,12),10,990),y0:GY,len:0,max:42,obj:null};s.streamers.push(s.ground)}
+  checkConnect(s)}
+function checkConnect(s){const tip=last(s.main);
+  for(const t of s.streamers){if(t.len<6)continue;if(Math.hypot(tip.x-t.x,tip.y-(t.y0-t.len))<38){join(s,t);return}}
+  if(tip.y>=GY-1)join(s,{x:tip.x,y0:GY,len:0,obj:null})}
+function join(s,t){s.hit=t;s.cp={x:t.x,y:t.y0-t.len};s.main.push({x:s.cp.x,y:s.cp.y});if(t.len>0)s.main.push({x:t.x,y:t.y0});s.phase='connect';s.t=0}
+function updStrike(s,dt){s.t+=dt;
+  if(s.phase==='leader'){s.acc+=dt;while(s.acc>=s.stepMs&&s.phase==='leader'){s.acc-=s.stepMs;leaderStep(s)}
+    if(s.phase==='leader'){for(const t of s.streamers)t.len=Math.min(t.max,t.len+dt*.09);checkConnect(s)}}
+  else if(s.phase==='connect'){if(s.t>=(s.stopAtConnect?1900:160)){if(s.stopAtConnect)s.done=true;else{s.phase='stroke';s.t=0}}}
+  else if(s.phase==='stroke'){if(!s.fired){s.fired=true;s.onStroke&&s.onStroke(s)}if(s.t>=s.strokes*210){s.phase='fade';s.t=0}}
+  else if(s.phase==='fade'){if(s.t>=600)s.done=true}}
+function strokeOn(s){return s&&s.phase==='stroke'&&(s.t%210)<90}
+function flashOf(s){if(!s)return{cloud:0,sky:0};
+  if(strokeOn(s))return s.type==='ic'?{cloud:reduceMotion?.15:.4,sky:reduceMotion?0:.06}:{cloud:reduceMotion?.1:.25,sky:reduceMotion?0:.16};
+  if(s.phase==='fade'){const k=1-s.t/600;return{cloud:.08*k,sky:0}}return{cloud:0,sky:0}}
+function pathPts(c,pts){c.beginPath();c.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)c.lineTo(pts[i].x,pts[i].y)}
+function drawStrike(c,s){if(!s)return;const lc=s.type==='pos'?T.pos:T.neg,sc=s.type==='pos'?T.neg:T.pos;
+  c.save();c.lineJoin='round';c.lineCap='round';
+  if(s.phase==='leader'||s.phase==='connect'){
+    c.strokeStyle=withA(sc,.95);c.lineWidth=2.4;
+    for(const t of s.streamers){if(t.len<1)continue;c.beginPath();c.moveTo(t.x,t.y0);for(let y=6;y<=t.len;y+=6)c.lineTo(t.x+((y/6)%2?2.5:-2.5),t.y0-y);c.stroke();
+      (s.type==='pos'?minus:plus)(c,t.x+9,t.y0-t.len-4,4,sc)}
+    c.strokeStyle=withA(lc,.25);c.lineWidth=7;pathPts(c,s.main);c.stroke();c.setLineDash([5,4]);c.strokeStyle=withA(lc,.95);c.lineWidth=2.8;pathPts(c,s.main);c.stroke();
+    c.lineWidth=1.5;c.strokeStyle=withA(lc,.6);for(const b of s.branches)if(b.pts.length>1){pathPts(c,b.pts);c.stroke()}
+    c.setLineDash([]);const tip=s.phase==='connect'?s.cp:last(s.main);c.fillStyle=lc;circ(c,tip.x,tip.y,4);
+    if(s.phase==='connect'){const k=.5+.5*Math.sin(s.t/90);c.fillStyle=`rgba(255,255,255,${.6+.4*k})`;circ(c,s.cp.x,s.cp.y,6+4*k);c.strokeStyle=lc;c.lineWidth=2;c.stroke()}
+  }else{const on=strokeOn(s);const a=s.phase==='fade'?Math.max(0,1-s.t/600)*.5:on?1:.3;
+    c.strokeStyle=withA(T.glow,.5*a);c.lineWidth=on?14:7;pathPts(c,s.main);c.stroke();
+    c.strokeStyle=`rgba(255,255,255,${a})`;c.lineWidth=on?4.5:2.4;pathPts(c,s.main);c.stroke();
+    if(on){c.strokeStyle=withA(T.glow,.35);c.lineWidth=4;for(const b of s.branches)if(b.pts.length>1){pathPts(c,b.pts);c.stroke()}
+      c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=1.4;for(const b of s.branches)if(b.pts.length>1){pathPts(c,b.pts);c.stroke()}}}
+  c.restore()}
+
+/* ---------- storm scene ---------- */
+function bigArrow(c,x,y1,y2,col){c.strokeStyle=col;c.lineWidth=11;c.lineCap='butt';c.beginPath();c.moveTo(x,y1);c.lineTo(x,y2-Math.sign(y2-y1)*10);c.stroke();
+  const d=Math.sign(y2-y1);c.fillStyle=col;c.beginPath();c.moveTo(x-18,y2-d*14);c.lineTo(x+18,y2-d*14);c.lineTo(x,y2+d*10);c.closePath();c.fill()}
+function arrowHead(c,x,y,d,col){c.fillStyle=col;c.beginPath();c.moveTo(x-6,y-d*9);c.lineTo(x+6,y-d*9);c.lineTo(x,y+d*2);c.closePath();c.fill()}
+function drawStorm(c,o){
+  const g=c.createLinearGradient(0,0,0,GY);g.addColorStop(0,T.sky1);g.addColorStop(1,T.sky2);c.fillStyle=g;c.fillRect(0,0,W,GY);
+  if(o.band){c.fillStyle=withA(T.warm,.12);c.fillRect(0,0,W,ftY(35000));c.strokeStyle=withA(T.warm,.6);c.setLineDash([8,6]);c.lineWidth=1.5;c.beginPath();c.moveTo(0,ftY(35000));c.lineTo(W,ftY(35000));c.stroke();c.setLineDash([])}
+  c.font=FONT(500,12);c.textBaseline='middle';c.textAlign='left';
+  for(const ft of [10000,20000,30000,40000]){const y=ftY(ft);c.strokeStyle=withA(T.ink,.35);c.lineWidth=1.5;c.beginPath();c.moveTo(0,y);c.lineTo(12,y);c.stroke();
+    c.fillStyle=withA(T.dark?'#e4ecf2':'#ffffff',.85);c.fillText(`${ft/1000},000 ft`,16,y)}
+  c.fillStyle=T.ground;c.fillRect(0,GY,W,H-GY);c.fillStyle=T.ground2;c.fillRect(0,GY,W,3);
+  // rain shaft
+  const rg=c.createLinearGradient(0,BASE_Y,0,GY);rg.addColorStop(0,withA(T.cloud2,.55));rg.addColorStop(1,withA(T.cloud2,.1));c.fillStyle=rg;c.fillRect(420,BASE_Y,310,GY-BASE_Y);
+  c.strokeStyle=withA(T.icec,.4);c.lineWidth=1.2;c.beginPath();
+  for(let i=0;i<70;i++){const x=430+((i*37.3)%290);const sp=260+(i%5)*40;const y=BASE_Y+((now*sp/1000+i*53)%(GY-BASE_Y-10));c.moveTo(x,y);c.lineTo(x-3,y+11)}c.stroke();
+  // cloud
+  const fl=flashOf(o.strike);
+  const cg=c.createLinearGradient(0,90,0,BASE_Y);cg.addColorStop(0,T.cloud);cg.addColorStop(1,T.cloud2);c.fillStyle=cg;c.fill(cloudP);
+  if(fl.cloud>0){c.fillStyle=`rgba(255,255,255,${fl.cloud})`;c.fill(cloudP)}
+  c.strokeStyle=withA(T.icec,.75);c.setLineDash([10,7]);c.lineWidth=1.6;c.beginPath();c.moveTo(0,FREEZE_Y);c.lineTo(W,FREEZE_Y);c.stroke();c.setLineDash([]);
+  if(!o.hideFreeze)tag(c,'Freezing level (0 °C)',995,FREEZE_Y,{align:'right',size:12,col:T.icec});
+  if(o.arrows){bigArrow(c,545,462,190,withA(T.drop,.35));bigArrow(c,662,190,462,withA(T.icec,.35))}
+  drawParticles(c,o.up,o.ice,o.pAlpha);
+  drawSparks(c);
+  for(const ob of o.objs)drawObj(c,ob);
+  // charges
+  const Q=o.Q;const n=Math.round(clamp(Q,0,1.15)*27);
+  for(let i=0;i<Math.min(n,POS_PTS.length);i++){plus(c,POS_PTS[i].x,POS_PTS[i].y,6,T.pos);minus(c,NEG_PTS[i].x,NEG_PTS[i].y,6,T.neg)}
+  const gN=Math.round(clamp(Q,0,1.1)*18);for(let i=0;i<Math.min(gN,GND_PTS.length);i++)plus(c,GND_PTS[i].x,GND_PTS[i].y,5,T.dark?T.pos:'#ffd2bd');
+  const k=Math.round(clamp(Q,0,1)*4);for(const ob of o.objs){const h=OBJ_H[ob.type];const ox=ob.x+(ob.type==='house'?36:16);for(let j=0;j<k;j++)plus(c,ox,GY-8-j*(h-14)/3,4.5,T.pos)}
+  if(o.field&&Q>.05){const a=clamp(Q,0,1)*.6,col=withA(T.ink,a);c.save();c.setLineDash([6,6]);c.lineDashOffset=-now*.02;c.strokeStyle=col;c.lineWidth=1.6;
+    for(let i=0;i<5;i++){const x=500+i*45;c.beginPath();c.moveTo(x,214);c.lineTo(x,384);c.stroke();arrowHead(c,x,388,1,col)}
+    for(let i=0;i<5;i++){const x=470+i*60;c.beginPath();c.moveTo(x,GY-6);c.lineTo(x,BASE_Y+14);c.stroke();arrowHead(c,x,BASE_Y+10,-1,col)}c.restore()}
+  if(fl.sky>0){c.fillStyle=`rgba(255,255,255,${fl.sky})`;c.fillRect(0,0,W,H)}
+  drawStrike(c,o.strike);
+}
+
+/* ---------- close-up scene ---------- */
+function graupel(c,x,y,r,dots){c.beginPath();for(let k=0;k<=28;k++){const th=k/28*Math.PI*2;const q=r*(1+.07*Math.sin(th*5+1)+.04*Math.sin(th*9));const px=x+Math.cos(th)*q,py=y+Math.sin(th)*q;k?c.lineTo(px,py):c.moveTo(px,py)}c.closePath();
+  c.fillStyle=T.dark?'#d3dde6':'#ffffff';c.fill();c.strokeStyle=T.icec;c.lineWidth=3;c.stroke();
+  for(let i=0;i<dots;i++){const th=i*2.399;const q=r*.75*Math.sqrt((i+1)/12);c.fillStyle=withA(T.icec,.55);circ(c,x+Math.cos(th)*q,y+Math.sin(th)*q,4)}}
+function droplet(c,x,y,r){c.fillStyle=T.drop;circ(c,x,y,r);c.fillStyle='rgba(255,255,255,.55)';circ(c,x-r*.35,y-r*.35,r*.28)}
+function bump(c,x,y,r){c.fillStyle=T.dark?'#eaf1f7':'#f4f8fb';c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();c.strokeStyle=T.icec;c.lineWidth=2.5;c.stroke()}
+function crystal(c,x,y,r,rot){hex(c,x,y,r,rot,T.icec,withA(T.icec,.25),3);c.strokeStyle=withA(T.icec,.8);c.lineWidth=1.6;c.beginPath();
+  for(let k=0;k<3;k++){const a=rot+k*Math.PI/3;c.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r);c.lineTo(x-Math.cos(a)*r,y-Math.sin(a)*r)}c.stroke()}
+function electron(c,x,y){c.fillStyle=T.neg;circ(c,x,y,10);minus(c,x,y,5,'#ffffff')}
+function drawCloseup(c,time,variant,labels){
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,T.cin1);g.addColorStop(1,T.cin2);c.fillStyle=g;c.fillRect(0,0,W,H);
+  for(let i=0;i<46;i++){const sp=14+(i%5)*9;const x=((i*211.7)%W)+Math.sin(time*.6+i)*14;const y=(((i*97.3)-time*sp)%H+H)%H;c.fillStyle=withA(T.drop,.3);circ(c,x,y,2.2+(i%3))}
+  const P=4.8,p=(time%P)/P,pc=.42,cx=500,cy=290;
+  c.save();c.translate(500,290);c.scale(1.55,1.55);c.translate(-500,-290);
+  c.globalAlpha=smooth(p/.06)*smooth((1-p)/.08);
+  const Fc={x:cx+30,y:cy-24},Rc={x:cx-30,y:cy+44};
+  if(variant==='freeze'){
+    const Fp=q=>q<pc?{x:lerp(cx+90,Fc.x,q/pc),y:lerp(-80,Fc.y,q/pc)}:{x:lerp(Fc.x,Fc.x+30,(q-pc)/(1-pc)),y:lerp(Fc.y,cy+110,(q-pc)/(1-pc))};
+    const F=Fp(p);
+    if(p>pc){const gl=smooth((p-pc)/.08)*(1-smooth((p-.86)/.12));c.strokeStyle=withA(T.warm,.6*gl);c.lineWidth=12;c.beginPath();c.arc(F.x,F.y,70+6*Math.sin(time*6),0,Math.PI*2);c.stroke()}
+    graupel(c,F.x,F.y,48,Math.round(clamp((p-pc)/.4,0,1)*12));
+    const o1={x:(Rc.x-Fc.x),y:(Rc.y-Fc.y)};const m1=Math.hypot(o1.x,o1.y);
+    if(p<pc)droplet(c,lerp(cx-150,Rc.x,p/pc),lerp(680,Rc.y,p/pc),20);else bump(c,F.x+o1.x/m1*52,F.y+o1.y/m1*52,16);
+    const p2=.66,n2={x:.838,y:.546},F2=Fp(p2),C2={x:F2.x+n2.x*66,y:F2.y+n2.y*66};
+    if(p<p2){const q=clamp((p-.3)/(p2-.3),0,1);droplet(c,lerp(cx+320,C2.x,q),lerp(700,C2.y,q),18)}else bump(c,F.x+n2.x*52,F.y+n2.y*52,14);
+    if(labels){
+      if(p<pc){tag(c,'Falling ice',F.x+62,F.y,{align:'left',size:11});tag(c,'Rising water droplet',lerp(cx-150,Rc.x,p/pc)+28,lerp(680,Rc.y,p/pc),{align:'left',size:11,col:T.drop})}
+      if(p>pc-.02&&p<.92)tag(c,'The droplet freezes on contact and releases heat',500,125,{size:11,col:T.warm});
+      if(p>.6)tag(c,'Slightly warm surface: graupel, a soft hail',F.x-75,F.y-60,{align:'right',size:11})}
+  }else{
+    const Fp=q=>q<pc?{x:lerp(cx+100,Fc.x,q/pc),y:lerp(-80,Fc.y,q/pc)}:{x:lerp(Fc.x,Fc.x+80,(q-pc)/(1-pc)),y:lerp(Fc.y,700,(q-pc)/(1-pc))};
+    const Rp=q=>q<pc?{x:lerp(cx-170,Rc.x,q/pc),y:lerp(700,Rc.y,q/pc)}:{x:lerp(Rc.x,Rc.x-190,(q-pc)/(1-pc)),y:lerp(Rc.y,-90,(q-pc)/(1-pc))};
+    const F=Fp(p),R=Rp(p);
+    const eo=[{x:16,y:-12},{x:4,y:-20},{x:21,y:0}],fo=[{x:-28,y:24},{x:-40,y:6},{x:-16,y:36}];
+    graupel(c,F.x,F.y,48,9);crystal(c,R.x,R.y,24,time*.8);
+    let arrived=0;
+    for(let i=0;i<3;i++){const te=smooth((p-pc-i*.035)/.1);
+      if(p<pc){/* electrons sit on the crystal before collision */ c.fillStyle=withA(T.neg,.0)}
+      else if(te<1)electron(c,lerp(R.x+eo[i].x,F.x+fo[i].x,te),lerp(R.y+eo[i].y,F.y+fo[i].y,te));
+      else{arrived++;electron(c,F.x+fo[i].x,F.y+fo[i].y)}}
+    for(let i=0;i<arrived;i++)plus(c,R.x+32+i*14,R.y-30,7,T.pos);
+    if(labels){
+      if(p<pc){tag(c,'Falling graupel',F.x+60,F.y,{align:'left',size:11});tag(c,'Rising ice crystal',R.x+36,R.y,{align:'left',size:11})}
+      if(p>pc-.02&&p<pc+.34)tag(c,'Electrons are sheared off the rising crystal',500,465,{size:11,col:T.neg});
+      if(p>pc+.2){tag(c,'Rising crystal: now positive',R.x+80,R.y,{align:'left',size:11,col:T.pos});tag(c,'Falling graupel: now negative',F.x-60,F.y,{align:'right',size:11,col:T.neg})}}
+  }
+  c.globalAlpha=1;c.restore()}
+
+/* ---------- Explain steps ---------- */
+const STEPS=[
+ {short:'Updrafts',title:'Inside a thunderstorm',text:'A thunderstorm is turbulent, with strong updrafts and downdrafts running side by side. Updrafts lift small water droplets from the lower cloud to between 35,000 and 70,000 feet, miles above the freezing level. Downdrafts carry hail and ice down from the frozen upper cloud.',Q:0,arrows:true,band:true},
+ {short:'Graupel',title:'Zoom in: graupel forms',text:'When a rising droplet hits falling ice, it freezes onto it and gives off heat. That heat keeps the ice’s surface slightly warmer than the air around it, and the particle becomes graupel, a kind of soft hail.',view:'close',variant:'freeze'},
+ {short:'Charges separate',title:'Zoom in: charges separate',text:'When graupel collides with more droplets and ice crystals, electrons are sheared off the rising particles and collect on the falling ones. Electrons are negative, so the rising particles end up positive and the falling graupel ends up negative. This is the leading theory: exactly how lightning forms has never been verified.',view:'close',variant:'charge'},
+ {short:'Charged cloud',title:'Zoom out: a charged cloud',text:'Repeat those collisions countless times and the storm sorts itself into a negative base and a positive top, with an electric field between them. Below the storm, positive charge pools in the ground and follows the storm wherever it goes.',Q:1,field:true,sparks:true},
+ {short:'Breakdown',title:'Breaking through the air',text:'Air is a very good insulator, so a tremendous amount of charge has to build before anything happens. When the field finally overpowers the air, lightning results. The field inside the cloud is much stronger than the one between the cloud and the ground, so about 75 to 80 percent of lightning stays inside the cloud.',Q:.25,cycle:true,sparks:true,meter:true},
+ {cam:{x:600,y:415,s:1.6},short:'Leader',title:'Stepped leader and streamer',text:'A channel of negative charge called a stepped leader zigzags down from the cloud base in rapid steps, each quicker than a blink. It’s invisible to the eye. As it nears the ground, positive charge collects in tall objects and reaches up toward it as a streamer.',Q:.95,strike:'neg',stopAtConnect:true,stepMs:130,startX:600},
+ {cam:{x:600,y:415,s:1.6},short:'Strike',title:'The strike',text:'When the leader and a streamer connect, charge rushes through the channel, and that transfer is the lightning we see. If enough charge is left, more strokes follow the same channel, which makes the bolt flicker. Tall objects are hit often because they’re closer to the cloud, but lightning can still hit open ground. It depends on where the charge collects.',Q:.95,strike:'neg',stepMs:80},
+ {short:'Positive',title:'Positive lightning',text:'Some lightning starts in the positively charged anvil, so the leader carries positive charge and the streamer is negative. Positive strikes are under 5 percent of all strikes but far more dangerous: they cross more air, can carry up to ten times the peak charge (as much as 300,000 amps and a billion volts), usually strike just once, and can land more than 25 miles from the rain. If you can hear thunder, you can be struck.',Q:.95,strike:'pos',stepMs:75}
+];
+const EX_OBJS=[{type:'house',x:450},{type:'tree',x:610},{type:'pole',x:775}];
+let cam={x:500,y:300,s:1};
+let mode='explain',step=0,st={},zoom=0,zoomTarget=0,closeVariant='freeze';const focal={x:600,y:330};
+const seen=new Set();
+
+const trackList=$('#trackList');
+STEPS.forEach((s,i)=>{const li=document.createElement('li');const b=document.createElement('button');
+  b.innerHTML=`<span class="n">${i+1}</span>${s.short}`;b.addEventListener('click',()=>enterStep(i));li.appendChild(b);trackList.appendChild(li)});
+function enterStep(i){step=i;const S=STEPS[i];seen.add(i);st={t:0,Q:S.Q||0,strike:null,wait:500};
+  zoomTarget=S.view==='close'?1:0;if(S.variant)closeVariant=S.variant;
+  $('#capTitle').textContent=S.title;$('#capText').textContent=S.text;
+  [...trackList.querySelectorAll('button')].forEach((b,j)=>{b.toggleAttribute('aria-current',j===i);if(j===i)b.setAttribute('aria-current','step');b.classList.toggle('seen',seen.has(j))});
+  $('#back').disabled=i===0;
+  const nx=$('#next');nx.textContent=i===STEPS.length-1?'Open Explore mode':'Next';
+  if(i===STEPS.length-1)unlock();
+  const cur=trackList.querySelector('[aria-current="step"]');cur&&cur.scrollIntoView({block:'nearest',inline:'nearest'});}
+$('#back').addEventListener('click',()=>{if(step>0)enterStep(step-1)});
+$('#next').addEventListener('click',()=>{if(step<STEPS.length-1)enterStep(step+1);else setMode('explore')});
+
+function updExplain(dt){const S=STEPS[step];st.t+=dt;
+  const ct=S.cam||{x:500,y:300,s:1},kc=reduceMotion?1:Math.min(1,dt/350);cam.x+=(ct.x-cam.x)*kc;cam.y+=(ct.y-cam.y)*kc;cam.s+=(ct.s-cam.s)*kc;
+  zoom+=Math.sign(zoomTarget-zoom)*Math.min(Math.abs(zoomTarget-zoom),dt/(reduceMotion?400:950));
+  updParticles(dt,.75);updSparks(dt,S.sparks?8:0);
+  if(S.cycle&&!st.strike){st.Q+=dt/1000*.3;if(st.Q>=1)st.strike=makeStrike('ic',{onStroke:()=>{st.Q=Math.max(.2,st.Q-.6)}})}
+  if(S.strike&&!st.strike){st.wait-=dt;if(st.wait<=0)st.strike=makeStrike(S.strike,{objs:EX_OBJS,stepMs:S.stepMs,stopAtConnect:S.stopAtConnect,startX:S.startX})}
+  if(st.strike){updStrike(st.strike,dt);if(st.strike.done){st.strike=null;st.wait=1300}}}
+
+function meterC(c,Q){const x=20,y=48,w=300,h=16;c.font=FONT(600,13);c.textAlign='left';c.textBaseline='alphabetic';
+  c.fillStyle=withA(T.panel,.9);rr(c,x-8,y-wf(13)-12,w+16,h+wf(13)*2+28,10);c.fill();
+  c.fillStyle=T.ink;c.fillText('Electric field',x,y-6);
+  c.fillStyle=withA(T.ink,.12);rr(c,x,y,w,h,h/2);c.fill();
+  const fw=w*.8*clamp(Q,0,1.25);const gr=c.createLinearGradient(x,0,x+w,0);gr.addColorStop(0,T.neg);gr.addColorStop(1,T.glow);c.fillStyle=gr;if(fw>2){rr(c,x,y,Math.max(h,fw),h,h/2);c.fill()}
+  c.fillStyle=T.ink;c.fillRect(x+w*.8-1.5,y-4,3,h+8);
+  c.font=FONT(500,12);c.fillStyle=T.muted;c.textAlign='right';c.fillText('Air breaks down',x+w*.8+wf(12)*4.2,y+h+wf(12)+4);c.textAlign='left'}
+
+function explainLabels(c){const S=STEPS[step],s=st.strike;
+  if(step===0){tag(c,'Updraft',530,505,{align:'right',col:T.drop});tag(c,'Downdraft',680,505,{align:'left'});tag(c,'Updrafts reach 35,000 ft and higher',20,60,{align:'left',col:T.warm})}
+  if(step===3){tag(c,'Positive top',790,222,{align:'left',col:T.pos});tag(c,'Negative base',800,445,{align:'left',col:T.neg});tag(c,'Positive charge in the ground',800,530,{align:'left',col:T.pos})}
+  if(S.meter){meterC(c,st.Q);if(s)tag(c,'In-cloud flash',800,300,{align:'left'})}
+  if(S.strike){
+    if(step===7)tag(c,'Positive anvil',880,80,{col:T.pos});
+    if(s&&(s.phase==='leader'||s.phase==='connect')){
+      if(s.phase==='leader'){const tip=last(s.main);tag(c,s.type==='pos'?'Positive leader':'Stepped leader (invisible to the eye)',tip.x+20,tip.y,{align:'left',col:s.type==='pos'?T.pos:T.neg})}
+      let big=null;for(const t of s.streamers)if(!big||t.len>big.len)big=t;
+      if(big&&big.len>15&&s.phase==='leader')tag(c,'Streamer',big.x-14,big.y0-big.len-6,{align:'right',col:s.type==='pos'?T.neg:T.pos});
+      if(s.phase==='connect')tag(c,'Leader meets streamer',s.cp.x+18,s.cp.y-26,{align:'left'})}
+    if(s&&s.phase==='stroke'&&s.hit){tag(c,step===7?'Lands far from the rain':'Return stroke',s.hit.x+(s.hit.x>800?-20:20),step===7?GY-120:GY-95,{align:s.hit.x>800?'right':'left'})}}
+}
+
+/* ---------- Explore ---------- */
+const ex={Q:0,strike:null,up:.7,ice:.7,paused:false,slow:false,skipIC:false,
+  objs:[{type:'house',x:300},{type:'tree',x:480},{type:'pole',x:650},{type:'tree',x:880}],
+  place:'tree',lens:null,lensUsed:false,counts:{ic:0,neg:0,pos:0},targets:{tree:0,house:0,pole:0,ground:0},statusKey:''};
+function setStatus(key,text){if(ex.statusKey===key)return;ex.statusKey=key;$('#status').textContent=text}
+function renderTally(){const c=ex.counts,tot=c.ic+c.neg+c.pos;$('#tIc').textContent=c.ic;$('#tNeg').textContent=c.neg;$('#tPos').textContent=c.pos;
+  $('#tShare').textContent=tot?Math.round(c.ic/tot*100)+'%':'–';
+  $('#hTree').textContent=ex.targets.tree;$('#hHouse').textContent=ex.targets.house;$('#hPole').textContent=ex.targets.pole;$('#hGround').textContent=ex.targets.ground}
+function fire(){const r=Math.random();const type=ex.skipIC?(r<.18?'pos':'neg'):(r<.78?'ic':r<.96?'neg':'pos');
+  ex.strike=makeStrike(type,{objs:ex.objs,stepMs:55,onStroke:s=>{ex.Q=Math.max(0,ex.Q-(type==='ic'?.55:.7));ex.counts[type]++;
+    if(type!=='ic'){const k=s.hit&&s.hit.obj?s.hit.obj.type:'ground';ex.targets[k]++;
+      setStatus('hit'+Math.random(),k==='ground'?`${type==='pos'?'Positive strike':'Strike'} on open ground. The leader met a streamer rising from the ground itself.`:`${type==='pos'?'Positive strike':'Strike'}! The leader connected with a streamer rising from the ${OBJ_NAME[k]}.`)}
+    else setStatus('ic'+Math.random(),'In-cloud flash. The field inside the cloud is the strongest, so most lightning never leaves it.');
+    renderTally()}});
+  if(type==='neg')setStatus('lead'+Math.random(),'Field broke through! A negative stepped leader is zigzagging down from the cloud base.');
+  if(type==='pos')setStatus('lead'+Math.random(),'Rare positive lightning: a positive leader is dropping from the anvil, far from the rain.')}
+function updExplore(dt){updParticles(dt,ex.up);updSparks(dt,ex.up*ex.ice*14);
+  if(!ex.strike){const rate=ex.up*Math.pow(ex.ice,1.5)*.45;ex.Q=Math.max(0,ex.Q+(rate-.04*ex.Q)*dt/1000);
+    if(ex.Q>=1)fire();
+    else if(ex.ice<.2)setStatus('lowice','Very little ice means few graupel collisions, so charge can’t build enough to overcome the air. Storms without much ice usually don’t make lightning.');
+    else if(ex.up<.15)setStatus('lowup','A weak updraft barely mixes rising droplets with falling ice, so charge builds very slowly.');
+    else if(rate<.04)setStatus('slow','Charge is building slowly. Try a stronger updraft or more ice.');
+    else setStatus('build','Charge is building. The field has to overpower the air’s insulation before lightning can happen.')}
+  else{updStrike(ex.strike,dt*(ex.slow?.4:1));if(ex.strike.done)ex.strike=null}}
+function lensLabel(y){return y<300?'Upper cloud: rising ice crystals carry positive charge':y<BASE_Y-60?'Mixing zone: collisions strip electrons off rising crystals':'Lower cloud: falling graupel carries negative charge'}
+function drawLens(c,L){const r=128;const lx=clamp(L.x,r+6,W-r-6),ly=clamp(L.y,r+6,H-r-44);
+  c.save();c.beginPath();c.arc(lx,ly,r,0,Math.PI*2);c.clip();c.translate(lx,ly);const k=(2*r)/600*.8;c.scale(k,k);c.translate(-500,-290);drawCloseup(c,now/1000,'charge',false);c.restore();
+  c.strokeStyle=T.ink;c.lineWidth=3.5;c.beginPath();c.arc(lx,ly,r,0,Math.PI*2);c.stroke();
+  tag(c,lensLabel(L.y),lx,ly+r+22,{})}
+
+/* controls */
+const upEl=$('#up'),iceEl=$('#ice');
+upEl.addEventListener('input',()=>{ex.up=upEl.value/100;$('#upOut').textContent=upEl.value+'%'});
+iceEl.addEventListener('input',()=>{ex.ice=iceEl.value/100;$('#iceOut').textContent=iceEl.value+'%'});
+$('#slow').addEventListener('change',e=>ex.slow=e.target.checked);
+$('#skipIC').addEventListener('change',e=>ex.skipIC=e.target.checked);
+document.querySelectorAll('[data-place]').forEach(b=>b.addEventListener('click',()=>{ex.place=b.dataset.place;
+  document.querySelectorAll('[data-place]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}));
+$('#clearObjs').addEventListener('click',()=>{ex.objs.length=0});
+$('#pause').addEventListener('click',()=>{ex.paused=!ex.paused;$('#pause').textContent=ex.paused?'Resume':'Pause'});
+$('#reset').addEventListener('click',()=>{ex.Q=0;ex.strike=null;ex.counts={ic:0,neg:0,pos:0};ex.targets={tree:0,house:0,pole:0,ground:0};ex.statusKey='';renderTally()});
+cv.addEventListener('pointerdown',e=>{if(mode!=='explore')return;const r=cv.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
+  if(y>BASE_Y+10){ex.lens=null;const hit=ex.objs.findIndex(o=>Math.abs(o.x-x)<28);
+    if(hit>=0)ex.objs.splice(hit,1);else if(ex.objs.length<8)ex.objs.push({type:ex.place,x:clamp(x,24,976)});return}
+  if(ex.lens){ex.lens=null;return}
+  if(hitC.isPointInPath(cloudP,x,y)){ex.lens={x,y};ex.lensUsed=true}});
+
+/* ---------- modes ---------- */
+const KEY='lightning-lab-unlocked';let unlocked=false;
+try{unlocked=localStorage.getItem(KEY)==='1'}catch(e){}
+function unlock(){unlocked=true;try{localStorage.setItem(KEY,'1')}catch(e){}
+  const b=$('#mExplore');b.disabled=false;b.removeAttribute('title');$('#lockIcon').style.display='none';$('#unlockNow').hidden=true}
+if(unlocked)unlock();
+$('#unlockNow').addEventListener('click',unlock);
+function setMode(m){if(m==='explore'&&!unlocked)return;mode=m;
+  $('#mExplain').setAttribute('aria-pressed',String(m==='explain'));$('#mExplore').setAttribute('aria-pressed',String(m==='explore'));
+  $('#track').hidden=m!=='explain';$('#caption').hidden=m!=='explain';$('#explorePanel').hidden=m!=='explore';
+  $('#stage').classList.toggle('exploring',m==='explore');ex.lens=null;
+  if(location.hash.slice(1)!==m)history.replaceState(null,'','#'+m);}
+$('#mExplain').addEventListener('click',()=>setMode('explain'));
+$('#mExplore').addEventListener('click',()=>setMode('explore'));
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h==='explore'){unlock();setMode('explore')}else if(h==='explain')setMode('explain')});
+document.addEventListener('keydown',e=>{if(mode!=='explain'||e.target.closest('input'))return;
+  if(e.key==='ArrowRight'&&step<STEPS.length-1){enterStep(step+1)}else if(e.key==='ArrowLeft'&&step>0){enterStep(step-1)}});
+
+/* ---------- loop ---------- */
+function draw(){const c=ctx;c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);c.setTransform(baseScale,0,0,baseScale,0,0);
+  if(mode==='explain'){const S=STEPS[step];const e=smooth(zoom);
+    if(e<1){c.save();c.translate(500,300);c.scale(cam.s,cam.s);c.translate(-cam.x,-cam.y);c.translate(focal.x,focal.y);c.scale(1+2.4*e,1+2.4*e);c.translate(-focal.x,-focal.y);
+      drawStorm(c,{Q:st.Q,up:.75,ice:.75,pAlpha:S.strike?.55:1,arrows:S.arrows,field:S.field,band:S.band,objs:EX_OBJS,strike:st.strike,hideFreeze:cam.s>1.15});
+      if(e<.05)explainLabels(c);c.restore();if(S.strike)tag(c,'Slowed way down',20,30,{align:'left'})}
+    if(e>0){const cx=lerp(focal.x,500,e),cy=lerp(focal.y,300,e),r=Math.max(1,e*620);
+      c.save();c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.clip();drawCloseup(c,now/1000,closeVariant,e>.97);c.restore();
+      if(e<1){c.strokeStyle=T.ink;c.lineWidth=3.5;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.stroke()}}
+  }else{
+    drawStorm(c,{Q:ex.Q,up:ex.up,ice:ex.ice,pAlpha:1,arrows:false,field:true,band:false,objs:ex.objs,strike:ex.strike});
+    if(ex.strike&&ex.strike.type!=='ic')tag(c,'Slowed way down',20,60,{align:'left'});
+    if(!ex.lensUsed&&!ex.strike)tag(c,'Tap the cloud to look inside',650,60,{});
+    if(ex.paused)tag(c,'Paused',500,300,{size:18});
+    if(ex.lens)drawLens(c,ex.lens);
+    $('#mFill').style.width=(clamp(ex.Q,0,1.25)*80)+'%'}
+}
+let lastTs=performance.now();
+function frame(ts){const dt=Math.min(50,ts-lastTs);lastTs=ts;
+  if(mode==='explain'){now+=dt;updExplain(dt)}else if(!ex.paused){now+=dt;updExplore(dt)}
+  draw();requestAnimationFrame(frame)}
+
+enterStep(0);renderTally();
+if(location.hash.slice(1)==='explore'){unlock();setMode('explore')}else setMode('explain');
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
