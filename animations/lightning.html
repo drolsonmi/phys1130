@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>How Lightning Forms</title>
@@ -9,19 +10,19 @@
 <style>
 :root {
   --page: #e9edf4; --bar: #ffffff; --ink: #25282b; --muted: #5d6470; --edge: #cfd6e2;
-  --brand: #1e376c; --accent: #f47920; --btn: #f1f4f9; --btn-ink: #1e376c; --focus: #c2410c;
+  --brand: #1e376c; --accent: #f47920; --accent-text: #b34700; --btn: #f1f4f9; --btn-ink: #1e376c; --focus: #c2410c;
   color-scheme: light;
   box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
-    --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+    --brand: #a9c0ef; --accent-text: #f47920; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
-  --brand: #a9c0ef; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+  --brand: #a9c0ef; --accent-text: #f47920; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
 }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; background: var(--page); overflow-x: hidden; }
 * { box-sizing: border-box; }
@@ -47,11 +48,11 @@ body { margin: 0; min-height: 100%; background: var(--page); color: var(--ink); 
 .line { font-family: "Zilla Slab", Georgia, serif; font-size: 84px; line-height: 1.04; font-weight: 700; color: var(--main); }
 .line .w { display: inline-block; white-space: pre; }
 .sub { font-size: 34px; line-height: 1.4; color: color-mix(in srgb, var(--second) 82%, var(--ground)); }
-.sub b.o { color: #d4610c; }
+.sub b.o { color: #b34700; }
 .sub .pp { display: block; margin-top: 18px; }
 .pov { display: block; width: fit-content; margin-bottom: 16px; padding: 6px 14px; border-radius: 8px; font-size: 24px; font-weight: 700; color: var(--main); background: color-mix(in srgb, var(--main) 9%, var(--ground)); }
 #stage.big .pov { font-size: var(--tag); } .sub b.b { color: var(--slp); }
-.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #b34700; }
 .rule { width: 96px; height: 4px; background: var(--accent); border-radius: 2px; }
 .art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .card { position: absolute; border-radius: 16px; background: color-mix(in srgb, var(--main) 6%, var(--ground)); border: 2px solid color-mix(in srgb, var(--main) 18%, var(--ground)); }
@@ -75,7 +76,7 @@ canvas.ri { width: 230px; height: 230px; flex: none; }
 #dText { margin: 0; font-size: 17px; line-height: 1.6; max-width: 72ch; }
 #closeText { display: none; }
 #cap { display: none; }
-.cap-tag { margin: 0 0 2px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.cap-tag { margin: 0 0 2px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
 .cap-line { margin: 0 0 6px; font-family: "Zilla Slab", Georgia, serif; font-size: 24px; line-height: 1.15; color: var(--brand); }
 .cap-sub { margin: 0 0 4px; font-size: 16px; line-height: 1.5; }
 .cap-box { margin: 10px 0 4px; padding: 10px 12px; border-radius: 8px; background: var(--bar); border: 1px solid var(--edge); }
@@ -207,7 +208,7 @@ let SCALE = 0.6;   // current stage scale, used for canvas text size
 const fpx = (target, lo, hi) => Math.min(hi, Math.max(lo, target / SCALE));
 
 // ---------- canvas drawing kit ----------
-const C = { navy: '#1e376c', ink: '#25282b', orange: '#f47920', orangeDk: '#d4610c', blue: '#1667c4', red: '#c8322a', grid: '#8fa7cc', sea: '#dbe8f6', grass: '#e4efd9', tree: '#a8cf94', treeEdge: '#5f8f4e', plate: '#f4f6fa', wedge: '#dfe6f2' };
+const C = { navy: '#1e376c', ink: '#25282b', orange: '#f47920', orangeDk: '#b34700', blue: '#1667c4', red: '#c8322a', grid: '#8fa7cc', sea: '#dbe8f6', grass: '#e4efd9', tree: '#a8cf94', treeEdge: '#5f8f4e', plate: '#f4f6fa', wedge: '#dfe6f2' };
 const P = (cx, cy, r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];   // math angle (counterclockwise) to screen
 function label(ctx, txt, x, y, color, size, align, weight) {
   ctx.font = (weight || 700) + ' ' + size + 'px "Nunito Sans", system-ui, sans-serif';
@@ -616,7 +617,7 @@ cscene('stroke', 'Connection and return stroke', 8, [190, 'Connection', 'The ret
 // thunder: the flash heats the channel, the air bursts outward, and the sound reaches a listener 5 seconds later
 const TH = { x: 640, y: 690, s: 1.35 }, TSRC = [545, 730], TLIS = 935, TSPD = (TLIS - 14 - TSRC[0]) / 5;
 // flash times: two strikes 5 s apart from the listener with a pause after each boom, then strikes at irregular intervals
-const TFL = [0.5, 10]; (() => { const r = rng(55); let x = 15.8 + r(); while (x < 400) { TFL.push(x); x += 0.9 + r() * 3.8; } })();
+const TFL = [0.5, 10]; (() => { const r = rng(55); let x = 15.8 + r(); while (x < 400) { TFL.push(x); x += 1.5 + r() * 3.4; } })();
 function listener(c, x, a) { c.globalAlpha = a; disc(c, x, GY - 52, 9, '#1e376c'); line(c, [[x, GY - 43], [x, GY - 18]], '#1e376c', 5); line(c, [[x, GY - 18], [x - 7, GY]], '#1e376c', 5); line(c, [[x, GY - 18], [x + 7, GY]], '#1e376c', 5); line(c, [[x, GY - 36], [x - 12, GY - 24]], '#1e376c', 5); line(c, [[x, GY - 36], [x + 9, GY - 50]], '#1e376c', 5); c.globalAlpha = 1; }
 cscene('thunder', 'Thunder', 16, [170, 'The sound of lightning', 'Thunder', 'The lightning channel heats the air around it to about <b class="o">50,000 °F</b>, five times hotter than the surface of the sun. The air expands so suddenly that it makes a shock wave, which we hear as <b class="o">thunder</b>.<span class="pp">Light arrives almost at once, but sound takes about <b class="o">5 seconds to travel a mile</b>. Count the seconds from flash to thunder and divide by 5 to find how many miles away the lightning struck.</span>'], function (t, ctx) {
   const cam = camLerp(LEAD, TH, eio(seg(t, 0, 0.5)));
@@ -679,7 +680,7 @@ cscene('types', 'Kinds of lightning', 13, [100, 'The whole storm again', 'Four m
     s.globalAlpha = A.lab; two(500, 868, 'Cloud-to-ground', 'branches point down', 'center', C.navy);
     s.globalAlpha = I.lab; two(380, 430, 'Within-cloud', 'inside one cloud', 'center', C.navy);
     s.globalAlpha = D.lab; two(690, 318, 'Cloud-to-cloud', 'jumps between clouds', 'center', C.navy);
-    s.globalAlpha = q; label(s, '+ collects at the cloud base', 200, 690, C.red, L2(), 'center'); label(s, '− gathers on the ground', 200, 690 + L2() * 1.3, C.blue, L2(), 'center');
+    s.globalAlpha = q; label(s, '+ collects at the cloud base', 18, 690, C.red, L2(), 'left'); label(s, '− gathers on the ground', 18, 690 + L2() * 1.3, C.blue, L2(), 'left');
     s.globalAlpha = B.lab; two(190, 800, 'Ground-to-cloud', 'leaders branch up', 'center', C.navy);
     s.globalAlpha = 1;
   });
@@ -748,6 +749,7 @@ const desc = $('desc'), textB = $('textB');
 function applyText() {
   const shown = mode === 'port' || textOn;
   desc.classList.toggle('sr-only', !shown);
+  desc.tabIndex = shown ? 0 : -1;   // a visible, scrollable text region must be reachable by keyboard
   textB.setAttribute('aria-expanded', textOn ? 'true' : 'false');
   textB.setAttribute('aria-label', textOn ? 'Hide scene text' : 'Show scene text');
 }
@@ -794,10 +796,23 @@ function go(i) {
   nextB.disabled = i === SCENES.length - 1;
   if (mode === 'port') desc.scrollTop = 0;
 }
+// keep long scene text inside the frame when the text is enlarged for small screens
+function fitWords(root) {
+  if (root._fitS === SCALE) return;
+  const w = root.querySelector('.ground > .words'); if (!w || !w.offsetHeight) return;
+  root._fitS = SCALE;
+  if (w.dataset.top === undefined) w.dataset.top = parseFloat(w.style.top) || 0;
+  const sub = w.querySelector('.sub'), room = 1080 - 36;
+  w.style.top = w.dataset.top + 'px'; if (sub) sub.style.fontSize = '';
+  if (+w.dataset.top + w.offsetHeight > room) w.style.top = Math.max(36, room - w.offsetHeight) + 'px';
+  let fs = sub ? parseFloat(getComputedStyle(sub).fontSize) : 0;
+  while (sub && parseFloat(w.style.top) + w.offsetHeight > room && fs > 24) { fs -= 1; sub.style.fontSize = fs + 'px'; }
+}
 function frameLoop(now) {
   const t = sceneTime(now);
   const fp = prev === null ? 1 : clamp01((now - fadeStart) / 1000 / FADE);
   SCENES.forEach((s, k) => { s.root.style.display = (k === cur || (k === prev && fp < 1)) ? 'block' : 'none'; });
+  fitWords(SCENES[cur].root);
   if (prev !== null && fp < 1) { const ps = SCENES[prev]; ps.root.style.opacity = 1 - fp; ps.root.style.zIndex = 1; ps.render(prevT + (now - fadeStart) / 1000); }
   else prev = null;
   const s = SCENES[cur];

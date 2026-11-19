@@ -160,7 +160,7 @@ Condensation and Clouds
 * [Dew, Frost, and Frozen Dew](./animations/dew-mobile.html)
 
 Cloud Development
-* [Cloud Formation](./animations/cloud-development-mobile1.html)
+<!--* [Cloud Formation](./animations/cloud-development-mobile1.html)-->
 * [Cloud Formation with variable temperatures](./animations/cloud-development-mobile2.html)
 * [Orographic Uplift](./animations/orographic-uplift-mobile.html)
 
@@ -181,13 +181,16 @@ Wind
 * [Coriolis Effect](./animations/coriolis-effect.html)
 * [Global Circulations](./animations/globalcirculations.html)
 
+Global Circulations
+* [Upwelling](./animations/upwelling-mobile.html)
+* [ENSO](./animations/enso-mobile.html)
+
 Airmasses and Fronts
 * [Fronts](./animations/fronts.html)
 * [Weather with Fronts](./animations/front-weather.html)
 
 Severe Weather
 * [Lightning](./animations/lightning.html)
+* [Storm Surge](./animations/stormsurge.html)
 
-Tropical
-* [Upwelling](./animations/upwelling-mobile.html)
-* [ENSO](./animations/enso-mobile.html)
+Climate

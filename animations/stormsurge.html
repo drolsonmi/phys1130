@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hurricane Storm Surge</title>
+<meta name="description" content="An animated, scene-by-scene explanation of hurricane storm surge: how hurricanes are steered, why the right side is strongest, how wind piles water on the coast, and how surge adds to the tide.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700&family=Zilla+Slab:wght@700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --page: #e9edf4; --bar: #ffffff; --ink: #25282b; --muted: #5d6470; --edge: #cfd6e2;
+  --brand: #1e376c; --accent: #f47920; --accent-ink: #a3440a; --btn: #f1f4f9; --btn-ink: #1e376c; --focus: #c2410c;
+  color-scheme: light;
+  box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0e1320; --bar: #171e2e; --ink: #e8ecf3; --muted: #a9b2c1; --edge: #2c3650;
+    --brand: #a9c0ef; --accent-ink: #ffb27a; --btn: #222b40; --btn-ink: #dbe5fa; --focus: #ffb27a; color-scheme: dark;
+  }
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; background: var(--page); overflow-x: hidden; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100%; background: var(--page); color: var(--ink); font-family: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 12px; top: -100px; z-index: 50; background: var(--bar); color: var(--brand); font-weight: 700; padding: 12px 16px; border-radius: 8px; border: 2px solid var(--brand); }
+.skip:focus { top: calc(12px + env(safe-area-inset-top, 0px)); outline: 3px solid var(--focus); outline-offset: 2px; }
+
+#app { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; min-height: 100vh; background: var(--page); }
+#main { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+#frame { width: min(100%, calc((100vh - 140px) * 16 / 9)); aspect-ratio: 16 / 9; position: relative; overflow: hidden; border-radius: 10px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,.12); touch-action: pan-y; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#app:fullscreen #frame { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+#turn { display: none; }
+
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #ffffff;
+  --ground:#ffffff; --main:#1e376c; --second:#25282b; --accent:#f47920; --slp:#1667c4;
+  color: var(--second); font-family: "Nunito Sans", system-ui, sans-serif; }
+.layer { position: absolute; inset: 0; display: none; }
+.ground { position: absolute; inset: 0; background: var(--ground); }
+.words { position: absolute; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.words > * { margin: 0; }
+.line { font-family: "Zilla Slab", Georgia, serif; font-size: 84px; line-height: 1.04; font-weight: 700; color: var(--main); }
+.line .w { display: inline-block; white-space: pre; }
+.sub { font-size: 34px; line-height: 1.4; color: color-mix(in srgb, var(--second) 82%, var(--ground)); }
+.sub b.o { color: #c2560a; }
+.tag { font-size: 24px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #c2560a; }
+.rule { width: 96px; height: 4px; background: var(--accent); border-radius: 2px; }
+.art { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.card { position: absolute; border-radius: 16px; background: color-mix(in srgb, var(--main) 6%, var(--ground)); border: 2px solid color-mix(in srgb, var(--main) 18%, var(--ground)); }
+#stage.big .sub { font-size: var(--sub); }
+#stage.big .tag { font-size: var(--tag); }
+#stage.big .cn .sub { font-size: var(--sub) !important; }
+#stage.big .rc { top: 330px !important; height: 690px !important; padding: 30px 20px !important; gap: 14px !important; }
+#stage.big .rc .sub { font-size: min(var(--sub), 38px) !important; }
+#stage.big .rc .line { font-size: 40px !important; }
+#stage.big .ri { width: 170px; height: 170px; }
+#stage.port .ground > .words { display: none; }
+#stage.port .rc { left: 830px !important; width: 1060px !important; height: 240px !important; flex-direction: row !important; text-align: left !important; padding: 0 36px !important; gap: 36px !important; }
+#stage.port .rc0 { top: 20px !important; } #stage.port .rc1 { top: 283px !important; } #stage.port .rc2 { top: 546px !important; } #stage.port .rc3 { top: 809px !important; }
+#stage.port .rc .words { align-items: flex-start !important; gap: 14px !important; }
+#stage.port .ri { width: 180px; height: 180px; }
+
+#desc { width: min(100%, calc((100vh - 140px) * 16 / 9)); background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 16px 20px 18px; }
+#desc:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+#dTitle { margin: 0 0 6px; font-size: 18px; line-height: 1.3; color: var(--brand); }
+#dText { margin: 0; font-size: 17px; line-height: 1.6; max-width: 72ch; }
+#closeText { display: none; }
+#cap { display: none; }
+.cap-tag { margin: 0 0 2px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); }
+.cap-line { margin: 0 0 6px; font-family: "Zilla Slab", Georgia, serif; font-size: 24px; line-height: 1.15; color: var(--brand); }
+.cap-sub { margin: 0 0 8px; font-size: 16px; line-height: 1.5; }
+.cap-box { margin: 10px 0 4px; padding: 10px 12px; border-radius: 8px; background: var(--bar); border: 1px solid var(--edge); }
+#srcs { margin: 10px 0 0; font-size: 14px; color: var(--muted); }
+#srcs a { color: var(--brand); }
+
+#bar { width: min(100%, calc((100vh - 140px) * 16 / 9)); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bar); border: 1px solid var(--edge); border-radius: 10px; padding: 6px 8px; }
+#app:fullscreen #bar, #app:fullscreen #desc { width: min(100%, calc((100vh - 100px) * 16 / 9)); }
+button { font: inherit; font-weight: 700; font-size: 15px; color: var(--btn-ink); background: var(--btn); border: 1px solid var(--edge);
+  border-radius: 8px; min-height: 44px; min-width: 44px; padding: 0 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; }
+button:hover { border-color: var(--brand); }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; }
+button svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+#next { background: var(--brand); color: var(--bar); border-color: var(--brand); padding: 0 20px; }
+#next.ready { background: var(--accent); border-color: var(--accent); color: #25282b; }
+#where { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 0; padding: 0 4px; }
+#title { font-size: 15px; font-weight: 700; color: var(--ink); padding-left: 9px; }
+#dots { display: flex; flex-wrap: nowrap; }
+#wtop { display: flex; align-items: baseline; gap: 12px; padding-right: 4px; }
+#wtop .hint { margin-left: auto; }
+#dots button { min-height: 44px; height: 44px; width: 38px; min-width: 38px; padding: 0; border: 0; background: transparent; border-radius: 6px; }
+#dots button::before { content: ""; width: 24px; height: 8px; border-radius: 4px; background: var(--edge); }
+#dots button.on::before { background: var(--brand); }
+#dots button.done::before { background: color-mix(in srgb, var(--brand) 45%, var(--edge)); }
+#count { display: none; font-size: 14px; font-weight: 700; color: var(--ink); text-align: center; white-space: nowrap; }
+.hint { font-size: 13px; color: var(--muted); }
+#textB[aria-expanded="true"] { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+.no-fs #full { display: none !important; }
+
+body.land #app { flex-direction: row; align-items: stretch; justify-content: center; gap: 8px; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 6px max(6px, env(safe-area-inset-right, 0px)) 6px max(6px, env(safe-area-inset-left, 0px)); }
+body.land #main { flex: 1; min-width: 0; justify-content: center; }
+body.land #frame { width: min(100%, calc((100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9));
+  width: min(100%, calc((100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px) * 16 / 9)); border-radius: 8px; }
+body.land #bar { width: 76px; flex: none; flex-direction: column; flex-wrap: nowrap; align-items: stretch; padding: 6px; gap: 5px; overflow-y: auto; }
+body.land #bar .t, body.land #where, body.land .hint { display: none; }
+body.land #count { display: block; order: 0; padding: 4px 0; }
+body.land #replay { order: 1; } body.land #pause { order: 2; } body.land #full { order: 3; } body.land #textB { order: 4; }
+body.land #spacer { order: 5; flex: 1; min-height: 4px; }
+body.land #back { order: 6; } body.land #next { order: 7; min-height: 64px; padding: 0; }
+body.land #next svg { width: 28px; height: 28px; }
+body.land button { padding: 0; }
+body.land #desc { position: fixed; z-index: 20; width: auto; overflow-y: auto;
+  top: auto; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-height: calc(100% - 20px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  left: calc(max(6px, env(safe-area-inset-left, 0px)) + 10px); right: calc(max(6px, env(safe-area-inset-right, 0px)) + 96px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.25); padding: 12px 16px; }
+body.land #closeText { display: inline-flex; flex: none; padding: 0 16px; }
+body.land #dText { font-size: 16px; line-height: 1.55; }
+
+body.port #app { justify-content: flex-start; align-items: stretch; gap: 0; padding: 0; min-height: 0;
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+body.port #main { flex: none; padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px); }
+body.port #frame { width: 100%; aspect-ratio: 1120 / 1080; border-radius: 0; box-shadow: none; }
+body.port #turn { display: block; margin: 0; width: 100%; padding: 6px 16px; font-size: 14px; color: var(--muted); text-align: center; border-bottom: 1px solid var(--edge); }
+body.port #desc { width: auto; flex: 1; min-height: 0; overflow-y: auto; border: 0; border-radius: 0; background: var(--page); padding: 12px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+body.port #desc.sr-only { position: static !important; width: auto; height: auto; margin: 0; overflow-y: auto; clip: auto; white-space: normal; }
+body.port #cap { display: block; margin: 4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--edge); }
+body.port #dText { font-size: 16px; }
+body.port #bar { width: auto; flex: none; flex-wrap: nowrap; border: 0; border-top: 1px solid var(--edge); border-radius: 0; gap: 8px;
+  padding: 8px max(10px, env(safe-area-inset-right, 0px)) 8px max(10px, env(safe-area-inset-left, 0px)); }
+body.port #where, body.port .hint, body.port #textB { display: none; }
+body.port #replay, body.port #pause, body.port #full { padding: 0; }
+body.port #replay .t, body.port #pause .t { display: none; }
+body.port #back, body.port #next { flex: 1; min-height: 52px; font-size: 17px; }
+body.port #back { order: 0; } body.port #replay { order: 1; } body.port #pause { order: 2; } body.port #full { order: 3; } body.port #next { order: 4; }
+body.port #spacer { display: none; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#desc" id="skip">Skip to scene text</a>
+<h1 class="sr-only">Hurricane storm surge: an animated presentation</h1>
+<div id="app">
+  <div id="main">
+    <div id="frame" aria-hidden="true"><div id="stage"></div></div>
+    <p id="turn">Turn your phone sideways for a bigger picture.</p>
+  </div>
+  <section id="desc" tabindex="-1" aria-labelledby="dTitle" class="sr-only">
+    <div class="dhead">
+      <div id="live" aria-live="polite" aria-atomic="true"><h2 id="dTitle"></h2><div id="cap" aria-hidden="true"></div><p id="dText"></p></div>
+      <button id="closeText" aria-label="Close scene text">Close</button>
+    </div>
+    <p id="srcs">Sources: <a href="https://www.noaa.gov/jetstream/tc-hazards">NWS JetStream: Tropical Cyclone Hazards</a>, <a href="https://www.noaa.gov/jetstream/tc-tcm/learning-lesson-quadraphonic-wind">JetStream: Quadraphonic Wind</a>, <a href="https://www.noaa.gov/jetstream/tc-tcm">JetStream: Forecast/Advisory</a>, <a href="https://www.aoml.noaa.gov/wp-content/uploads/2020/12/How-Do-Hurricanes-Move_.pdf">NOAA AOML: How Do Hurricanes Move?</a>, <a href="https://www.nhc.noaa.gov/surge/">NHC: Storm Surge Overview</a>, <a href="https://www.weather.gov/media/safety/surge_intro.pdf">NWS: Introduction to Storm Surge</a></p>
+  </section>
+  <nav id="bar" aria-label="Animation controls">
+    <button id="back" aria-label="Previous scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span class="t">Back</span></button>
+    <button id="replay" aria-label="Replay this scene"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v5h5"/></svg><span class="t">Replay</span></button>
+    <button id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true" id="pauseIco"><path d="M8 5v14M16 5v14"/></svg><span class="t" id="pauseTxt">Pause</span></button>
+    <div id="where"><div id="wtop"><div id="title" aria-hidden="true"></div><span class="hint" aria-hidden="true">Arrow keys or Space</span></div><div id="dots" role="group" aria-label="Scenes"></div></div>
+    <div id="count" aria-hidden="true"></div>
+    <button id="full" aria-label="Full screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+    <button id="textB" aria-label="Show scene text" aria-controls="desc" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 10h14M5 14h10M5 18h7"/></svg><span class="t">Text</span></button>
+    <div id="spacer" aria-hidden="true"></div>
+    <button id="next" aria-label="Next scene"><span class="t">Next</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </nav>
+</div>
+<script>
+(function () {
+// ---------- helpers ----------
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const seg = (t, a, b) => clamp01((t - a) / (b - a));
+const lerp = (a, b, p) => a + (b - a) * p;
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const TAU = Math.PI * 2, DEG = Math.PI / 180;
+function h(html) { const tp = document.createElement('template'); tp.innerHTML = html.trim(); return tp.content.firstElementChild; }
+function fadeFromRight(el, t, t0) {
+  if (!el._w) {
+    const words = el.textContent.split(' ');
+    el.textContent = '';
+    el._w = words.map((w, i) => { const s = document.createElement('span'); s.className = 'w'; s.textContent = w + (i < words.length - 1 ? ' ' : ''); el.appendChild(s); return s; });
+  }
+  el._w.forEach((s, i) => { const p = eo(seg(t, t0 + i * .11, t0 + i * .11 + .5)); s.style.opacity = p; s.style.transform = 'translateX(' + ((1 - p) * 26).toFixed(1) + 'px)'; });
+}
+function subIn(st, t, a) { const p = eo(seg(t, a, a + .6)); st.opacity = p; st.transform = 'translateX(' + lerp(26, 0, p) + 'px)'; }
+const textBlock = (top, tag, line, sub) =>
+  '<div class="words" style="left:140px;top:' + top + 'px;width:640px">' +
+  '<p class="tag">' + tag + '</p><h2 class="line">' + line + '</h2>' + (sub ? [].concat(sub).map(x => '<p class="sub">' + x + '</p>').join('') : '') + '</div>';
+function textRefs(self, root) { self.tagS = root.querySelector('.words .tag').style; self.line = root.querySelector('.words .line'); self.subs = [...root.querySelectorAll('.words > .sub')].map(e => e.style); }
+function textRender(self, t, subAt) { self.tagS.opacity = eo(seg(t, 0.2, 0.7)); fadeFromRight(self.line, t, 0.4); self.subs.forEach((st, i) => subIn(st, t, subAt + i * 0.5)); }
+let SCALE = 0.6;
+let FK = 1;   // extra scale while drawing a shrunken map, so its text keeps its size
+const fpx = (target, lo, hi) => Math.min(hi, Math.max(lo, target / SCALE)) / FK;
+
+// ---------- canvas drawing kit ----------
+const C = { navy: '#1e376c', ink: '#25282b', orange: '#f47920', orangeDk: '#c2560a', blue: '#1667c4', red: '#c8322a', grid: '#8fa7cc',
+  sea: '#dbe8f6', grass: '#e4efd9', grassEdge: '#5f8f4e', sky: '#f3f7fc', water: '#8dbbe8', waterTop: '#1667c4', tide: '#b9d6f3', sand: '#e6d3a3', sandEdge: '#8a6d3b' };
+const P = (cx, cy, r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];
+function label(ctx, txt, x, y, color, size, align, weight) {
+  ctx.font = (weight || 700) + ' ' + size + 'px "Nunito Sans", system-ui, sans-serif';
+  ctx.textAlign = align || 'left'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.26; ctx.strokeStyle = 'rgba(255,255,255,.95)';
+  ctx.strokeText(txt, x, y); ctx.fillStyle = color; ctx.fillText(txt, x, y);
+  return ctx.measureText(txt).width;
+}
+function disc(ctx, x, y, r, fill, stroke, lw) { ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 3; ctx.stroke(); } }
+function line(ctx, pts, color, w, dash) {
+  if (pts.length < 2) return;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.setLineDash(dash || []);
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]); ctx.stroke(); ctx.setLineDash([]);
+}
+function poly(ctx, pts, fill, stroke, lw) {
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]); ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 3; ctx.lineJoin = 'round'; ctx.stroke(); }
+}
+function head(ctx, x, y, ang, size, color) {
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x, y);
+  ctx.lineTo(x - size * Math.cos(ang - 0.45), y - size * Math.sin(ang - 0.45));
+  ctx.lineTo(x - size * Math.cos(ang + 0.45), y - size * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill();
+}
+function arrow(ctx, x1, y1, x2, y2, color, w) {
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 3) return;
+  const a = Math.atan2(y2 - y1, x2 - x1), hd = Math.min(w * 4, L * 0.7);
+  line(ctx, [[x1, y1], [x2 - Math.cos(a) * hd * 0.7, y2 - Math.sin(a) * hd * 0.7]], color, w);
+  head(ctx, x2, y2, a, hd, color);
+}
+function pathArrow(ctx, pts, color, w, dash) {
+  if (pts.length < 2) return;
+  const n = pts.length - 1; let k = n - 1;
+  while (k > 0 && Math.hypot(pts[n][0] - pts[k][0], pts[n][1] - pts[k][1]) < w * 3) k--;
+  const a = Math.atan2(pts[n][1] - pts[k][1], pts[n][0] - pts[k][0]), hd = w * 4;
+  line(ctx, pts.slice(0, n).concat([[pts[n][0] - Math.cos(a) * hd * 0.7, pts[n][1] - Math.sin(a) * hd * 0.7]]), color, w, dash);
+  head(ctx, pts[n][0], pts[n][1], a, hd, color);
+}
+function badge(ctx, x, y, letter, on, alpha) {
+  ctx.globalAlpha = alpha;
+  disc(ctx, x, y, 28, on ? C.orange : '#ffffff', on ? C.orange : C.navy, 4);
+  ctx.font = '700 32px "Nunito Sans", system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = on ? '#25282b' : C.navy; ctx.fillText(letter, x, y + 1);
+  ctx.globalAlpha = 1;
+}
+function clear(ctx) { ctx.clearRect(0, 0, 1920, 1080); }
+// smooth curve through points (Catmull-Rom), returned as many points
+function smooth(pts, n) {
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    for (let k = 0; k < n; k++) {
+      const u = k / n, u2 = u * u, u3 = u2 * u;
+      out.push([0, 1].map(j => 0.5 * ((2 * p1[j]) + (-p0[j] + p2[j]) * u + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * u2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * u3)));
+    }
+  }
+  out.push(pts[pts.length - 1].slice());
+  return out;
+}
+const upto = (pts, p) => pts.slice(0, Math.max(1, Math.round(p * (pts.length - 1))) + 1);
+const at = (pts, p) => pts[Math.round(clamp01(p) * (pts.length - 1))];
+
+// a hurricane seen from above (Northern Hemisphere: turns counterclockwise)
+function hurricane(ctx, x, y, r, ang, alpha) {
+  const a0 = ctx.globalAlpha; ctx.globalAlpha = a0 * (alpha === undefined ? 1 : alpha);
+  const g = ctx.createRadialGradient(x, y, r * 0.1, x, y, r);
+  g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.55, 'rgba(236,240,246,.85)'); g.addColorStop(1, 'rgba(236,240,246,0)');
+  disc(ctx, x, y, r, g);
+  for (let k = 0; k < 4; k++) {
+    const pts = []; for (let n = 0; n <= 30; n++) { const u = n / 30; pts.push(P(x, y, lerp(r * 0.98, r * 0.16, u), ang + k * TAU / 4 + u * 2.4)); }
+    line(ctx, pts, '#9fb0c6', r * 0.13); line(ctx, pts, '#ffffff', r * 0.06);
+  }
+  disc(ctx, x, y, r * 0.16, '#ffffff', '#9fb0c6', Math.max(2, r * 0.02));
+  disc(ctx, x, y, r * 0.08, C.sea, C.navy, Math.max(2, r * 0.015));
+  ctx.globalAlpha = a0;
+}
+// counterclockwise wind direction (screen) at math angle th
+const tang = th => [-Math.sin(th), -Math.cos(th)];
+
+// ================= schematic map of the southeastern US and western Atlantic =================
+const MAP = { x0: 860, x1: 1880, y0: 110, y1: 960 };
+const COAST = [[860, 430], [980, 440], [1080, 458], [1130, 470], [1160, 520], [1190, 620], [1225, 715], [1255, 772], [1282, 742], [1292, 640], [1282, 540], [1272, 470],
+  [1302, 402], [1360, 334], [1404, 300], [1384, 262], [1432, 204], [1500, 150], [1560, 110]];
+function drawMap(ctx, a, plain) {
+  ctx.globalAlpha = a;
+  ctx.fillStyle = C.sea; ctx.fillRect(MAP.x0, MAP.y0, MAP.x1 - MAP.x0, MAP.y1 - MAP.y0);
+  poly(ctx, COAST.concat([[860, 110]]), C.grass);
+  line(ctx, COAST, C.grassEdge, 3);
+  ctx.strokeStyle = C.navy; ctx.lineWidth = 4; ctx.strokeRect(MAP.x0, MAP.y0, MAP.x1 - MAP.x0, MAP.y1 - MAP.y0);
+  if (plain) { ctx.globalAlpha = 1; return; }
+  const sm = fpx(12, 22, 36);
+  label(ctx, 'United States', 960, 180, '#3f6b31', sm, 'center');
+  label(ctx, 'Gulf of Mexico', 880, 900, C.navy, sm, 'left', 400);
+  label(ctx, 'Atlantic Ocean', 1560, 900, C.navy, sm, 'center', 400);
+  label(ctx, 'Schematic map, not to scale', MAP.x1 - 14, MAP.y1 - 26, C.navy, fpx(11, 22, 32), 'right', 400);
+  ctx.globalAlpha = 1;
+}
+// a high (or low) with isobars and its flow arrows; dir: +1 clockwise (high), -1 counterclockwise (low)
+function pressureSystem(ctx, o, t) {
+  ctx.save(); ctx.beginPath(); ctx.rect(MAP.x0, MAP.y0, MAP.x1 - MAP.x0, MAP.y1 - MAP.y0); ctx.clip();
+  const { x, y, rx, ry } = o, a = o.a === undefined ? 1 : o.a;
+  ctx.globalAlpha = a;
+  [0.45, 0.75, 1].forEach(f => { ctx.beginPath(); ctx.ellipse(x, y, rx * f, ry * f, 0, 0, TAU); ctx.strokeStyle = o.low ? C.red : C.blue; ctx.lineWidth = 3; ctx.stroke(); });
+  label(ctx, o.low ? 'L' : 'H', x, y, o.low ? C.red : C.blue, fpx(30, 64, 96), 'center');
+  if (o.name) label(ctx, o.name, x, y + ry * 0.45 + fpx(12, 24, 38) * 0.2 + 26, o.low ? C.red : C.blue, fpx(12, 24, 38), 'center');
+  ctx.globalAlpha = a * (o.flow === undefined ? 1 : o.flow);
+  const R = 1.18, d = o.low ? -1 : 1;
+  for (let k = 0; k < 4; k++) {
+    const f0 = k * Math.PI / 2 + d * 0.25 * t, pts = [];
+    for (let n = 0; n <= 20; n++) { const f = f0 + d * 0.8 * n / 20; pts.push([x + rx * R * Math.cos(f), y + ry * R * Math.sin(f)]); }
+    pathArrow(ctx, pts, C.navy, o.lw || 5);
+  }
+  ctx.globalAlpha = 1; ctx.restore();
+}
+
+// ---------- scenes ----------
+const SCENES = [];
+function scene(id, name, dur, def) { SCENES.push(Object.assign({ id, name, dur }, def)); }
+function cscene(id, name, dur, text, render, extra) {
+  scene(id, name, dur, {
+    init(root) {
+      const tb = h(textBlock(text[0], text[1], text[2], text[3]));
+      if (extra) tb.append(h(extra));
+      root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas></div>'));
+      root.firstChild.append(tb);
+      this.ctx = root.querySelector('canvas').getContext('2d');
+      this.cn = root.querySelector('.cn');
+      this.tb = tb; this.tbTop = text[0];
+      textRefs(this, root);
+    },
+    render(t) {
+      // on small screens the text is drawn larger; shrink the block if it would run off the bottom
+      if (this._fit !== SCALE && this.tb.offsetHeight) {
+        this._fit = SCALE; const k = Math.min(1, (1050 - this.tbTop) / this.tb.offsetHeight);
+        this.tb.style.transformOrigin = '0 0'; this.tb.style.transform = k < 1 ? 'scale(' + k.toFixed(3) + ')' : '';
+      }
+      textRender(this, t, 1.2); if (this.cn) subIn(this.cn.style, t, 2.6); clear(this.ctx); render.call(this, t, this.ctx); },
+  });
+}
+
+// ---------- 1. title ----------
+scene('title', 'Storm surge', 5, {
+  init(root) {
+    root.append(h('<div class="ground"><canvas class="art cv" width="1920" height="1080"></canvas>' +
+      '<div class="words" style="left:140px;top:300px;width:720px">' +
+      '<p class="tag">Introduction to meteorology</p><h1 class="line" style="font-size:104px">Hurricane storm surge</h1>' +
+      '<div class="rule"></div><p class="sub">How a hurricane\'s winds push the ocean onto land</p></div></div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style; this.subS = root.querySelector('.sub').style;
+    this.ctx = root.querySelector('canvas').getContext('2d');
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.1);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.9, 1.4)) + ')';
+    subIn(this.subS, t, 1.2);
+    const ctx = this.ctx; clear(ctx);
+    ctx.globalAlpha = eo(seg(t, 0.3, 1.5));
+    disc(ctx, 1400, 540, 400, C.sea);
+    hurricane(ctx, 1400, 540, 380, 0.35 * t);
+    disc(ctx, 1400, 540, 400, null, C.navy, 5);
+    ctx.globalAlpha = 1;
+  },
+});
+
+// ---------- 2. steering by the Bermuda High ----------
+const BH = { x: 1650, y: 400, rx: 185, ry: 150, name: 'Bermuda High' };
+const TR1 = smooth([[1870, 920], [1700, 830], [1530, 740], [1440, 620], [1430, 480], [1480, 330], [1590, 220], [1720, 160]], 16);
+const FC = [0.2, 0.4, 0.6, 0.8, 1].map((f, i) => ({ f, lab: (24 * (i + 1)) + ' h' }));
+cscene('steer', 'Steered by highs and lows', 12, [190, 'Forecasting the path', 'Steered by highs and lows', 'Big highs and lows steer a hurricane like a cork in a river. Air flows <b class="o">clockwise</b> around the Bermuda High, so a hurricane moves to the <b class="o">west</b>, then curls to the <b class="o">north</b> around the high\'s west side, and ultimately curls to the <b class="o">east</b>.'], function (t, ctx) {
+  drawMap(ctx, eo(seg(t, 0.2, 0.9)));
+  pressureSystem(ctx, Object.assign({ a: eo(seg(t, 1.0, 1.6)), flow: eo(seg(t, 1.8, 2.4)) }, BH), t);
+  const fs = fpx(12, 24, 38);
+  // forecast positions appear first, then the storm follows them
+  FC.forEach((c, i) => {
+    const a = eo(seg(t, 2.8 + i * 0.25, 3.2 + i * 0.25)); if (!a) return;
+    const p = at(TR1, c.f); ctx.globalAlpha = a; disc(ctx, p[0], p[1], 11, '#ffffff', C.navy, 4);
+    label(ctx, c.lab, p[0] + (c.f > 0.75 ? -22 : -24), p[1] + (c.f > 0.75 ? 26 : 0), C.navy, fs, 'right');
+  });
+  ctx.globalAlpha = eo(seg(t, 2.8, 3.3));
+  label(ctx, 'Dots: forecast positions every 24 hours', MAP.x0, 1000, C.navy, fs, 'left', 400);
+  ctx.globalAlpha = 1;
+  const p = eio(seg(t, 4.6, 10));
+  if (p > 0) line(ctx, upto(TR1, p), C.orange, 6, [14, 10]);
+  const q = at(TR1, p);
+  hurricane(ctx, q[0], q[1], 46, 1.4 * t, eo(seg(t, 4.0, 4.6)));
+  ctx.globalAlpha = eo(seg(t, 2.0, 2.6));
+  label(ctx, 'Steering flow', BH.x + 40, BH.y + BH.ry * 1.18 + 34, C.navy, fs, 'center');
+  ctx.globalAlpha = 1;
+});
+
+// ---------- 3. strong or weak high ----------
+const BH_S = { x: 1560, y: 420, rx: 300, ry: 190 };
+const BH_W = { x: 1745, y: 360, rx: 88, ry: 78 };
+const TROUGH = { x: 1180, y: 300, rx: 96, ry: 74, low: true };
+const TR2 = smooth([[1870, 920], [1650, 880], [1420, 850], [1250, 845], [1120, 780], [1040, 660], [1010, 540], [1000, 445]], 16);
+const TR3 = smooth([[1870, 920], [1690, 800], [1570, 660], [1530, 520], [1550, 380], [1610, 250], [1700, 150]], 16);
+const MK = 0.49, MW = (MAP.x1 - MAP.x0) * MK, MH = (MAP.y1 - MAP.y0) * MK, MY = 300;
+function inMap(ctx, ox, fn) {
+  ctx.save(); ctx.translate(ox, MY); ctx.scale(MK, MK); ctx.translate(-MAP.x0, -MAP.y0); FK = MK;
+  try { fn(); } finally { FK = 1; ctx.restore(); }
+}
+function caseMap(ctx, t, t0, ox, title, high, track, dash, color, result, trough) {
+  const a = eo(seg(t, t0, t0 + 0.7)), fs = fpx(13, 26, 42), sm = fpx(12, 24, 38);
+  if (!a) return;
+  ctx.globalAlpha = a; label(ctx, title, ox + MW / 2, MY - 40, C.navy, fs, 'center'); ctx.globalAlpha = 1;
+  inMap(ctx, ox, () => {
+    drawMap(ctx, a, true);
+    const b = eo(seg(t, t0 + 0.8, t0 + 1.4));
+    pressureSystem(ctx, Object.assign({ a: b, flow: b, lw: 9 }, high), t);
+    if (trough) {
+      pressureSystem(ctx, Object.assign({ a: b, flow: b, lw: 9 }, TROUGH), t);
+      ctx.globalAlpha = b; label(ctx, 'Trough', TROUGH.x, TROUGH.y + TROUGH.ry * 1.25 + fpx(12, 24, 38) * 1.3, C.red, fpx(12, 24, 38), 'center'); ctx.globalAlpha = 1;
+    }
+    const p = eio(seg(t, t0 + 1.8, t0 + 5.6));
+    if (p > 0) line(ctx, upto(track, p), color, 11, dash);
+    const q = at(track, p);
+    hurricane(ctx, q[0], q[1], 60, 1.4 * t, eo(seg(t, t0 + 1.4, t0 + 1.8)));
+  });
+  const r = eo(seg(t, t0 + 5.8, t0 + 6.4));
+  ctx.globalAlpha = r;
+  line(ctx, [[ox, MY + MH + 50], [ox + 60, MY + MH + 50]], color, 6, dash.map(d => d * 0.6));
+  result.forEach((l, i) => label(ctx, l, ox + 74, MY + MH + 50 + i * sm * 1.3, color === C.orange ? C.orangeDk : color, sm, 'left'));
+  ctx.globalAlpha = 1;
+}
+cscene('paths', 'A strong or weak high', 14, [190, 'Forecasting the path', 'A strong or weak high', ['A <b class="o">strong</b> Bermuda High pushes a hurricane far west, toward Florida and the Gulf of Mexico.', 'A <b class="o">weak</b> high lets it turn north sooner, often pulled by a low-pressure trough to the west.']], function (t, ctx) {
+  caseMap(ctx, t, 0.2, MAP.x0, 'Strong Bermuda High', BH_S, TR2, [14, 10], C.orange, ['Pushed far west,', 'into the Gulf'], false);
+  caseMap(ctx, t, 6.8, MAP.x1 - MW, 'Weak Bermuda High', BH_W, TR3, [3, 12], C.navy, ['Turns north early,', 'out to sea'], true);
+});
+
+// ---------- 4. the right side is strongest ----------
+const RS = { x: 1380, y: 600, r: 250, V: 150, F: 10 / 90 };
+function windRing(ctx, t, fwd, a) {
+  ctx.globalAlpha = a;
+  for (let k = 0; k < 8; k++) {
+    const th = k * Math.PI / 4, [px, py] = P(RS.x, RS.y, RS.r * 1.12, th), d = tang(th);
+    const vx = d[0] * RS.V, vy = d[1] * RS.V - RS.V * RS.F * fwd;   // storm motion is north (up the screen)
+    const hot = k === 0 ? 1 : 0;
+    arrow(ctx, px - vx / 2, py - vy / 2, px + vx / 2, py + vy / 2, hot && fwd > 0.5 ? C.orangeDk : C.navy, 7);
+  }
+  ctx.globalAlpha = 1;
+}
+cscene('right', 'Strongest on the right', 12, [190, 'Which side is worse?', 'Strongest on the right', 'The winds swirl <b class="o">counterclockwise</b>. On the right side of the storm\'s path, the wind blows the same way the storm moves, so the two speeds <b class="o">add</b>. On the left side they <b class="o">subtract</b>.'], function (t, ctx) {
+  const fs = fpx(13, 26, 42), sm = fpx(12, 24, 38);
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  ctx.fillStyle = C.sea; ctx.fillRect(MAP.x0, 110, MAP.x1 - MAP.x0, 900);
+  // ripples drift down the screen, so the storm seems to move north
+  ctx.strokeStyle = '#b8cde6'; ctx.lineWidth = 3;
+  const drift = Math.min(t, 11) * 40;
+  for (let i = 0; i < 9; i++) for (let j = 0; j < 7; j++) {
+    const x = MAP.x0 + 60 + i * 120 + (j % 2) * 60, y = 110 + ((j * 140 + drift) % 900);
+    ctx.beginPath(); ctx.moveTo(x - 22, y); ctx.quadraticCurveTo(x, y - 10, x + 22, y); ctx.stroke();
+  }
+  // right side shading and the right-front quadrant
+  const sh = eo(seg(t, 8.2, 8.8));
+  if (sh) {
+    ctx.globalAlpha = sh; ctx.fillStyle = 'rgba(244,121,32,.14)';
+    ctx.beginPath(); ctx.moveTo(RS.x, RS.y - RS.r * 1.45); ctx.lineTo(RS.x, RS.y + RS.r * 1.45); ctx.arc(RS.x, RS.y, RS.r * 1.45, Math.PI / 2, -Math.PI / 2, true); ctx.closePath(); ctx.fill();
+    ctx.setLineDash([10, 8]); ctx.strokeStyle = C.orangeDk; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(RS.x, RS.y); ctx.arc(RS.x, RS.y, RS.r * 1.45, 0, -Math.PI / 2, true); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  hurricane(ctx, RS.x, RS.y, RS.r, 0.5 * t);
+  ctx.globalAlpha = 1;
+  const fwd = eio(seg(t, 5.0, 6.6));
+  windRing(ctx, t, fwd, eo(seg(t, 1.4, 2.2)));
+  // forward motion
+  ctx.globalAlpha = eo(seg(t, 3.4, 4.0));
+  arrow(ctx, RS.x, RS.y + 70, RS.x, RS.y - 70, C.orange, 9);
+  label(ctx, 'Storm moves north at 10 mph', RS.x, 160, C.navy, fs, 'center');
+  ctx.globalAlpha = 1;
+  // speeds on the left and right
+  const xr = RS.x + RS.r * 1.12, xl = RS.x - RS.r * 1.12;
+  ctx.globalAlpha = eo(seg(t, 2.2, 2.8));
+  label(ctx, 'Right side', xr + 30, RS.y - 120, C.navy, sm, 'left');
+  label(ctx, 'Left side', xl - 30, RS.y - 120, C.navy, sm, 'right');
+  const sR = Math.round(90 + 10 * fwd), sL = Math.round(90 - 10 * fwd);
+  label(ctx, sR + ' mph', xr + 30, RS.y - 40 + 0, fwd > 0.5 ? C.orangeDk : C.navy, fpx(15, 32, 48), 'left');
+  label(ctx, sL + ' mph', xl - 30, RS.y - 40, C.navy, fpx(15, 32, 48), 'right');
+  ctx.globalAlpha = eo(seg(t, 6.4, 7.0));
+  label(ctx, '90 + 10', xr + 30, RS.y + 20, C.orangeDk, sm, 'left', 400);
+  label(ctx, '90 − 10', xl - 30, RS.y + 20, C.navy, sm, 'right', 400);
+  ctx.globalAlpha = sh;
+  label(ctx, 'Right-front quadrant', RS.x + 40, RS.y - RS.r * 1.45 - 30 + 0, C.orangeDk, sm, 'left');
+  ctx.globalAlpha = 1;
+}, '<div class="card cn" style="position:static;padding:22px 26px;display:flex;flex-direction:column;gap:8px"><p class="tag" style="color:var(--main)">Example</p><p class="sub" style="font-size:28px">90 mph winds in a storm moving at 10 mph: about 100 mph on the right side and 80 mph on the left.</p></div>');
+
+// ---------- coast seen from above (scenes 5 and 6) ----------
+const CY = x => 310 + 12 * Math.sin(x / 90);
+const LF = 1380;   // landfall point
+const CB = 960;    // bottom of the coast map
+function clipCoast(ctx) { ctx.save(); ctx.beginPath(); ctx.rect(MAP.x0, 110, MAP.x1 - MAP.x0, CB - 110); ctx.clip(); }
+function drawCoast(ctx, a) {
+  ctx.globalAlpha = a;
+  ctx.fillStyle = C.sea; ctx.fillRect(MAP.x0, 110, MAP.x1 - MAP.x0, CB - 110);
+  const land = [[MAP.x0, 110]]; for (let x = MAP.x0; x <= MAP.x1; x += 10) land.push([x, CY(x)]); land.push([MAP.x1, 110]);
+  poly(ctx, land, C.grass);
+  const cl = []; for (let x = MAP.x0; x <= MAP.x1; x += 10) cl.push([x, CY(x)]); line(ctx, cl, C.grassEdge, 4);
+  ctx.strokeStyle = C.navy; ctx.lineWidth = 4; ctx.strokeRect(MAP.x0, 110, MAP.x1 - MAP.x0, CB - 110);
+  label(ctx, 'Land', MAP.x0 + 24, 160, '#3f6b31', fpx(12, 24, 38), 'left');
+  label(ctx, 'Ocean', MAP.x0 + 24, CB - 36, C.navy, fpx(12, 24, 38), 'left');
+  ctx.globalAlpha = 1;
+}
+const OPTS = [['A', LF - 300], ['B', LF], ['C', LF + 300]];
+cscene('predict', 'Make a prediction', 7, [150, 'Make a prediction', 'Where will the water pile up?', ['Hurricane winds drive ocean waters. Those waters then move onto the shoreline, raising the water level.', 'The hurricane moves north toward the coast. Where will the ocean rise the most: <b class="o">A</b>, <b class="o">B</b> or <b class="o">C</b>? Decide, then press Next.']], function (t, ctx) {
+  drawCoast(ctx, eo(seg(t, 0.2, 0.9)));
+  const y = lerp(900, 760, eio(seg(t, 0.6, 4)));
+  clipCoast(ctx); hurricane(ctx, LF, y, 240, 0.5 * t, eo(seg(t, 0.4, 1.0))); ctx.restore();
+  ctx.globalAlpha = eo(seg(t, 1.0, 1.6)); arrow(ctx, LF, y - 260, LF, y - 340, C.orange, 9); ctx.globalAlpha = 1;
+  OPTS.forEach(([L, x], i) => badge(ctx, x, CY(x) - 60, L, false, eo(seg(t, 1.8 + i * 0.4, 2.3 + i * 0.4))));
+  const fs = fpx(12, 24, 38);
+  ctx.globalAlpha = eo(seg(t, 3.4, 4.0));
+  [['Left of path', LF - 300], ['Eye', LF], ['Right of path', LF + 300]].forEach(([s, x]) => label(ctx, s, x, CY(x) - 120, C.navy, fs, 'center'));
+  ctx.globalAlpha = 1;
+});
+
+// surge profile along the coast: + water piles up (right), - water pulled away (left)
+const prof = x => Math.exp(-Math.pow((x - (LF + 170)) / 190, 2)) - 0.45 * Math.exp(-Math.pow((x - (LF - 230)) / 160, 2));
+cscene('push', 'Wind pushes water ashore', 12, [190, 'Water on the move', 'Wind pushes water ashore', ['On the <b class="o">right</b> side, winds blow toward the shore and pile the ocean up against the coast.', 'On the left side, winds blow offshore and push water away.', 'Winds in the <b class="o">right-front quadrant</b> also build waves that ride onto the shoreline.', 'The answer is <b class="o">C</b>.']], function (t, ctx) {
+  drawCoast(ctx, eo(seg(t, 0.2, 0.9)));
+  const fs = fpx(13, 26, 42), sm = fpx(12, 24, 38);
+  const app = eio(seg(t, 1.0, 8.0)), y = lerp(880, 560, app), A = app * eo(seg(t, 1.6, 8.5));
+  // water levels along the coast
+  if (A > 0.01) {
+    const up = [], dn = [];
+    for (let x = MAP.x0; x <= MAP.x1; x += 6) { const s = prof(x) * A; if (s > 0) up.push([x, CY(x) - s * 90]); else up.push([x, CY(x)]); if (s < 0) dn.push([x, CY(x) - s * 110]); else dn.push([x, CY(x)]); }
+    const coast = []; for (let x = MAP.x1; x >= MAP.x0; x -= 6) coast.push([x, CY(x)]);
+    poly(ctx, up.concat(coast), 'rgba(22,103,196,.55)'); line(ctx, up, C.blue, 4);
+    poly(ctx, dn.concat(coast), C.sand); line(ctx, dn, C.sandEdge, 3);
+  }
+  clipCoast(ctx);
+  hurricane(ctx, LF, y, 240, 0.5 * t, eo(seg(t, 0.2, 0.8)));
+  // the right-front quadrant
+  const qa = eo(seg(t, 2.0, 2.6));
+  ctx.globalAlpha = qa; ctx.setLineDash([12, 9]); ctx.strokeStyle = C.orangeDk; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(LF, y); ctx.arc(LF, y, 250, 0, -Math.PI / 2, true); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  // waves built in the right-front quadrant ride north onto the shore
+  const NW = 7;
+  for (let i = 0; i < NW; i++) {
+    const x = LF + 45 + i * 38 + (i % 2) * 6, ph = (t * 0.32 + i * 0.41) % 1;
+    const y0 = y - 40 - (i % 3) * 30, y1 = CY(x) - Math.max(0, prof(x) * A * 90) + 10;
+    if (y1 >= y0) continue;
+    const yy = lerp(y0, y1, ph), w = 40 + 18 * ph;
+    const a = qa * eo(seg(ph, 0, 0.12)) * (1 - seg(ph, 0.86, 1));
+    if (a <= 0) continue;
+    ctx.globalAlpha = a;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x - w, yy + 14); ctx.quadraticCurveTo(x, yy - 16, x + w, yy + 14);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 11; ctx.stroke(); ctx.strokeStyle = C.blue; ctx.lineWidth = 5; ctx.stroke();
+    if (ph > 0.72) { const f = seg(ph, 0.72, 1); [-0.6, -0.2, 0.2, 0.6].forEach(o => disc(ctx, x + o * w, y1 - 4 - f * 10, 4 + f * 4, '#ffffff', C.blue, 2)); }
+  }
+  // wind arrows around the storm (solid), water pushed away on the left (dashed)
+  ctx.globalAlpha = eo(seg(t, 1.0, 1.6));
+  for (let k = 0; k < 8; k++) { const th = k * Math.PI / 4, [px, py] = P(LF, y, 270, th), d = tang(th); arrow(ctx, px - d[0] * 55, py - d[1] * 55, px + d[0] * 55, py + d[1] * 55, C.navy, 6); }
+  ctx.globalAlpha = A;
+  [LF - 160, LF - 300].forEach(x => pathArrow(ctx, [[x, CY(x) + 30], [x, CY(x) + 120]], C.blue, 7, [10, 9]));
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  OPTS.forEach(([L, x]) => badge(ctx, x, CY(x) - 60 - Math.max(0, prof(x) * A * 90), L, L === 'C' && t > 8.6, 1));
+  ctx.globalAlpha = eo(seg(t, 8.6, 9.2));
+  label(ctx, 'Water piles up', LF + 120, 150, C.blue, fs, 'center');
+  label(ctx, 'Water pushed away', MAP.x0 + 20, CY(MAP.x0) + 110, C.orangeDk, fs, 'left');
+  ctx.globalAlpha = eo(seg(t, 1.0, 1.6));
+  label(ctx, 'Solid arrows: wind.  Dashed arrows: water pushed away.', MAP.x0, 995, C.navy, sm, 'left', 400);
+  ctx.globalAlpha = qa;
+  label(ctx, 'Curved lines: waves. Outline: right-front quadrant.', MAP.x0, 995 + sm * 1.35, C.navy, sm, 'left', 400);
+  ctx.globalAlpha = 1;
+});
+
+// ---------- cross-section of the coast (scenes 7 and 8) ----------
+const XS = { msl: 620, k: 14, shore: 1500, x0: MAP.x0, x1: MAP.x1, bot: 1000 };
+const groundY = x => x < 1440 ? lerp(960, 640, (x - XS.x0) / 580) : x < 1500 ? lerp(640, 620, (x - 1440) / 60) : lerp(620, 494, (x - 1500) / 380);
+function house(ctx, x) {
+  const g = groundY(x);
+  poly(ctx, [[x - 34, g], [x - 34, g - 50], [x, g - 82], [x + 34, g - 50], [x + 34, g]], '#ffffff', C.navy, 3);
+  ctx.fillStyle = C.navy; ctx.fillRect(x - 8, g - 28, 16, 28);
+}
+// tide: feet everywhere; surge: feet at the shore, smaller out at sea
+function drawSection(ctx, t, tide, surge, opts) {
+  opts = opts || {};
+  ctx.fillStyle = C.sky; ctx.fillRect(XS.x0, 110, XS.x1 - XS.x0, XS.bot - 110);
+  const ramp = x => clamp01((x - XS.x0) / 560) * 0.8 + 0.2;
+  const wav = (surge / 15) * 5 + 1.5;
+  const surf = x => XS.msl - (tide + surge * ramp(x)) * XS.k + wav * Math.sin(x / 26 - 3 * t);
+  // ground
+  const gp = []; for (let x = XS.x0; x <= XS.x1; x += 8) gp.push([x, groundY(x)]);
+  poly(ctx, gp.concat([[XS.x1, XS.bot], [XS.x0, XS.bot]]), C.sand);
+  const landTop = gp.filter(p => p[0] >= 1496); line(ctx, landTop, C.grassEdge, 8);
+  line(ctx, gp.filter(p => p[0] <= 1500), C.sandEdge, 3);
+  house(ctx, 1640); house(ctx, 1790);
+  // water between its surface and the ground
+  const top = [], bot = [];
+  for (let x = XS.x0; x <= XS.x1; x += 6) { const g = groundY(x), s = Math.min(surf(x), g); top.push([x, s]); bot.push([x, g]); }
+  poly(ctx, top.concat(bot.reverse()), 'rgba(110,165,225,.72)');
+  line(ctx, top.filter(p => groundY(p[0]) - p[1] > 1), C.waterTop, 4);
+  // normal sea level
+  line(ctx, [[XS.x0, XS.msl], [XS.x1, XS.msl]], C.navy, 3, [12, 10]);
+  label(ctx, 'Normal sea level', XS.x0 + 16, XS.msl + 30, C.navy, fpx(12, 22, 34), 'left');
+  ctx.strokeStyle = C.navy; ctx.lineWidth = 4; ctx.strokeRect(XS.x0, 110, XS.x1 - XS.x0, XS.bot - 110);
+  return surf;
+}
+cscene('surge', 'The storm surge', 12, [170, 'The storm surge', 'A dome of water', 'Storm surge is ocean water <b class="o">pushed toward the shore</b> by the hurricane\'s winds. It rises above the normal sea level and can flood land <b class="o">several miles inland</b>.'], function (t, ctx) {
+  const fs = fpx(13, 26, 42), sm = fpx(12, 24, 38);
+  const H = 15 * eio(seg(t, 2.4, 8.0));
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  drawSection(ctx, t, 0, H);
+  // wind
+  ctx.save(); ctx.beginPath(); ctx.rect(XS.x0, 110, XS.x1 - XS.x0, 900); ctx.clip();
+  ctx.globalAlpha = eo(seg(t, 1.2, 1.8));
+  for (let i = 0; i < 4; i++) { const x = 900 + ((i * 230 + t * 120) % 920); arrow(ctx, x, 230 + (i % 2) * 50, x + 150, 230 + (i % 2) * 50, C.navy, 7); }
+  ctx.restore();
+  label(ctx, 'Hurricane winds blow toward shore', 1370, 160, C.navy, fs, 'center');
+  // surge height
+  const a = eo(seg(t, 8.2, 8.8));
+  if (a) {
+    ctx.globalAlpha = a; const top = XS.msl - 15 * XS.k;
+    arrow(ctx, 1420, XS.msl, 1420, top + 4, C.orange, 7); arrow(ctx, 1420, top, 1420, XS.msl - 4, C.orange, 7);
+    label(ctx, 'Storm surge', 1396, (XS.msl + top) / 2 - 22, C.orangeDk, fs, 'right');
+    label(ctx, '15 ft', 1396, (XS.msl + top) / 2 + 22, C.orangeDk, fs, 'right');
+    label(ctx, 'Flooded homes', 1715, 340, C.navy, sm, 'center');
+  }
+  ctx.globalAlpha = eo(seg(t, 0.6, 1.2));
+  label(ctx, 'Shallow, gently sloping sea floor', 1000, 900, C.sandEdge, sm, 'left');
+  ctx.globalAlpha = 1;
+}, '<div class="card cn" style="position:static;padding:22px 26px;display:flex;flex-direction:column;gap:8px"><p class="tag" style="color:var(--main)">Why the sea floor matters</p><p class="sub" style="font-size:28px">A shallow, gently sloping sea floor lets the water pile up higher. Much of the Gulf and Atlantic coast is less than 10 feet above sea level.</p></div>');
+
+// tide gauge with stacked tide and surge
+function gauge(ctx, x, tide, surge, a) {
+  ctx.globalAlpha = a;
+  const y0 = XS.msl, k = XS.k, top = y0 - 20 * k, sm = fpx(11, 20, 32);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 10, top - 10, 20, groundY(x) - top + 10); ctx.strokeStyle = C.navy; ctx.lineWidth = 3; ctx.strokeRect(x - 10, top - 10, 20, groundY(x) - top + 10);
+  for (let f = 0; f <= 20; f += 5) { line(ctx, [[x - 10, y0 - f * k], [x + 10, y0 - f * k]], C.navy, 3); label(ctx, f + ' ft', x - 18, y0 - f * k, C.navy, sm, 'right', 400); }
+  ctx.fillStyle = C.blue; ctx.fillRect(x + 14, y0 - tide * k, 22, tide * k);
+  ctx.fillStyle = C.navy; ctx.fillRect(x + 14, y0 - (tide + surge) * k, 22, surge * k);
+  ctx.globalAlpha = 1;
+}
+function moon(ctx, x, y, r, a) {
+  ctx.globalAlpha = a;
+  disc(ctx, x, y, r, '#f6f2df', C.navy, 4);
+  disc(ctx, x - r * 0.3, y - r * 0.2, r * 0.18, '#e2dcc0'); disc(ctx, x + r * 0.28, y + r * 0.25, r * 0.13, '#e2dcc0'); disc(ctx, x + r * 0.1, y - r * 0.42, r * 0.09, '#e2dcc0');
+  ctx.globalAlpha = 1;
+}
+cscene('tide', 'Surge plus the tide', 13, [170, 'Add the Moon', 'Surge + tide = storm tide', 'The Moon\'s pull raises and lowers the ocean in <b class="o">tides</b>. The surge rides on top of the tide. Together they make the <b class="o">storm tide</b>, the total rise in water.'], function (t, ctx) {
+  const fs = fpx(13, 26, 42), sm = fpx(12, 24, 38);
+  const tide = 2 * eio(seg(t, 1.8, 3.6)), surge = 15 * eio(seg(t, 5.4, 9.4));
+  ctx.globalAlpha = eo(seg(t, 0.2, 0.9));
+  drawSection(ctx, t, tide, surge);
+  moon(ctx, 960, 200, 52, eo(seg(t, 1.0, 1.6)));
+  ctx.globalAlpha = eo(seg(t, 1.0, 1.6)); label(ctx, 'Moon', 960, 200 + 52 + sm * 0.8, C.navy, sm, 'center'); ctx.globalAlpha = 1;
+  const gx = 1380;
+  gauge(ctx, gx, tide, surge, eo(seg(t, 1.4, 2.0)));
+  ctx.globalAlpha = eo(seg(t, 3.8, 4.3));
+  label(ctx, 'High tide: 2 ft', gx + 50, XS.msl - 14 + 0, C.blue, sm, 'left');
+  ctx.globalAlpha = eo(seg(t, 9.4, 10));
+  label(ctx, 'Surge: 15 ft', gx + 50, XS.msl - (2 + 7.5) * XS.k, C.navy, sm, 'left');
+  // the sum
+  const eq = [['2 ft tide', C.blue, 4.0], [' + 15 ft surge', C.navy, 9.6], [' = 17 ft storm tide', C.orangeDk, 10.4]];
+  ctx.font = '700 ' + fs + 'px "Nunito Sans", system-ui, sans-serif';
+  let W = eq.reduce((s, e) => s + ctx.measureText(e[0]).width, 0);
+  const room = 1860 - 1040, ef = W > room ? fs * room / W : fs; W = Math.min(W, room);
+  let x = Math.max(1040, Math.min(1520 - W / 2, 1860 - W));
+  eq.forEach(([s, c, t0]) => { ctx.globalAlpha = eo(seg(t, t0, t0 + 0.5)); const w = label(ctx, s, x, 200, c, ef, 'left'); x += w; });
+  ctx.globalAlpha = 1;
+}, '<div class="card cn" style="position:static;padding:22px 26px;display:flex;flex-direction:column;gap:8px"><p class="tag" style="color:var(--main)">Example</p><p class="sub" style="font-size:28px">A 15 ft storm surge on top of a high tide 2 ft above mean sea level makes a 17 ft storm tide.</p></div>');
+
+// ---------- 9. timing with the tide ----------
+const GR = { x0: 990, x1: 1860, lo: -6, hi: 24, hrs: 36 };
+const tideA = hr => 2 * Math.cos(TAU * (hr - 18) / 12.42);
+const tideB = hr => 2 * Math.cos(TAU * (hr - 18 - 6.21) / 12.42);
+const surgeF = hr => 15 * Math.exp(-Math.pow((hr - 18) / 4.5, 2));
+function graph(ctx, y0, y1, tideF, p1, p2, p3, title, showX) {
+  const X = hr => lerp(GR.x0, GR.x1, hr / GR.hrs), Y = v => lerp(y1, y0, (v - GR.lo) / (GR.hi - GR.lo));
+  const sm = fpx(11, 20, 32), fs = fpx(13, 26, 42);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(GR.x0, y0, GR.x1 - GR.x0, y1 - y0);
+  [-5, 0, 5, 10, 15, 20].forEach(v => { line(ctx, [[GR.x0, Y(v)], [GR.x1, Y(v)]], v === 0 ? C.navy : '#d5dde9', v === 0 ? 3 : 2); label(ctx, (v < 0 ? '−' + (-v) : v) + ' ft', GR.x0 - 12, Y(v), C.navy, sm, 'right', 400); });
+  if (showX) [0, 12, 24, 36].forEach(hr => label(ctx, hr + ' h', X(hr), y1 + 26, C.navy, sm, 'center', 400));
+  ctx.strokeStyle = C.navy; ctx.lineWidth = 3; ctx.strokeRect(GR.x0, y0, GR.x1 - GR.x0, y1 - y0);
+  const curve = (f, p) => { const o = []; for (let i = 0; i <= 180 * p; i++) { const hr = GR.hrs * i / 180; o.push([X(hr), Y(f(hr))]); } return o; };
+  if (p1 > 0) line(ctx, curve(tideF, p1), C.blue, 5, [14, 9]);
+  if (p2 > 0) line(ctx, curve(surgeF, p2), C.navy, 5, [3, 10]);
+  if (p3 > 0) line(ctx, curve(hr => tideF(hr) + surgeF(hr), p3), C.orange, 8);
+  label(ctx, title, GR.x0, y0 - 26, C.navy, fs, 'left');
+  // peak labels, each shown once its line is drawn
+  const hr = 18, td = tideF(hr), tot = td + surgeF(hr), sgn = td > 0 ? '+' : '−', amt = Math.abs(Math.round(td));
+  const lead = (x1, y1, x2, y2, c) => line(ctx, [[x1, y1], [x2, y2]], c, 2);
+  if (p1 >= 1) {
+    disc(ctx, X(hr), Y(td), 8, C.blue, '#ffffff', 3);
+    label(ctx, (td < 0 ? '−' : '') + amt + ' ft', X(hr), Y(td > 0 ? 5.5 : 1.6), C.blue, fs, 'center');
+  }
+  if (p2 >= 1) {
+    disc(ctx, X(hr), Y(15), 8, C.navy, '#ffffff', 3);
+    lead(X(16.2), Y(20), X(hr) - 8, Y(15) - 6, C.navy);
+    label(ctx, '15 ft', X(16), Y(20), C.navy, fs, 'right');
+  }
+  if (p3 >= 1) {
+    disc(ctx, X(hr), Y(tot), 10, C.orange, C.navy, 3);
+    lead(X(19.8), Y(20), X(hr) + 9, Y(tot) - 6, C.orangeDk);
+    label(ctx, '15 ft ' + sgn + ' ' + amt + ' ft = ' + Math.round(tot) + ' ft', X(20), Y(20), C.orangeDk, fs, 'left');
+  }
+}
+cscene('timing', 'Timing with the tide', 13, [190, 'Timing matters', 'High tide makes it worse', 'The tide rises and falls about <b class="o">twice a day</b>. The same surge floods the most when its peak arrives at <b class="o">high tide</b>, and less at low tide.'], function (t, ctx) {
+  const p1 = eio(seg(t, 1.0, 3.0)), p2 = eio(seg(t, 3.6, 5.6)), p3 = eio(seg(t, 6.2, 8.6)), a = eo(seg(t, 0.2, 0.9));
+  ctx.globalAlpha = a;
+  graph(ctx, 180, 500, tideA, p1, p2, p3, 'Surge peak arrives at high tide', false);
+  graph(ctx, 610, 930, tideB, p1, p2, p3, 'Surge peak arrives at low tide', true);
+  const sm = fpx(11, 20, 32);
+  let x = 900;
+  [['Tide', C.blue, [14, 9], 1.0], ['Storm surge', C.navy, [3, 10], 3.6], ['Storm tide (total)', C.orange, [], 6.2]].forEach(([s, c, d, t0]) => {
+    ctx.globalAlpha = a * eo(seg(t, t0, t0 + 0.4));
+    line(ctx, [[x, 1010], [x + 56, 1010]], c, c === C.orange ? 8 : 5, d); x += 68;
+    x += label(ctx, s, x, 1010, c === C.orange ? C.orangeDk : c, sm, 'left') + 40;
+  });
+  ctx.globalAlpha = a; label(ctx, 'Example numbers', GR.x1, 1054, C.navy, sm, 'right', 400);
+  ctx.globalAlpha = 1;
+});
+
+// ---------- 10. recap ----------
+scene('recap', 'Recap', 7, {
+  init(root) {
+    const icoA = '<rect x="-100" y="-100" width="200" height="200" rx="16" fill="#dbe8f6"/><ellipse cx="30" cy="-20" rx="55" ry="42" fill="none" stroke="#1667c4" stroke-width="4"/><text x="30" y="-8" text-anchor="middle" fill="#1667c4" style="font:700 36px Nunito Sans,sans-serif">H</text><path d="M85 85 Q -10 80 -45 30 Q -65 -20 -20 -80" fill="none" stroke="#f47920" stroke-width="8" stroke-linecap="round" stroke-dasharray="14 10"/><path d="M-30 -92 L -6 -70 L -36 -64 Z" fill="#f47920"/>';
+    const icoB = '<circle r="92" fill="#dbe8f6" stroke="#1e376c" stroke-width="5"/><path d="M0 -92 A 92 92 0 0 1 0 92 Z" fill="rgba(244,121,32,.3)"/><circle r="14" fill="#fff" stroke="#1e376c" stroke-width="3"/><path d="M0 40 L 0 -40" stroke="#f47920" stroke-width="9" stroke-linecap="round"/><path d="M-16 -30 L 0 -56 L 16 -30 Z" fill="#f47920"/><text x="56" y="10" text-anchor="middle" fill="#1e376c" style="font:700 30px Nunito Sans,sans-serif">R</text><text x="-56" y="10" text-anchor="middle" fill="#1e376c" style="font:700 30px Nunito Sans,sans-serif">L</text>';
+    const icoS = '<rect x="-100" y="-100" width="200" height="200" rx="16" fill="#f3f7fc"/><path d="M-100 100 L 100 20 L 100 100 Z" fill="#e6d3a3" stroke="#8a6d3b" stroke-width="3"/><path d="M-100 0 Q -20 -10 30 -40 Q 70 -55 100 -45 L 100 20 L -100 100 Z" fill="rgba(110,165,225,.8)" stroke="#1667c4" stroke-width="4"/><line x1="-100" x2="100" y1="10" y2="10" stroke="#1e376c" stroke-width="3" stroke-dasharray="8 6"/><path d="M-85 -70 L -10 -70" stroke="#1e376c" stroke-width="7" stroke-linecap="round"/><path d="M-12 -84 L 14 -70 L -12 -56 Z" fill="#1e376c"/>';
+    const icoC = '<rect x="-100" y="-100" width="200" height="200" rx="16" fill="#f3f7fc"/><line x1="-90" x2="90" y1="70" y2="70" stroke="#1e376c" stroke-width="3" stroke-dasharray="8 6"/><rect x="-20" y="50" width="40" height="20" fill="#1667c4"/><rect x="-20" y="-80" width="40" height="130" fill="#1e376c"/><circle cx="-60" cy="-60" r="24" fill="#f6f2df" stroke="#1e376c" stroke-width="3"/>';
+    let ci = 0;
+    const card = (x, ico, hd, sub) => '<div class="card rc rc' + (ci++) + '" style="left:' + x + 'px;top:400px;width:400px;height:560px;display:flex;flex-direction:column;align-items:center;gap:18px;padding:34px 24px;text-align:center">' +
+      '<svg class="ri" width="200" height="200" viewBox="-115 -115 230 230" style="flex:none;overflow:visible">' + ico + '</svg>' +
+      '<div class="words" style="position:static;align-items:center;gap:12px"><p class="line" style="font-size:42px">' + hd + '</p><p class="sub" style="font-size:28px">' + sub + '</p></div></div>';
+    root.append(h('<div class="ground"><div class="words" style="left:140px;top:110px;width:1500px"><p class="tag">Recap</p><h2 class="line">Hurricane storm surge</h2><div class="rule"></div></div>' +
+      card(140, icoA, 'Steered by highs', 'The Bermuda High and troughs set the path.') +
+      card(570, icoB, 'Strongest winds on the right', 'Wind speed plus the storm\'s forward speed.') +
+      card(1000, icoS, 'Storm surge', 'Winds push ocean water up onto the shore.') +
+      card(1430, icoC, 'Surge + tide', 'Storm tide is surge plus tide. High tide is worst.') + '</div>'));
+    this.tagS = root.querySelector('.tag').style; this.line = root.querySelector('.line'); this.rule = root.querySelector('.rule').style;
+    this.cards = [...root.querySelectorAll('.card')];
+  },
+  render(t) {
+    this.tagS.opacity = eo(seg(t, 0, 0.5)); fadeFromRight(this.line, t, 0.2);
+    this.rule.transformOrigin = '0 50%'; this.rule.transform = 'scaleX(' + eo(seg(t, 0.8, 1.3)) + ')';
+    this.cards.forEach((c, i) => { const p = eo(seg(t, 1.4 + i * 0.6, 2.1 + i * 0.6)); c.style.opacity = p; c.style.transform = 'translateY(' + lerp(30, 0, p) + 'px)'; });
+  },
+});
+
+// ---------- scene text (shown on screen and read by screen readers) ----------
+const META = {
+  title: { still: 5, cap: { tag: 'Introduction to meteorology', line: 'Hurricane storm surge', sub: 'How a hurricane\'s winds push the ocean onto land' },
+    desc: 'This animation explains hurricane storm surge. It starts with how forecasters predict where a hurricane will go, shows why the right side of the storm is the strongest, how its winds push ocean water onto the coast, and how the surge adds to the normal tide. The picture shows a hurricane seen from above, spinning counterclockwise.' },
+  steer: { still: 12, cap: { tag: 'Forecasting the path', line: 'Steered by highs and lows', sub: 'Big highs and lows steer a hurricane like a cork in a river. Air flows clockwise around the Bermuda High, so a hurricane moves to the west, then curls to the north around the high\'s west side, and ultimately curls to the east.' },
+    desc: 'A schematic map of the southeastern United States, the Gulf of Mexico and the western Atlantic Ocean. The Bermuda High sits over the Atlantic, with oval isobars and arrows showing air flowing clockwise around it. Dots mark forecast positions every 24 hours, out to 120 hours (5 days), like those in a National Hurricane Center forecast. A hurricane then follows the dots: it moves west along the south side of the high, curls north around the high\'s west side, and ultimately curls to the east, past the Carolinas and out to sea.' },
+  paths: { still: 14, cap: { tag: 'Forecasting the path', line: 'A strong or weak high', sub: ['A strong Bermuda High pushes a hurricane far west, toward Florida and the Gulf of Mexico.', 'A weak high lets it turn north sooner, often pulled by a low-pressure trough to the west.'] },
+    desc: 'Two small maps side by side. The left map shows a strong, large Bermuda High that stretches west to Florida. The hurricane is pushed far to the west, passes south of Florida, and turns north into the Gulf coast. The right map shows a weak, small high far out in the Atlantic, with a low-pressure trough over the United States to the west. There the hurricane turns north early and heads out to sea, away from the coast. The strength of the high helps decide where a hurricane goes.' },
+  right: { still: 12, cap: { tag: 'Which side is worse?', line: 'Strongest on the right', sub: 'The winds swirl counterclockwise. On the right side of the storm\'s path, the wind blows the same way the storm moves, so the two speeds add. On the left side they subtract.', box: ['Example', '90 mph winds in a storm moving at 10 mph: about 100 mph on the right side and 80 mph on the left.'] },
+    desc: 'A hurricane seen from above, with 90 mph winds swirling counterclockwise, shown by eight arrows around it. The storm moves north at 10 mph. On the right (east) side, the wind blows north, the same way the storm moves, so the speeds add: 90 plus 10 makes 100 mph, and the arrow grows. On the left (west) side, the wind blows south, against the storm\'s motion, so 90 minus 10 makes 80 mph, and the arrow shrinks. The right half of the storm is shaded, and the right-front quadrant, often the most dangerous part, is outlined.' },
+  predict: { still: 7, cap: { tag: 'Make a prediction', line: 'Where will the water pile up?', sub: ['Hurricane winds drive ocean waters. Those waters then move onto the shoreline, raising the water level.', 'The hurricane moves north toward the coast. Where will the ocean rise the most: A, B or C? Decide, then press Next.'] },
+    desc: 'Hurricane winds drive ocean waters, which then move onto the shoreline and raise the water level. A map with land at the top and ocean below. A hurricane moves north toward the coast. Three spots are marked on the coast: A is left of the storm\'s path, B is where the eye will come ashore, and C is right of the storm\'s path. Decide where the ocean will rise the most before going on.' },
+  push: { still: 12, cap: { tag: 'Water on the move', line: 'Wind pushes water ashore', sub: ['On the right side, winds blow toward the shore and pile the ocean up against the coast.', 'On the left side, winds blow offshore and push water away.', 'Winds in the right-front quadrant also build waves that ride onto the shoreline.', 'The answer is C.'] },
+    desc: 'The hurricane moves toward the coast, its winds swirling counterclockwise. To the right of its path, the winds blow from the ocean toward land, and blue water spreads over the land around spot C: the ocean piles up against the coast. To the left of its path, the winds blow from land out to sea and push water away, so the water drops and the sandy sea floor near spot A shows. Meanwhile, the winds in the storm\'s right-front quadrant, outlined with a dashed line, build waves. Curved wave crests travel north from that quadrant, ride onto the shoreline on top of the piled-up water near spot C, and break into foam. The answer is C, right of the storm\'s path.' },
+  surge: { still: 12, cap: { tag: 'The storm surge', line: 'A dome of water', sub: 'Storm surge is ocean water pushed toward the shore by the hurricane\'s winds. It rises above the normal sea level and can flood land several miles inland.', box: ['Why the sea floor matters', 'A shallow, gently sloping sea floor lets the water pile up higher. Much of the Gulf and Atlantic coast is less than 10 feet above sea level.'] },
+    desc: 'A side view of the coast. The ocean is on the left, over a shallow, gently sloping sea floor. Low land with two houses is on the right. A dashed line marks the normal sea level. Hurricane winds blow from the ocean toward the shore and push the water up against the coast. The water rises 15 feet above the normal sea level, with waves on top, and floods the land and both houses.' },
+  tide: { still: 13, cap: { tag: 'Add the Moon', line: 'Surge + tide = storm tide', sub: 'The Moon\'s pull raises and lowers the ocean in tides. The surge rides on top of the tide. Together they make the storm tide, the total rise in water.', box: ['Example', 'A 15 ft storm surge on top of a high tide 2 ft above mean sea level makes a 17 ft storm tide.'] },
+    desc: 'The same side view of the coast, with the Moon in the sky and a water-level gauge marked from 0 to 20 feet. First the Moon\'s pull brings high tide, and the water rises 2 feet. Then the storm surge adds 15 feet on top. The gauge shows a 2-foot blue bar for the tide and a 15-foot navy bar for the surge. Together: 2 feet of tide plus 15 feet of surge makes a 17-foot storm tide.' },
+  timing: { still: 13, cap: { tag: 'Timing matters', line: 'High tide makes it worse', sub: 'The tide rises and falls about twice a day. The same surge floods the most when its peak arrives at high tide, and less at low tide.' },
+    desc: 'Two graphs of water level over 36 hours, using example numbers. In each, a dashed blue line shows the tide rising and falling 2 feet about twice a day, a dotted navy line shows a 15-foot storm surge that peaks at hour 18, and a solid orange line shows their total, the storm tide. The peaks are labeled as each line is drawn. In the top graph the surge peaks at high tide: the tide is labeled 2 ft, the surge 15 ft, and the storm tide 15 ft + 2 ft = 17 ft. In the bottom graph the same surge peaks at low tide: the tide is labeled −2 ft, the surge 15 ft, and the storm tide 15 ft − 2 ft = 13 ft.' },
+  recap: { still: 7, cap: { tag: 'Recap', line: 'Hurricane storm surge' },
+    desc: 'Recap, in four boxes. Steered by highs: the Bermuda High and troughs set the path forecasters predict. Strongest winds on the right: the wind speed plus the storm\'s forward speed. Storm surge: the winds push ocean water up onto the shore. Surge plus tide: the storm tide is the surge plus the tide, and a surge that arrives at high tide floods the most.' },
+};
+SCENES.forEach(s => Object.assign(s, META[s.id]));
+
+// ---------- player ----------
+const $ = id => document.getElementById(id);
+const stage = $('stage'), frame = $('frame'), body = document.body;
+SCENES.forEach(s => { s.root = document.createElement('div'); s.root.className = 'layer'; stage.appendChild(s.root); s.init(s.root); });
+
+const mqPort = matchMedia('(orientation: portrait) and (max-width: 640px)');
+const mqLand = matchMedia('(orientation: landscape) and (max-height: 560px)');
+const mqReduce = matchMedia('(prefers-reduced-motion: reduce)');
+let mode = 'desk';
+function fit() {
+  const m = mqPort.matches ? 'port' : mqLand.matches ? 'land' : 'desk';
+  if (m !== mode) { body.classList.remove('desk', 'land', 'port'); mode = m; }
+  body.classList.add(mode);
+  const port = mode === 'port';
+  const s = frame.clientWidth / (port ? 1120 : 1920);
+  if (!s) return;
+  SCALE = s;
+  stage.style.transform = 'scale(' + s + ')' + (port ? ' translateX(-800px)' : '');
+  stage.classList.toggle('port', port);
+  stage.classList.toggle('big', s < 0.55);
+  const px = (target, lo, hi) => Math.min(hi, Math.max(lo, target / s)).toFixed(1) + 'px';
+  stage.style.setProperty('--sub', px(15, 34, 46));
+  stage.style.setProperty('--tag', px(13, 24, 42));
+  applyText();
+}
+new ResizeObserver(fit).observe(frame);
+[mqPort, mqLand].forEach(q => q.addEventListener ? q.addEventListener('change', fit) : q.addListener(fit));
+addEventListener('resize', fit);
+addEventListener('orientationchange', () => setTimeout(fit, 250));
+
+let textOn = false;
+try { textOn = localStorage.getItem('surge-text') === '1'; } catch (e) {}
+const desc = $('desc'), textB = $('textB');
+function applyText() {
+  const shown = mode === 'port' || textOn;
+  desc.classList.toggle('sr-only', !shown);
+  textB.setAttribute('aria-expanded', textOn ? 'true' : 'false');
+  textB.setAttribute('aria-label', textOn ? 'Hide scene text' : 'Show scene text');
+}
+function setText(on) { textOn = on; try { localStorage.setItem('surge-text', on ? '1' : '0'); } catch (e) {} applyText(); }
+textB.onclick = () => setText(!textOn);
+// keyboard focus landing in the hidden text panel (such as a source link) opens it, so focus is always visible
+desc.addEventListener('focusin', e => { if (e.target !== desc && mode !== 'port' && !textOn) setText(true); });
+$('closeText').onclick = () => { setText(false); textB.focus(); };
+$('skip').addEventListener('click', e => { e.preventDefault(); if (mode !== 'port') setText(true); desc.focus(); });
+
+const dots = $('dots'), title = $('title'), count = $('count'), nextB = $('next'), backB = $('back');
+SCENES.forEach((s, i) => { const b = document.createElement('button'); b.setAttribute('aria-label', 'Go to scene ' + (i + 1) + ': ' + s.name); b.onclick = () => go(i); dots.appendChild(b); });
+const esc = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+let cur = -1, start = performance.now(), prev = null, prevT = 0, fadeStart = 0, paused = false, pausedAt = 0, still = false;
+const FADE = 0.4;
+function sceneTime(now) { return ((paused ? pausedAt : now) - start) / 1000; }
+function setPaused(p) {
+  const now = performance.now();
+  if (p === paused) return;
+  if (paused) { start += now - pausedAt; paused = false; } else { pausedAt = now; paused = true; }
+  $('pauseTxt').textContent = paused ? 'Play' : 'Pause';
+  $('pause').setAttribute('aria-label', paused ? 'Play' : 'Pause');
+  $('pauseIco').innerHTML = paused ? '<path d="M7 5l12 7-12 7z"/>' : '<path d="M8 5v14M16 5v14"/>';
+}
+function go(i) {
+  if (i < 0 || i >= SCENES.length) return;
+  const now = performance.now();
+  const reduce = mqReduce.matches;
+  if (i !== cur && cur >= 0 && !reduce) { prev = cur; prevT = sceneTime(now); fadeStart = now; } else prev = null;
+  cur = i;
+  const s = SCENES[i];
+  if (reduce) { setPaused(false); start = now - s.still * 1000; setPaused(true); still = true; }
+  else { start = now; if (paused) pausedAt = now; still = false; }
+  title.textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  count.textContent = (i + 1) + ' of ' + SCENES.length;
+  $('dTitle').textContent = 'Scene ' + (i + 1) + ' of ' + SCENES.length + ': ' + s.name;
+  const c = s.cap;
+  $('cap').innerHTML = '<p class="cap-tag">' + esc(c.tag) + '</p><p class="cap-line">' + esc(c.line) + '</p>' +
+    (c.sub ? [].concat(c.sub).map(x => '<p class="cap-sub">' + esc(x) + '</p>').join('') : '') + (c.box ? '<div class="cap-box"><p class="cap-tag" style="color:var(--brand)">' + esc(c.box[0]) + '</p><p class="cap-sub">' + esc(c.box[1]) + '</p></div>' : '');
+  $('dText').textContent = s.desc;
+  [...dots.children].forEach((d, k) => { d.className = k === i ? 'on' : k < i ? 'done' : ''; if (k === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current'); });
+  if (document.activeElement === backB && i === 0) nextB.focus();
+  if (document.activeElement === nextB && i === SCENES.length - 1) backB.focus();
+  backB.disabled = i === 0;
+  nextB.disabled = i === SCENES.length - 1;
+  if (mode === 'port') desc.scrollTop = 0;
+}
+function frameLoop(now) {
+  const t = sceneTime(now);
+  const fp = prev === null ? 1 : clamp01((now - fadeStart) / 1000 / FADE);
+  SCENES.forEach((s, k) => { s.root.style.display = (k === cur || (k === prev && fp < 1)) ? 'block' : 'none'; });
+  if (prev !== null && fp < 1) { const ps = SCENES[prev]; ps.root.style.opacity = 1 - fp; ps.root.style.zIndex = 1; ps.render(prevT + (now - fadeStart) / 1000); }
+  else prev = null;
+  const s = SCENES[cur];
+  s.root.style.opacity = fp; s.root.style.zIndex = 2;
+  s.render(Math.max(0, t));
+  nextB.classList.toggle('ready', (t >= s.dur || still) && cur < SCENES.length - 1);
+  requestAnimationFrame(frameLoop);
+}
+nextB.onclick = () => go(cur + 1);
+backB.onclick = () => go(cur - 1);
+$('replay').onclick = () => { prev = null; still = false; setPaused(false); start = performance.now(); };
+$('pause').onclick = () => setPaused(!paused);
+
+const app = $('app');
+const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) && !!(app.requestFullscreen || app.webkitRequestFullscreen);
+if (!fsOK) body.classList.add('no-fs');
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+$('full').onclick = () => {
+  try {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (app.requestFullscreen || app.webkitRequestFullscreen).call(app); if (r && r.catch) r.catch(() => {}); }
+  } catch (e) {}
+};
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { $('full').setAttribute('aria-label', fsEl() ? 'Exit full screen' : 'Full screen'); fit(); }));
+
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  const onButton = e.target.closest && e.target.closest('button, a');
+  const k = e.key;
+  if (k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); go(cur + 1); }
+  else if (k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); go(cur - 1); }
+  else if (k === ' ' || k === 'Spacebar') { if (!onButton) { e.preventDefault(); go(cur + 1); } }
+  else if (k === 'Home') { e.preventDefault(); go(0); }
+  else if (k === 'End') { e.preventDefault(); go(SCENES.length - 1); }
+  else if (k === 'r' || k === 'R') $('replay').click();
+  else if (k === 'p' || k === 'P') $('pause').click();
+  else if ((k === 'f' || k === 'F') && fsOK) $('full').click();
+  else if (k === 't' || k === 'T') setText(!textOn);
+  else if (k === 'Escape' && textOn && mode === 'land') { setText(false); textB.focus(); }
+});
+
+let tp = null;
+frame.addEventListener('pointerdown', e => { if (e.pointerType !== 'touch') return; tp = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+frame.addEventListener('pointercancel', () => { tp = null; });
+frame.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch' || !tp) return;
+  const dx = e.clientX - tp.x, dy = e.clientY - tp.y, dt = performance.now() - tp.t; tp = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 800) { go(cur + (dx < 0 ? 1 : -1)); return; }
+  if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 350) {
+    const r = frame.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width;
+    if (fx > 0.5) go(cur + 1); else if (fx < 0.25) go(cur - 1);
+  }
+});
+
+window.SURGE = { go, seek(t) { setPaused(false); start = performance.now() - t * 1000; prev = null; setPaused(true); }, scenes: SCENES.length };
+
+fit();
+go(0);
+requestAnimationFrame(frameLoop);
+})();
+</script>
+</body>
+</html>
