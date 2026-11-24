@@ -324,8 +324,11 @@ A **supercell** is a severe thunderstorm with a **single, intense, rotating updr
 - **Positive lightning** comes from the positively charged anvil, can strike **many miles away** from the storm ("**bolt from the blue**"), and carries a stronger, longer-lasting current. It is less common but more dangerous, and it causes many wildfires.
 
 #### Thunder and Distance
-- Light arrives almost instantly; sound travels about **1 mile in 5 seconds** (about **1 km in 3 seconds**).
-- **Distance (miles) ≈ seconds between flash and thunder ÷ 5**
+- Light arrives almost instantly
+- Lightning is a current of electricity that rapidly heats up the air
+    - As air is heated, it rapidly expands, creating a pressure wave that hits our ears
+    - Sound travels about **1 mile in 5 seconds** (about **1 km in 3 seconds**).
+        - **Distance (miles) ≈ seconds between flash and thunder ÷ 5**
 - Thunder is rarely heard more than about **10 miles** away. If you can hear thunder, you are close enough to be struck.
 
 #### Different Types of Lightning
